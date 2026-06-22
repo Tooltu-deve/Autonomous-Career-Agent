@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+pydantic
+pydantic-settings
+playwright
+pika
+sqlalchemy
+psycopg[binary]
