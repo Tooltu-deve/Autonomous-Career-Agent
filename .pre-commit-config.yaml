@@ -1,0 +1,65 @@
+repos:
+  # === Safety ===
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
+      - id: no-commit-to-branch
+        args: [--branch, main]
+      - id: check-merge-conflict
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: [--baseline, .secrets.baseline]
+
+  # === Commit message: Conventional Commits ===
+  # Chạy ở stage commit-msg, kiểm tra format: feat(scope): mô tả
+  - repo: https://github.com/compilerla/conventional-pre-commit
+    rev: v3.4.0
+    hooks:
+      - id: conventional-pre-commit
+        stages: [commit-msg]
+        args: [feat, fix, docs, style, refactor, test, chore]
+
+  # === Python ===
+  - repo: https://github.com/psf/black
+    rev: 24.4.2
+    hooks:
+      - id: black
+        files: ^(services|libs)/
+
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.4.9
+    hooks:
+      - id: ruff
+        args: [--fix]
+        files: ^(services|libs)/
+
+  # === Coding convention checks ===
+  - repo: local
+    hooks:
+      # Cấm đọc os.environ trực tiếp — phải dùng libs.common.config.settings
+      - id: no-os-environ
+        name: "Convention: no direct os.environ"
+        language: pygrep
+        entry: 'os\.environ'
+        files: ^(services|libs)/.*\.py$
+        exclude: ^libs/common/config\.py$
+
+      # Cấm import chéo giữa các service
+      - id: no-cross-service-imports
+        name: "Convention: no cross-service imports"
+        language: pygrep
+        entry: 'from services\.|import services\.'
+        files: ^services/.*\.py$
+
+      # ESLint frontend
+      - id: eslint-frontend
+        name: ESLint (frontend)
+        language: node
+        entry: sh -c 'cd frontend && npm run lint'
+        files: ^frontend/
+        pass_filenames: false
