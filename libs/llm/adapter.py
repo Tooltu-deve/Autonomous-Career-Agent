@@ -2,6 +2,7 @@
 
 TODO: cài đặt gọi API thực tế. Đây là skeleton định nghĩa interface chung.
 """
+
 from abc import ABC, abstractmethod
 
 

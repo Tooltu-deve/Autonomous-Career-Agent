@@ -1,4 +1,5 @@
 """Cấu hình dùng chung cho mọi service, đọc từ biến môi trường."""
+
 from pydantic_settings import BaseSettings
 
 
