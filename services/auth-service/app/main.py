@@ -1,4 +1,5 @@
 """auth-service — FastAPI service."""
+
 from fastapi import FastAPI
 
 app = FastAPI(title="auth-service")

@@ -1,4 +1,5 @@
 """ats-agent-service — FastAPI service."""
+
 from fastapi import FastAPI
 
 app = FastAPI(title="ats-agent-service")

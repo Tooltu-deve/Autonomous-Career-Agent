@@ -1,4 +1,5 @@
 """profile-service — FastAPI service."""
+
 from fastapi import FastAPI
 
 app = FastAPI(title="profile-service")

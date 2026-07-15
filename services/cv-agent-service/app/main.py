@@ -1,4 +1,5 @@
 """cv-agent-service — FastAPI service."""
+
 from fastapi import FastAPI
 
 app = FastAPI(title="cv-agent-service")
