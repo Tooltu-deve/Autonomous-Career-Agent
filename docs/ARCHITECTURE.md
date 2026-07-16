@@ -48,6 +48,7 @@ flowchart TB
     FE -->|REST| GW
     GW -->|HTTP| AUTH
     GW -->|HTTP| PROF
+    GW -->|"HTTP: GET /reports"| ATS
 
     %% Data access
     AUTH --> PG
@@ -63,7 +64,7 @@ flowchart TB
     CV -->|publish CV JSON| Q2
     Q2 -->|consume| ATS
     ATS -->|score + cover letter<br/>+ PDF| LLM
-    ATS -->|store report| PG
+    ATS -->|"store + read reports"| PG
 
     classDef infra fill:#1f2937,stroke:#4b5563,color:#e5e7eb
     classDef svc fill:#0f766e,stroke:#14b8a6,color:#ecfeff
@@ -122,10 +123,16 @@ sequenceDiagram
     ATS->>ATS: export PDF
     ATS->>PG: lưu ats_reports
 
-    Note over U,PG: Phase 5 — Người dùng xem kết quả
-    U->>FE: Xem report
+    Note over U,PG: Phase 5 — Người dùng xem kết quả (sync)
+    U->>FE: Xem dashboard
     FE->>GW: GET /reports
-    GW-->>FE: ATS report + CV + cover letter PDF
+    Note right of GW: Gateway chỉ routing + verify JWT,<br/>không chứa business logic
+    GW->>ATS: forward GET /reports
+    ATS->>PG: query ats_reports
+    PG-->>ATS: reports
+    ATS-->>GW: ATS report + CV + cover letter PDF
+    GW-->>FE: response
+    FE-->>U: hiển thị dashboard
 ```
 
 ## Ghi chú
@@ -135,3 +142,4 @@ sequenceDiagram
 - **Shared models** (`Job`, `ProfileData`, `GeneratedCV`, `ATSReport`) tại `libs.schemas.models`.
 - **Config** duy nhất qua `libs.common.config.settings` — không đọc `os.environ` trực tiếp.
 - Mọi service đều expose `GET /health`.
+- **`ats-agent-service` sở hữu bảng `ats_reports`** và đảm nhiệm cả hai vai trò: (1) **consumer bất đồng bộ** nghe queue `cv.generated` để ghi report, và (2) **read API đồng bộ** (`GET /reports`) phục vụ dashboard. API Gateway chỉ forward request đọc tới service này — Gateway không tự truy vấn Postgres.
