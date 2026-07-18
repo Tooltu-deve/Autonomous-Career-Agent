@@ -23,19 +23,20 @@ flowchart TB
 
     subgraph services["Application Services"]
         AUTH["🔐 auth-service"]
-        PROF["👔 profile-service"]
+        PROF["👔 profile-service<br/>+ preferred_template"]
         SCRAPER["🕷️ scraper-service"]
-        CV["🤖 cv-agent-service<br/>(RAG)"]
+        CV["🤖 cv-agent-service<br/>(RAG) + CV editor API"]
         ATS["📊 ats-agent-service"]
+        PDF["🧾 pdf-service<br/>LaTeX → PDF"]
     end
 
     subgraph messaging["Async Messaging — RabbitMQ :5672 / :15672"]
-        Q1{{"queue: jobs.scraped"}}
+        Q1{{"queue: cv.requested<br/>(user_id, job_id, attempt, feedback)"}}
         Q2{{"queue: cv.generated"}}
     end
 
     subgraph data["Data Stores"]
-        PG[("🐘 Postgres 16 · :5432<br/>users · jobs · ats_reports")]
+        PG[("🐘 Postgres 16 · :5432<br/>users · jobs · cvs · ats_reports")]
         QD[("🧠 Qdrant · :6333<br/>profile embeddings")]
     end
 
@@ -47,24 +48,29 @@ flowchart TB
     User -->|HTTPS| FE
     FE -->|REST| GW
     GW -->|HTTP| AUTH
-    GW -->|HTTP| PROF
+    GW -->|"HTTP: /profile"| PROF
+    GW -->|"HTTP: POST /jobs/search, /jobs/select"| SCRAPER
+    GW -->|"HTTP: GET/PUT /cvs"| CV
     GW -->|"HTTP: GET /reports"| ATS
+    GW -->|"HTTP: POST /pdf/export"| PDF
 
     %% Data access
     AUTH --> PG
     PROF --> PG
     PROF -->|embeddings| QD
 
-    %% Async pipeline
-    SCRAPER -->|scrape LinkedIn/Indeed<br/>publish| Q1
-    SCRAPER --> PG
+    %% Async pipeline (CV generation + scoring loop)
+    SCRAPER -->|"scrape LinkedIn/Indeed (on request)"| PG
+    SCRAPER -->|"publish selected jobs"| Q1
     Q1 -->|consume| CV
     CV -->|RAG: read profile| QD
-    CV -->|LLM call| LLM
+    CV -->|"LLM call (+ retry feedback)"| LLM
+    CV -->|"store CV draft + read/update"| PG
     CV -->|publish CV JSON| Q2
     Q2 -->|consume| ATS
-    ATS -->|score + cover letter<br/>+ PDF| LLM
-    ATS -->|"store + read reports"| PG
+    ATS -->|score + cover letter| LLM
+    ATS -->|"store report + PASS/FAIL"| PG
+    ATS -.->|"FAIL: republish + feedback (attempt+1)"| Q1
 
     classDef infra fill:#1f2937,stroke:#4b5563,color:#e5e7eb
     classDef svc fill:#0f766e,stroke:#14b8a6,color:#ecfeff
@@ -72,20 +78,20 @@ flowchart TB
     classDef ext fill:#4c1d95,stroke:#8b5cf6,color:#ede9fe
 
     class PG,QD infra
-    class AUTH,PROF,SCRAPER,CV,ATS,GW svc
+    class AUTH,PROF,SCRAPER,CV,ATS,PDF,GW svc
     class Q1,Q2 queue
     class LLM ext
 ```
 
 ## Sequence Diagram — End-to-End Flow
 
-Từ lúc người dùng cập nhật hồ sơ đến khi có ATS report hoàn chỉnh.
+Từ lúc setup hồ sơ (chọn template) → tìm & chọn job → sinh CV → chấm điểm (có vòng retry) → chỉnh sửa → xuất PDF.
 
 ```mermaid
 sequenceDiagram
     autonumber
     actor U as 👤 User
-    participant FE as 🖥️ Frontend
+    participant FE as 🖥️ Frontend (Tiptap)
     participant GW as 🚪 API Gateway
     participant PROF as 👔 profile-service
     participant QD as 🧠 Qdrant
@@ -93,53 +99,83 @@ sequenceDiagram
     participant MQ as 🐰 RabbitMQ
     participant CV as 🤖 cv-agent-service
     participant ATS as 📊 ats-agent-service
+    participant PDF as 🧾 pdf-service
     participant LLM as ✨ LLM (Anthropic/OpenAI)
     participant PG as 🐘 Postgres
 
-    Note over U,QD: Phase 1 — Chuẩn bị hồ sơ (sync)
-    U->>FE: Cập nhật profile
-    FE->>GW: POST /profile
-    GW->>PROF: forward request
-    PROF->>PG: lưu profile
+    Note over U,QD: Phase 1 — Setup hồ sơ + chọn template (sync)
+    U->>FE: Cập nhật profile, chọn preferred_template
+    FE->>GW: PUT /profile {..., preferred_template}
+    GW->>PROF: forward
+    PROF->>PG: lưu profile + preferred_template
     PROF->>QD: upsert embeddings (RAG index)
     PROF-->>FE: 200 OK
 
-    Note over SCR,MQ: Phase 2 — Scrape jobs (async)
-    SCR->>SCR: scrape LinkedIn/Indeed
+    Note over U,PG: Phase 2 — Tìm & chọn job (sync)
+    U->>FE: Nhập tiêu chí tìm việc
+    FE->>GW: POST /jobs/search {criteria}
+    GW->>SCR: forward
+    SCR->>SCR: cào LinkedIn/Indeed theo tiêu chí
     SCR->>PG: lưu jobs
-    SCR->>MQ: publish → jobs.scraped
+    SCR-->>FE: danh sách jobs
+    FE-->>U: hiển thị jobs
+    U->>FE: tick chọn job → "Tạo CV"
+    FE->>GW: POST /jobs/select {job_ids}
+    GW->>SCR: forward
+    SCR->>MQ: publish → cv.requested (user_id, job_id, attempt=1)
 
-    Note over MQ,LLM: Phase 3 — Sinh CV bằng RAG
-    MQ-->>CV: consume jobs.scraped
+    Note over MQ,PG: Phase 3 — Sinh CV bằng RAG (async)
+    MQ-->>CV: consume cv.requested
     CV->>QD: query profile embeddings (retrieve)
-    CV->>LLM: generate CV JSON (job + profile context)
+    CV->>LLM: generate CV JSON (job + profile [+ feedback nếu retry])
     LLM-->>CV: structured CV
+    CV->>PG: upsert cvs (status=draft)
     CV->>MQ: publish → cv.generated
 
-    Note over MQ,PG: Phase 4 — Chấm điểm ATS + cover letter
+    Note over MQ,PG: Phase 4 — Chấm điểm ATS + cổng PASS/FAIL (async)
     MQ-->>ATS: consume cv.generated
     ATS->>LLM: score CV + viết cover letter
     LLM-->>ATS: score + cover letter
-    ATS->>ATS: export PDF
-    ATS->>PG: lưu ats_reports
+    alt score >= ngưỡng (PASS)
+        ATS->>PG: lưu ats_reports (status=PASS)
+    else score < ngưỡng (FAIL) và attempt <= max
+        ATS->>PG: lưu ats_reports (status=FAIL)
+        ATS->>MQ: republish → cv.requested (attempt+1, feedback)
+    else quá max lần
+        ATS->>PG: lưu ats_reports (status=NEEDS_REVIEW)
+    end
 
-    Note over U,PG: Phase 5 — Người dùng xem kết quả (sync)
-    U->>FE: Xem dashboard
-    FE->>GW: GET /reports
-    Note right of GW: Gateway chỉ routing + verify JWT,<br/>không chứa business logic
-    GW->>ATS: forward GET /reports
-    ATS->>PG: query ats_reports
-    PG-->>ATS: reports
-    ATS-->>GW: ATS report + CV + cover letter PDF
-    GW-->>FE: response
-    FE-->>U: hiển thị dashboard
+    Note over U,PG: Phase 5 — Xem preview & chỉnh sửa CV PASS (sync)
+    U->>FE: Mở CV (đã PASS)
+    FE->>GW: GET /cvs/{id}
+    GW->>CV: forward
+    CV->>PG: SELECT cv_data
+    PG-->>CV: cvData (JSON)
+    CV-->>FE: cvData
+    FE-->>U: render preview (template + cvData) + cho sửa
+    U->>FE: Sửa xong → Lưu
+    FE->>GW: PUT /cvs/{id} {cv_data}
+    GW->>CV: forward
+    CV->>PG: UPDATE cvs (status=edited)
+
+    Note over U,PDF: Phase 6 — Xuất PDF (sync, stateless)
+    U->>FE: Xác nhận "Xuất PDF"
+    FE->>GW: POST /pdf/export {template, cv_data}
+    GW->>PDF: forward
+    Note right of PDF: render .tex từ template + cv_data<br/>compile (tectonic), không lưu file
+    PDF-->>FE: application/pdf (stream)
+    FE-->>U: tải PDF về
 ```
 
 ## Ghi chú
 
 - **Không có cross-import giữa các service.** Giao tiếp đồng bộ chỉ qua API Gateway; giao tiếp bất đồng bộ chỉ qua RabbitMQ.
-- **Queue names** khai báo tập trung tại `libs.messaging.rabbitmq` (`QUEUE_JOBS_SCRAPED`, `QUEUE_CV_GENERATED`).
+- **Queue names** khai báo tập trung tại `libs.messaging.rabbitmq` (`QUEUE_CV_REQUESTED`, `QUEUE_CV_GENERATED`). *(Đổi tên `jobs.scraped` → `cv.requested` vì message giờ mang `user_id, job_id, attempt, feedback`.)*
 - **Shared models** (`Job`, `ProfileData`, `GeneratedCV`, `ATSReport`) tại `libs.schemas.models`.
-- **Config** duy nhất qua `libs.common.config.settings` — không đọc `os.environ` trực tiếp.
+- **Config** duy nhất qua `libs.common.config.settings` — không đọc `os.environ` trực tiếp (vd `ATS_PASS_THRESHOLD`, `ATS_MAX_ATTEMPTS`).
 - Mọi service đều expose `GET /health`.
-- **`ats-agent-service` sở hữu bảng `ats_reports`** và đảm nhiệm cả hai vai trò: (1) **consumer bất đồng bộ** nghe queue `cv.generated` để ghi report, và (2) **read API đồng bộ** (`GET /reports`) phục vụ dashboard. API Gateway chỉ forward request đọc tới service này — Gateway không tự truy vấn Postgres.
+- **`scraper-service` sở hữu bảng `jobs`**: (1) **API đồng bộ** `POST /jobs/search` (cào theo tiêu chí → trả jobs) và `POST /jobs/select` (publish job user chọn vào `cv.requested`); nó là **producer** của queue `cv.requested`.
+- **`ats-agent-service` sở hữu bảng `ats_reports`** và đảm nhiệm: (1) **consumer** nghe `cv.generated` → chấm điểm + cover letter, ghi report với `status = PASS | FAIL | NEEDS_REVIEW`; **FAIL** thì republish `cv.requested` (attempt+1, kèm weaknesses/advice), quá `ATS_MAX_ATTEMPTS` thì `NEEDS_REVIEW`; (2) **read API** `GET /reports`. ats **không** ghi vào bảng `cvs` (tránh ghi chéo bảng).
+- **`cv-agent-service` sở hữu bảng `cvs`** và đảm nhiệm hai vai trò: (1) **consumer** nghe `cv.requested` → sinh CV bằng RAG (dùng feedback nếu là retry) → upsert `cvs` (`status=draft`) → publish `cv.generated`; (2) **read/update API** (`GET/PUT /cvs/{id}`) phục vụ CV Editor (`status` chuyển `edited` khi user lưu).
+- **`pdf-service` là stateless** — nhận `{template, cv_data}` qua HTTP, compile LaTeX (`.tex`) → PDF và stream về, **không lưu file**. PDF luôn tái tạo được từ `cv_data` (bảng `cvs`) + `preferred_template` (profile).
+- **`preferred_template`** (`classic|modern|academic`) là thuộc tính của profile, do `profile-service` quản lý; user chọn lúc setup profile và **cố định** cho CV Editor.
