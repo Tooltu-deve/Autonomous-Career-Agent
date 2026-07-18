@@ -36,7 +36,7 @@ flowchart TB
     end
 
     subgraph data["Data Stores"]
-        PG[("🐘 Postgres 16 · :5432<br/>users · jobs · cvs · ats_reports")]
+        PG[("🐘 Postgres 16 · :5432<br/>users · profiles · jobs<br/>applications · cv_generations · ats_reports")]
         QD[("🧠 Qdrant · :6333<br/>profile embeddings")]
     end
 
@@ -103,16 +103,17 @@ sequenceDiagram
     participant LLM as ✨ LLM (Anthropic/OpenAI)
     participant PG as 🐘 Postgres
 
-    Note over U,QD: Phase 1 — Setup hồ sơ + chọn template (sync)
-    U->>FE: Cập nhật profile, chọn preferred_template
-    FE->>GW: PUT /profile {..., preferred_template}
+    Note over U,QD: Phase 1 — Setup hồ sơ + chọn template + tiêu chí job (sync)
+    U->>FE: Cập nhật profile, chọn preferred_template + tiêu chí tìm job
+    FE->>GW: PUT /profile {..., preferred_template, preferences}
     GW->>PROF: forward
     PROF->>PG: lưu profile + preferred_template
     PROF->>QD: upsert embeddings (RAG index)
     PROF-->>FE: 200 OK
 
     Note over U,PG: Phase 2 — Tìm & chọn job (sync)
-    U->>FE: Nhập tiêu chí tìm việc
+    U->>FE: Bấm "Tìm job"
+    Note right of FE: criteria lấy từ profile đã tải<br/>(profile_preferences), không nhập lại
     FE->>GW: POST /jobs/search {criteria}
     GW->>SCR: forward
     SCR->>SCR: cào LinkedIn/Indeed theo tiêu chí
@@ -129,34 +130,35 @@ sequenceDiagram
     CV->>QD: query profile embeddings (retrieve)
     CV->>LLM: generate CV JSON (job + profile [+ feedback nếu retry])
     LLM-->>CV: structured CV
-    CV->>PG: upsert cvs (status=draft)
+    CV->>PG: upsert cv_generations (edit_status=draft)<br/>set applications.generation_status=cv_generated
     CV->>MQ: publish → cv.generated
 
     Note over MQ,PG: Phase 4 — Chấm điểm ATS + cổng PASS/FAIL (async)
     MQ-->>ATS: consume cv.generated
     ATS->>LLM: score CV + viết cover letter
     LLM-->>ATS: score + cover letter
+    ATS->>PG: lưu ats_reports (score, breakdown, cover_letter)
     alt score >= ngưỡng (PASS)
-        ATS->>PG: lưu ats_reports (status=PASS)
-    else score < ngưỡng (FAIL) và attempt <= max
-        ATS->>PG: lưu ats_reports (status=FAIL)
+        ATS->>PG: applications.generation_status = completed
+    else score < ngưỡng và attempt < max
+        ATS->>PG: applications.generation_status = cv_queued
         ATS->>MQ: republish → cv.requested (attempt+1, feedback)
-    else quá max lần
-        ATS->>PG: lưu ats_reports (status=NEEDS_REVIEW)
+    else attempt >= max
+        ATS->>PG: applications.generation_status = needs_review
     end
 
     Note over U,PG: Phase 5 — Xem preview & chỉnh sửa CV PASS (sync)
     U->>FE: Mở CV (đã PASS)
     FE->>GW: GET /cvs/{id}
     GW->>CV: forward
-    CV->>PG: SELECT cv_data
-    PG-->>CV: cvData (JSON)
-    CV-->>FE: cvData
-    FE-->>U: render preview (template + cvData) + cho sửa
+    CV->>PG: SELECT cv_json
+    PG-->>CV: cv_json (JSON)
+    CV-->>FE: cv_json
+    FE-->>U: render preview (template + cv_json) + cho sửa
     U->>FE: Sửa xong → Lưu
-    FE->>GW: PUT /cvs/{id} {cv_data}
+    FE->>GW: PUT /cvs/{id} {cv_json}
     GW->>CV: forward
-    CV->>PG: UPDATE cvs (status=edited)
+    CV->>PG: UPDATE cv_generations (edit_status=edited)
 
     Note over U,PDF: Phase 6 — Xuất PDF (sync, stateless)
     U->>FE: Xác nhận "Xuất PDF"
@@ -175,7 +177,9 @@ sequenceDiagram
 - **Config** duy nhất qua `libs.common.config.settings` — không đọc `os.environ` trực tiếp (vd `ATS_PASS_THRESHOLD`, `ATS_MAX_ATTEMPTS`).
 - Mọi service đều expose `GET /health`.
 - **`scraper-service` sở hữu bảng `jobs`**: (1) **API đồng bộ** `POST /jobs/search` (cào theo tiêu chí → trả jobs) và `POST /jobs/select` (publish job user chọn vào `cv.requested`); nó là **producer** của queue `cv.requested`.
-- **`ats-agent-service` sở hữu bảng `ats_reports`** và đảm nhiệm: (1) **consumer** nghe `cv.generated` → chấm điểm + cover letter, ghi report với `status = PASS | FAIL | NEEDS_REVIEW`; **FAIL** thì republish `cv.requested` (attempt+1, kèm weaknesses/advice), quá `ATS_MAX_ATTEMPTS` thì `NEEDS_REVIEW`; (2) **read API** `GET /reports`. ats **không** ghi vào bảng `cvs` (tránh ghi chéo bảng).
-- **`cv-agent-service` sở hữu bảng `cvs`** và đảm nhiệm hai vai trò: (1) **consumer** nghe `cv.requested` → sinh CV bằng RAG (dùng feedback nếu là retry) → upsert `cvs` (`status=draft`) → publish `cv.generated`; (2) **read/update API** (`GET/PUT /cvs/{id}`) phục vụ CV Editor (`status` chuyển `edited` khi user lưu).
-- **`pdf-service` là stateless** — nhận `{template, cv_data}` qua HTTP, compile LaTeX (`.tex`) → PDF và stream về, **không lưu file**. PDF luôn tái tạo được từ `cv_data` (bảng `cvs`) + `preferred_template` (profile).
+- **`ats-agent-service` sở hữu bảng `ats_reports`** và đảm nhiệm: (1) **consumer** nghe `cv.generated` → chấm điểm + cover letter, ghi report (score, breakdown, keywords, cover letter); cập nhật `applications.generation_status`: PASS → `completed`, dưới ngưỡng & còn lượt → republish `cv.requested` (attempt+1, kèm weaknesses/advice), hết lượt → `needs_review`; (2) **read API** `GET /reports`. ats **không** ghi vào `cv_generations`.
+- **`cv-agent-service` sở hữu bảng `cv_generations`** và đảm nhiệm hai vai trò: (1) **consumer** nghe `cv.requested` → sinh CV bằng RAG (dùng feedback nếu là retry) → upsert `cv_generations` (`edit_status=draft`) → publish `cv.generated`; (2) **read/update API** (`GET/PUT /cvs/{id}`) phục vụ CV Editor (`edit_status` chuyển `edited` khi user lưu).
+- **`applications` là bảng orchestration dùng chung** (anchor row per user-job): nhiều service cùng cập nhật `generation_status` khi CV đi qua pipeline. Đây là **ngoại lệ có chủ đích** với nguyên tắc single-writer, đổi lại có một anchor trạng thái duy nhất để frontend poll. Các bảng nội dung (`cv_generations`, `ats_reports`) vẫn single-writer.
+- **`pdf-service` là stateless** — nhận `{template, cv_data}` qua HTTP, compile LaTeX (`.tex`) → PDF và stream về, **không lưu file**. PDF luôn tái tạo được từ `cv_generations.cv_json` + `profiles.preferred_template`.
 - **`preferred_template`** (`classic|modern|academic`) là thuộc tính của profile, do `profile-service` quản lý; user chọn lúc setup profile và **cố định** cho CV Editor.
+- **`profile_preferences`** (tiêu chí tìm job: target_role, salary, location, remote) do `profile-service` sở hữu, set lúc setup profile. Khi tìm job user chỉ bấm "Tìm job"; **frontend** lấy criteria từ profile rồi truyền vào `POST /jobs/search` — scraper không đọc thẳng bảng này (tránh cross-service DB).

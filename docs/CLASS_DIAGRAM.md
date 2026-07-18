@@ -53,8 +53,8 @@ classDiagram
         +content
     }
     class ATSReport {
-        +score
-        +status
+        +overall_score
+        +score_breakdown
         +cover_letter
     }
 ```
@@ -121,11 +121,18 @@ classDiagram
         +user_id
         +preferred_template
     }
+    class ProfilePreferencesORM {
+        <<ORM>>
+        +profile_id
+        +target_role
+        +preferred_locations
+    }
     class QdrantRepository {
         +upsert(vector)
     }
     ProfileRouter --> ProfileService
     ProfileService --> ProfileORM
+    ProfileService --> ProfilePreferencesORM
     ProfileService --> QdrantRepository
 ```
 
@@ -179,17 +186,18 @@ classDiagram
     class CVAgentService {
         +generate(CvRequest)
         +get_cv(id)
-        +update_cv(id, cv_data)
+        +update_cv(id, cv_json)
     }
-    class CvORM {
+    class CvGenerationORM {
         <<ORM>>
         +id
-        +cv_data
-        +status
+        +application_id
+        +cv_json
+        +edit_status
     }
     CvRequestConsumer --> CVAgentService
     CvsRouter --> CVAgentService
-    CVAgentService --> CvORM
+    CVAgentService --> CvGenerationORM
     CVAgentService --> LLMClient
 ```
 
@@ -207,14 +215,14 @@ classDiagram
     }
     class ATSAgentService {
         +process(GeneratedCV)
-        +evaluate(score, attempt) status
+        +evaluate(score, attempt) generation_status
         +list_reports(user_id)
     }
     class ATSReportORM {
         <<ORM>>
-        +score
-        +status
-        +attempt
+        +cv_generation_id
+        +overall_score
+        +cover_letter_text
     }
     CvGeneratedConsumer --> ATSAgentService
     ReportsRouter --> ATSAgentService
