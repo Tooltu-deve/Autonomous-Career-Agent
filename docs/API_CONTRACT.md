@@ -53,7 +53,8 @@ Request:
 ```json
 {
   "email": "user@example.com",
-  "password": "at-least-8-chars"
+  "password": "at-least-8-chars",
+  "full_name": "Nguyen Van A"
 }
 ```
 Response `201`:
@@ -61,6 +62,7 @@ Response `201`:
 {
   "id": "3f9a1b2c-...-uuid",
   "email": "user@example.com",
+  "full_name": "Nguyen Van A",
   "created_at": "2026-07-16T09:30:00Z"
 }
 ```
@@ -144,7 +146,7 @@ Gắn 1-1 với `profiles` (`profile_preferences.profile_id → profiles.id`).
   "expected_salary_min": 1500,
   "expected_salary_max": 2500,
   "currency": "USD",
-  "preferred_locations": "Ho Chi Minh City, Remote",
+  "preferred_locations": ["Ho Chi Minh City", "Remote"],
   "remote_preference": "hybrid"
 }
 ```
@@ -157,7 +159,7 @@ Request (không kèm `id`/`profile_id` — suy từ token):
   "expected_salary_min": 1500,
   "expected_salary_max": 2500,
   "currency": "USD",
-  "preferred_locations": "Ho Chi Minh City, Remote",
+  "preferred_locations": ["Ho Chi Minh City", "Remote"],
   "remote_preference": "hybrid"
 }
 ```
@@ -249,8 +251,8 @@ Chi tiết đầy đủ — gộp `applications` + `cv_generations` + `ats_repor
     "id": "report-uuid",
     "overall_score": 82,
     "score_breakdown": { "keywords": 70, "experience": 90 },
-    "matched_keywords": "python, fastapi",
-    "missing_keywords": "kubernetes",
+    "matched_keywords": ["python", "fastapi"],
+    "missing_keywords": ["kubernetes"],
     "recommendations": ["Thêm mục CI/CD"],
     "cover_letter_text": "Dear Hiring Manager, ...",
     "model_used": "claude-opus-4-8",
@@ -326,3 +328,4 @@ Sau khi RAG + LLM sinh xong CV, cv-agent ghi `cv_generations` row (`cv_json`) r�
 > - `infra/init-db/01_schema.sql` mới có 3 bảng (`users`, `jobs`, `ats_reports`) → cần cập nhật thành 10 bảng của schema mới.
 > - `api-gateway` chưa route `/applications`, `/profile/preferences` (chưa `depends_on` các service tương ứng).
 > - Message contract đổi từ `{user_id, job}` / `{user_id, job_id, content}` sang `{application_id}` / `{cv_generation_id}` — scraper/cv-agent/ats-agent phải theo id-based.
+> - **Kiểu list vs varchar:** contract để `preferred_locations`, `matched_keywords`, `missing_keywords` là **list of string** (API trả JSON array). Schema dbdiagram hiện là `varchar` → cần đổi các cột này sang `text[]` (Postgres array) hoặc `jsonb` cho khớp; nếu giữ `varchar` thì service phải serialize/deserialize (join/split) tại tầng repository.
