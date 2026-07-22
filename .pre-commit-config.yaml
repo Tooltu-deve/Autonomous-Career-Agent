@@ -59,7 +59,7 @@ repos:
       # ESLint frontend
       - id: eslint-frontend
         name: ESLint (frontend)
-        language: node
+        language: system
         entry: sh -c 'cd frontend && npm run lint'
         files: ^frontend/
         pass_filenames: false
