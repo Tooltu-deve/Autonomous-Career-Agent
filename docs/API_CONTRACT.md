@@ -138,6 +138,8 @@ Lỗi: `404` chưa có profile.
 ### `PUT /profile` → `200`
 Tạo mới hoặc thay toàn bộ profile + các bảng con (idempotent). Body giống response nhưng
 **không kèm `id`/`user_id`** (lấy từ token). Response = profile sau cập nhật. Side-effect: re-embed Qdrant.
+> `preferred_template` phải thuộc whitelist `"classic" | "modern" | "academic"` — giá trị ngoài → `422`.
+> Template chọn lúc setup profile và cố định cho các lần dùng sau (đổi phải sửa profile).
 
 ---
 
@@ -323,6 +325,55 @@ nếu pipeline chưa chạy xong (xem `pipeline_stage`).
 
 ---
 
+## A6. CVs  `/cvs`  🔒
+
+Do **cv-agent-service** sở hữu (bảng `cv_generations`). User xem preview + chỉnh sửa CV đã PASS
+trong CV Editor (React + Tiptap) trước khi xuất PDF.
+
+### `GET /cvs/{cv_generation_id}` → `200`
+Trả nội dung CV đã sinh.
+```json
+{
+  "id": "cvgen-uuid",
+  "application_id": "app-uuid",
+  "cv_json": { "...": "CV có cấu trúc" },
+  "edit_status": "draft",
+  "model_used": "claude-opus-4-8",
+  "generated_at": "2026-07-16T09:05:00Z"
+}
+```
+`404` nếu không tồn tại / không thuộc user.
+
+### `PUT /cvs/{cv_generation_id}` → `200`
+User lưu CV đã chỉnh. Body `{ cv_json }` phải khớp schema `GeneratedCV.content`; hợp lệ →
+cập nhật + `edit_status="edited"`. Sai schema → `422`.
+```json
+{ "cv_json": { "...": "CV đã sửa, đúng cấu trúc" } }
+```
+> Tiptap chỉ dùng cho vùng rich-text; khi lưu, FE serialize ngược về đúng schema `GeneratedCV.content`.
+
+---
+
+## A7. PDF Export  `/pdf`  🔒
+
+Do **pdf-service** sở hữu (stateless — render LaTeX, **không lưu file**).
+
+### `POST /pdf/export` → `200`
+User bấm "Xuất PDF". FE gửi `template` (đọc từ `preferred_template` qua `GET /profile`) + `cv_data`.
+Service render template LaTeX + data → compile PDF → stream về.
+Request:
+```json
+{
+  "template": "modern",
+  "cv_data": { "...": "cv_json của bản CV cuối" }
+}
+```
+Response `200`: `Content-Type: application/pdf` (binary stream, không JSON).
+- `template` phải thuộc whitelist `"classic" | "modern" | "academic"` — sai → `400` (chống path injection).
+- Lỗi/treo khi compile LaTeX → `422`.
+
+---
+
 # Phần B — Message Contract (RabbitMQ)
 
 Tên queue khai báo tập trung tại `libs.messaging.rabbitmq` (`QUEUE_CV_REQUESTED = "cv.requested"`,
@@ -382,13 +433,18 @@ Sau khi sinh xong CV, cv-agent ghi `cv_generations` row (`cv_json`) rồi publis
 | `profile_preferences` | `GET/PUT /profile/preferences` | scraper đọc `target_role`, `preferred_locations` |
 | `jobs` | `GET /jobs`, `POST /jobs/search`, `POST /jobs/select` | enum `source`, `status`; `raw_data` nội bộ |
 | `applications` | `GET /applications`, producer message `cv.requested` | gốc pipeline; enum `generation_status`, `pipeline_stage` |
-| `cv_generations` | `GET /applications/{id}`, message `cv.generated` | `cv_json`, enum `edit_status` |
+| `cv_generations` | `GET/PUT /cvs/{id}`, `GET /applications/{id}`, message `cv.generated` | `cv_json`, enum `edit_status` |
 | `ats_reports` | `GET /applications/{id}` | `cv_generation_id → cv_generations.id` |
+| *(không có bảng — stateless)* | `POST /pdf/export` | pdf-service render LaTeX, không lưu file |
+
+> **Ghi chú thiết kế:** report đọc gộp qua `GET /applications/{id}` (application + cv + ats_report
+> trong một call), **không** có endpoint `/reports` riêng — dù spec có nhắc — để frontend chỉ gọi một lần.
 
 > **Chưa khớp với code hiện tại** (cần vá ở bước sau):
 > - `libs/schemas/models.py` còn theo mô hình cũ → cần viết lại theo schema dbdiagram (tách profile, thêm `Application`, `CVGeneration`, message model `CvRequest(user_id, job_id, attempt, feedback)`; id kiểu `UUID`; `ProfileData` thêm `preferred_template`).
 > - `libs/messaging/rabbitmq.py`: đổi `QUEUE_JOBS_SCRAPED` → `QUEUE_CV_REQUESTED = "cv.requested"`; giữ `QUEUE_CV_GENERATED`.
 > - `libs/common/config.py`: thêm `ATS_PASS_THRESHOLD` (mặc định 70) và `ATS_MAX_ATTEMPTS` (mặc định 3) cho vòng retry.
-> - `api-gateway` chưa route `/jobs/*`, `/applications`, `/profile/preferences` tới service tương ứng.
+> - `api-gateway` chưa route `/jobs/*`, `/applications`, `/cvs/*`, `/pdf/export`, `/profile/preferences` tới service tương ứng.
+> - **pdf-service (service thứ 7) chưa tồn tại** — cần scaffold service mới cho `POST /pdf/export` (render LaTeX, Tectonic/Jinja2, stateless). Chưa có trong `docker-compose.yml`.
 > - **Kiểu list:** `preferred_locations`, `matched_keywords`, `missing_keywords` là **list of string**
 >   (API trả JSON array). DBML ghi chú `Array TEXT[] in DB` — dùng `TEXT[]`, không phải `varchar` đơn.
