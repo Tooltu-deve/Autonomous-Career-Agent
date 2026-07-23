@@ -1,7 +1,7 @@
 """Wrapper RabbitMQ dùng chung: publish / consume message JSON.
 
 Kết nối bằng pika (blocking). Mọi payload được serialize/deserialize JSON.
-Cấu hình đọc từ ``libs.common.config.settings`` — không đọc os.environ trực tiếp.
+Cấu hình đọc từ ``libs.common.config.settings`` (không đọc biến môi trường trực tiếp).
 """
 
 import json
