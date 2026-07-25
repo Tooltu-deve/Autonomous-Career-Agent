@@ -1,0 +1,14 @@
+# Keep Docker build context small when building from repo root.
+.git
+.venv
+**/__pycache__
+**/*.pyc
+.ruff_cache
+.pytest_cache
+node_modules
+frontend/.next
+docs
+*.md
+.env
+.env.*
+!.env.example

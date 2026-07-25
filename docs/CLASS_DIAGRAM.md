@@ -48,9 +48,14 @@ classDiagram
         +feedback
     }
     class GeneratedCV {
-        +user_id
-        +job_id
+        +id
+        +application_id
         +content
+        +edit_status
+        +model_used
+    }
+    class CvGenerated {
+        +cv_generation_id
     }
     class ATSReport {
         +overall_score
@@ -208,7 +213,7 @@ Consumer `cv.generated`: chấm điểm + cover letter, quyết định PASS/FAI
 ```mermaid
 classDiagram
     class CvGeneratedConsumer {
-        +on_message(GeneratedCV)
+        +on_message(CvGenerated)
     }
     class ReportsRouter {
         +get_reports()
