@@ -39,6 +39,14 @@ class Settings(BaseSettings):
     rabbitmq_user: str = "guest"
     rabbitmq_password: str = "guest"
 
+    # API Gateway — URL downstream service (mặc định = tên service trong docker-compose)
+    auth_service_url: str = "http://auth-service:8000"
+    profile_service_url: str = "http://profile-service:8000"
+    scraper_service_url: str = "http://scraper-service:8000"
+    cv_service_url: str = "http://cv-agent-service:8000"
+    ats_service_url: str = "http://ats-agent-service:8000"
+    pdf_service_url: str = "http://pdf-service:8000"
+
     @property
     def database_url(self) -> str:
         return (
