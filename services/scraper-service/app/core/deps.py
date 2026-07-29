@@ -1,32 +1,19 @@
 """Dependency dùng chung trong scraper-service."""
 
-from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from jose import JWTError
-
-from libs.common.jwt import decode_token
-
-_bearer = HTTPBearer()
+from fastapi import Header, HTTPException, status
 
 
 def get_current_user_id(
-    credentials: HTTPAuthorizationCredentials = Depends(_bearer),
+    x_user_id: str | None = Header(None, alias="X-User-Id"),
 ) -> str:
-    """Verify JWT Bearer token và trả về user_id (sub).
+    """Lấy user_id từ header do API Gateway truyền xuống.
 
-    Raise 401 nếu token thiếu, sai, hoặc hết hạn.
+    API Gateway đã verify JWT và gắn `X-User-Id` vào header.
+    Service không cần verify lại JWT nữa.
     """
-    try:
-        payload = decode_token(credentials.credentials)
-        user_id: str | None = payload.get("sub")
-        if not user_id:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Token không hợp lệ: thiếu subject.",
-            )
-        return user_id
-    except JWTError as exc:
+    if not x_user_id:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Token không hợp lệ hoặc đã hết hạn.",
-        ) from exc
+            detail="Thiếu X-User-Id từ API Gateway.",
+        )
+    return x_user_id
