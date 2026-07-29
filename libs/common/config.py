@@ -10,6 +10,9 @@ class Settings(BaseSettings):
     openai_api_key: str = ""
     llm_model: str = "claude-opus-4-8"
 
+    # Apify (scraper-service)
+    apify_api_token: str = ""
+
     # ATS retry gate
     ats_pass_threshold: float = 70
     ats_max_attempts: int = 3
