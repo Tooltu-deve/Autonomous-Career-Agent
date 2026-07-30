@@ -1,7 +1,7 @@
 """Pydantic schemas cho scraper-service (request/response, khớp API_CONTRACT.md A4)."""
 
 from datetime import datetime
-from typing import Optional
+from typing import Literal, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, Field
@@ -21,6 +21,9 @@ class JobSearchRequest(BaseModel):
     target_role: str = Field(..., min_length=1, examples=["Backend Engineer"])
     preferred_locations: list[str] = Field(
         default=["Ho Chi Minh City"], examples=[["Ho Chi Minh City", "Remote"]]
+    )
+    remote_preference: Optional[Literal["onsite", "remote", "hybrid"]] = Field(
+        default=None, description="e.g., remote, hybrid, onsite"
     )
 
 

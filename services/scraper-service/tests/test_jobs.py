@@ -47,12 +47,12 @@ def test_search_jobs_returns_200(monkeypatch):
 
     fake_job = MagicMock(spec=JobDB)
     fake_job.id = uuid.uuid4()
-    fake_job.source = "indeed"
-    fake_job.external_job_id = "indeed-001"
+    fake_job.source = "linkedin"
+    fake_job.external_job_id = "linkedin-001"
     fake_job.title = "Backend Engineer"
     fake_job.company = "ACME"
     fake_job.location = "Ho Chi Minh City"
-    fake_job.url = "https://indeed.com/job/001"
+    fake_job.url = "https://linkedin.com/jobs/view/001"
     fake_job.description = "Build cool APIs"
     fake_job.posted_at = None
     fake_job.scraped_at = datetime.now(tz=timezone.utc)
