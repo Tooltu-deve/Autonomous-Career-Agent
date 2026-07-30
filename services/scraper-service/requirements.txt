@@ -2,7 +2,11 @@ fastapi
 uvicorn[standard]
 pydantic
 pydantic-settings
-playwright
+apify-client
 pika
 sqlalchemy
 psycopg[binary]
+python-jose[cryptography]
+httpx
+pytest
+pytest-asyncio
