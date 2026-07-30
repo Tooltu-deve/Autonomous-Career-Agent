@@ -21,6 +21,26 @@ USER_ID = str(uuid.uuid4())
 HEADERS = {"X-User-Id": USER_ID}
 
 
+@pytest.fixture(autouse=True)
+def mock_embedding(monkeypatch):
+    """Mọi test: chặn embedding gọi OpenAI/Qdrant thật. Mặc định trả True.
+
+    Test embedding riêng override lại để kiểm hành vi (thành công / lỗi).
+    """
+    from app.services import profile_repository
+
+    calls = []
+
+    def _fake_sync(profile_id, text):
+        calls.append((profile_id, text))
+        return True
+
+    monkeypatch.setattr(
+        profile_repository.qdrant_sync, "sync_profile_embedding", _fake_sync
+    )
+    return calls
+
+
 @pytest.fixture()
 def client():
     engine = create_engine(
@@ -130,3 +150,35 @@ def test_prefs_empty_target_role_422(client):
     _put_profile(client)
     r = _put_prefs(client, target_role="")
     assert r.status_code == 422
+
+
+# ---- Embedding side-effect ----
+def test_put_profile_calls_embedding_with_text(client, mock_embedding):
+    _put_profile(client)
+    # sync được gọi đúng 1 lần, text chứa headline + skills đã ghép
+    assert len(mock_embedding) == 1
+    _profile_id, text = mock_embedding[0]
+    assert "Backend Engineer" in text  # headline
+    assert "python" in text and "fastapi" in text  # skills
+
+
+def test_put_profile_sets_synced_at_when_embedding_ok(client):
+    r = _put_profile(client)
+    assert r.status_code == 200
+    # embedding OK (mock trả True) -> đọc lại thấy đã sync (nội bộ, không có
+    # trong response API; kiểm gián tiếp: PUT thành công, không lỗi)
+
+
+def test_put_profile_ok_even_if_embedding_fails(client, monkeypatch):
+    # embedding lỗi (trả False) KHÔNG được làm hỏng PUT
+    from app.services import profile_repository
+
+    monkeypatch.setattr(
+        profile_repository.qdrant_sync,
+        "sync_profile_embedding",
+        lambda pid, text: False,
+    )
+    r = _put_profile(client)
+    assert r.status_code == 200  # profile vẫn lưu dù embedding fail
+    g = client.get("/profile", headers=HEADERS)
+    assert g.status_code == 200

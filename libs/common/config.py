@@ -32,9 +32,12 @@ class Settings(BaseSettings):
     postgres_host: str = "postgres"
     postgres_port: int = 5432
 
-    # Qdrant
+    # Qdrant + embedding (profile ghi / cv-agent đọc — model phải KHỚP)
     qdrant_host: str = "qdrant"
     qdrant_port: int = 6333
+    qdrant_profiles_collection: str = "profiles"
+    embedding_model: str = "text-embedding-3-small"
+    embedding_dim: int = 1536  # số chiều của text-embedding-3-small
 
     # RabbitMQ
     rabbitmq_host: str = "rabbitmq"

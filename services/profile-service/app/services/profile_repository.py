@@ -6,7 +6,7 @@ Sau khi ghi, gọi qdrant_sync (side-effect, hiện stub).
 
 import uuid
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.models.profile import (
@@ -56,7 +56,12 @@ def upsert_profile(db: Session, user_id: uuid.UUID, data: ProfileUpdate) -> Prof
     db.commit()
     db.refresh(profile)
 
-    qdrant_sync.sync_profile_embedding(profile.id, _profile_text(profile))
+    # Side-effect: embed lên Qdrant. Lỗi KHÔNG làm hỏng PUT (đã lưu Postgres ở trên).
+    # Chỉ đánh dấu embedding_synced_at khi upsert thành công.
+    if qdrant_sync.sync_profile_embedding(profile.id, _profile_text(profile)):
+        profile.embedding_synced_at = func.now()
+        db.commit()
+        db.refresh(profile)
     return profile
 
 
