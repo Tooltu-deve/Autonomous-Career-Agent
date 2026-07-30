@@ -384,19 +384,6 @@ export default function JobRadar() {
           </div>
 
           <div className="stat-item">
-            <div className="stat-icon si-green">
-              <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg>
-            </div>
-            <div className="stat-info">
-              <div className="stat-val">{stats.avgMatch}%</div>
-              <div className="stat-lbl">Độ khớp trung bình</div>
-            </div>
-          </div>
-
-          <div className="stat-item">
             <div className="stat-icon si-blue">
               <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
@@ -448,12 +435,6 @@ export default function JobRadar() {
                   Tất cả ({jobs.length})
                 </button>
                 <button
-                  className={`tab-chip ${activeFilter === 'high' ? 'active' : ''}`}
-                  onClick={() => setActiveFilter('high')}
-                >
-                  Độ khớp cao ({jobs.filter(j => j.match >= 85).length})
-                </button>
-                <button
                   className={`tab-chip ${activeFilter === 'saved' ? 'active' : ''}`}
                   onClick={() => setActiveFilter('saved')}
                 >
@@ -498,12 +479,6 @@ export default function JobRadar() {
                           </svg>
                           {job.location}
                         </span>
-                      </div>
-
-                      <div className="card-tags">
-                        {job.tags.map((t, idx) => (
-                          <span key={idx} className="tag-badge">{t}</span>
-                        ))}
                       </div>
 
                       <div className="card-footer">
