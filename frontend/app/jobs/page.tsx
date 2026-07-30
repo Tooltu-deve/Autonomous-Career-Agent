@@ -498,13 +498,6 @@ export default function JobRadar() {
                           </svg>
                           {job.location}
                         </span>
-                        <span>
-                          <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <line x1="12" y1="1" x2="12" y2="23"></line>
-                            <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                          </svg>
-                          {job.salary}
-                        </span>
                       </div>
 
                       <div className="card-tags">
@@ -548,13 +541,6 @@ export default function JobRadar() {
                       <circle cx="12" cy="10" r="3"></circle>
                     </svg>
                     {selectedJob.address}
-                  </div>
-                  <div className="meta-pill-item">
-                    <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="12" y1="1" x2="12" y2="23"></line>
-                      <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                    </svg>
-                    {selectedJob.salary}
                   </div>
                   <div className="meta-pill-item">
                     <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
