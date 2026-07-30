@@ -36,3 +36,6 @@ rabbitmq_data/
 
 # Logs
 *.log
+
+# Others
+*.html
