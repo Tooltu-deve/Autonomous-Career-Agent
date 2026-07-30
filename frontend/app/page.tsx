@@ -2,6 +2,7 @@
 
 import { useState, FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import './auth.css';
 
 /* ── Types ── */
 interface StoredUser {
@@ -148,7 +149,16 @@ export default function SignIn() {
           firstName: user.firstName,
           lastName: user.lastName,
         }));
-        router.push('/dashboard');
+        // Onboarding 1 lần duy nhất: profile-setup -> profile-preferences -> dashboard
+        const profileDone = localStorage.getItem('careernav_profile_completed');
+        const prefsDone = localStorage.getItem('careernav_preferences_completed');
+        if (profileDone !== 'true') {
+          router.push('/profile-setup');
+        } else if (prefsDone !== 'true') {
+          router.push('/profile-preferences');
+        } else {
+          router.push('/dashboard');
+        }
       } else {
         setLoginServerError('Email hoặc mật khẩu không đúng. Vui lòng thử lại.');
       }
@@ -221,7 +231,7 @@ export default function SignIn() {
   };
 
   return (
-    <div className="page">
+    <div className="auth-page">
       {/* ══ LEFT PANEL (Hero Decorative) ══ */}
       <aside className="left">
         <div className="brand">
@@ -245,7 +255,7 @@ export default function SignIn() {
 
         {/* Floating ATS Score Card */}
         <div className="visual-card">
-          <div className="vc-label">ATS Match Score</div>
+          <div className="vc-label">ATS MATCH SCORE</div>
           <div className="vc-score">84%</div>
           <div className="vc-sub">↑ 6% from last week</div>
           <div className="vc-bar-wrap">
