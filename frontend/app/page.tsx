@@ -1,6 +1,52 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
+
+/* ── Types ── */
+interface StoredUser {
+  email: string;
+  passwordHash: string;
+  firstName: string;
+  lastName: string;
+  createdAt: string;
+}
+
+/* ── Simple hash (NOT for production — demo only) ── */
+function simpleHash(str: string): string {
+  let hash = 5381;
+  for (let i = 0; i < str.length; i++) {
+    hash = (hash * 33) ^ str.charCodeAt(i);
+  }
+  return (hash >>> 0).toString(16);
+}
+
+/* ── localStorage helpers ── */
+const STORAGE_KEY = 'careernav_users';
+
+function getUsers(): StoredUser[] {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function saveUser(user: StoredUser) {
+  const users = getUsers();
+  users.push(user);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(users));
+}
+
+function findUser(email: string, password: string): StoredUser | null {
+  const users = getUsers();
+  const hash = simpleHash(password);
+  return users.find((u) => u.email === email && u.passwordHash === hash) ?? null;
+}
+
+function emailExists(email: string): boolean {
+  return getUsers().some((u) => u.email === email);
+}
 
 function isValidEmail(v: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
@@ -52,14 +98,17 @@ const GoogleIcon = () => (
 );
 
 export default function SignIn() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'login' | 'register'>('login');
 
-  // Form Controlled States
+  /* ── Login state ── */
   const [loginState, setLoginState] = useState({ email: '', password: '' });
   const [loginErrors, setLoginErrors] = useState({ email: false, password: false });
+  const [loginServerError, setLoginServerError] = useState<string | null>(null);
   const [isSubmittingLogin, setIsSubmittingLogin] = useState(false);
   const [showLoginPw, setShowLoginPw] = useState(false);
 
+  /* ── Register state ── */
   const [registerState, setRegisterState] = useState({
     firstName: '',
     lastName: '',
@@ -73,32 +122,45 @@ export default function SignIn() {
     email: false,
     password: false,
   });
+  const [registerServerError, setRegisterServerError] = useState<string | null>(null);
+  const [registerSuccess, setRegisterSuccess] = useState(false);
   const [isSubmittingRegister, setIsSubmittingRegister] = useState(false);
   const [showRegisterPw, setShowRegisterPw] = useState(false);
 
-  // Login Submit Handler
+  /* ── Login Submit Handler ── */
   const handleLoginSubmit = (e: FormEvent) => {
     e.preventDefault();
+    setLoginServerError(null);
     const emailValid = isValidEmail(loginState.email.trim());
     const passwordValid = loginState.password.length > 0;
 
-    setLoginErrors({
-      email: !emailValid,
-      password: !passwordValid,
-    });
-
+    setLoginErrors({ email: !emailValid, password: !passwordValid });
     if (!emailValid || !passwordValid) return;
 
     setIsSubmittingLogin(true);
     setTimeout(() => {
+      const user = findUser(loginState.email.trim().toLowerCase(), loginState.password);
       setIsSubmittingLogin(false);
-      alert('✓ Logged in successfully! (demo)');
-    }, 1200);
+      if (user) {
+        // Lưu session
+        sessionStorage.setItem('careernav_session', JSON.stringify({
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        }));
+        router.push('/dashboard');
+      } else {
+        setLoginServerError('Email hoặc mật khẩu không đúng. Vui lòng thử lại.');
+      }
+    }, 900);
   };
 
-  // Register Submit Handler
+  /* ── Register Submit Handler ── */
   const handleRegisterSubmit = (e: FormEvent) => {
     e.preventDefault();
+    setRegisterServerError(null);
+    setRegisterSuccess(false);
+
     const fnValid = registerState.firstName.trim().length > 0;
     const lnValid = registerState.lastName.trim().length > 0;
     const emailValid = isValidEmail(registerState.email.trim());
@@ -112,29 +174,50 @@ export default function SignIn() {
     });
 
     if (!registerState.terms) {
-      alert('Please agree to the Terms of Service to continue.');
+      setRegisterServerError('Bạn cần đồng ý với Điều khoản Dịch vụ để tiếp tục.');
       return;
     }
 
     if (!fnValid || !lnValid || !emailValid || !passwordValid) return;
 
+    // Kiểm tra email trùng
+    if (emailExists(registerState.email.trim().toLowerCase())) {
+      setRegisterErrors((err) => ({ ...err, email: true }));
+      setRegisterServerError('Email này đã được đăng ký. Hãy thử đăng nhập.');
+      return;
+    }
+
     setIsSubmittingRegister(true);
     setTimeout(() => {
+      saveUser({
+        email: registerState.email.trim().toLowerCase(),
+        passwordHash: simpleHash(registerState.password),
+        firstName: registerState.firstName.trim(),
+        lastName: registerState.lastName.trim(),
+        createdAt: new Date().toISOString(),
+      });
       setIsSubmittingRegister(false);
-      alert('✓ Account created! Redirecting to profile setup… (demo)');
-    }, 1400);
+      setRegisterSuccess(true);
+      // Sau 1.5s chuyển sang tab login
+      setTimeout(() => {
+        setActiveTab('login');
+        setLoginState({ email: registerState.email.trim().toLowerCase(), password: '' });
+        setRegisterSuccess(false);
+        setRegisterState({ firstName: '', lastName: '', email: '', password: '', terms: false });
+      }, 1500);
+    }, 900);
   };
 
   const handleForgot = () => {
     if (!isValidEmail(loginState.email.trim())) {
-      setLoginErrors(prev => ({ ...prev, email: true }));
+      setLoginErrors((prev) => ({ ...prev, email: true }));
       return;
     }
-    alert(`We'll send a password reset link to ${loginState.email.trim()}.\n\n(demo — email not actually sent)`);
+    alert(`Nếu email ${loginState.email.trim()} tồn tại, chúng tôi sẽ gửi link đặt lại mật khẩu.\n\n(demo — email chưa thực sự gửi)`);
   };
 
   const handleOAuth = (provider: string) => {
-    alert(`Continue with ${provider} — (demo, OAuth integration pending)`);
+    alert(`Đăng nhập với ${provider} — (demo, tính năng OAuth đang phát triển)`);
   };
 
   return (
@@ -215,7 +298,7 @@ export default function SignIn() {
               onClick={() => setActiveTab('login')}
               type="button"
             >
-              Sign in
+              Đăng nhập
             </button>
             <button
               className={`tab ${activeTab === 'register' ? 'active' : ''}`}
@@ -224,15 +307,15 @@ export default function SignIn() {
               onClick={() => setActiveTab('register')}
               type="button"
             >
-              Create account
+              Tạo tài khoản
             </button>
           </div>
 
           {/* ══ SIGN IN PANEL ══ */}
           {activeTab === 'login' && (
             <div className="panel active" id="panel-login">
-              <div className="form-title">Welcome back</div>
-              <div className="form-sub">Sign in to continue your job search.</div>
+              <div className="form-title">Chào mừng trở lại</div>
+              <div className="form-sub">Đăng nhập để tiếp tục tìm việc của bạn.</div>
 
               <form onSubmit={handleLoginSubmit} noValidate>
                 {/* Email */}
@@ -246,37 +329,35 @@ export default function SignIn() {
                       autoComplete="email"
                       value={loginState.email}
                       onChange={(e) => {
-                        setLoginState(s => ({ ...s, email: e.target.value }));
-                        setLoginErrors(err => ({ ...err, email: false }));
+                        setLoginState((s) => ({ ...s, email: e.target.value }));
+                        setLoginErrors((err) => ({ ...err, email: false }));
+                        setLoginServerError(null);
                       }}
                     />
                     <EmailIcon />
                   </div>
-                  {loginErrors.email && <div className="field-error">Please enter a valid email.</div>}
+                  {loginErrors.email && <div className="field-error">Vui lòng nhập email hợp lệ.</div>}
                 </div>
 
                 {/* Password */}
                 <div className={`field ${loginErrors.password ? 'has-error' : ''}`}>
                   <div className="field-row">
-                    <label htmlFor="l-password">Password</label>
-                    <button
-                      type="button"
-                      className="field-hint"
-                      onClick={handleForgot}
-                    >
-                      Forgot password?
+                    <label htmlFor="l-password">Mật khẩu</label>
+                    <button type="button" className="field-hint" onClick={handleForgot}>
+                      Quên mật khẩu?
                     </button>
                   </div>
                   <div className="input-wrap">
                     <input
                       type={showLoginPw ? 'text' : 'password'}
                       id="l-password"
-                      placeholder="Your password"
+                      placeholder="Mật khẩu của bạn"
                       autoComplete="current-password"
                       value={loginState.password}
                       onChange={(e) => {
-                        setLoginState(s => ({ ...s, password: e.target.value }));
-                        setLoginErrors(err => ({ ...err, password: false }));
+                        setLoginState((s) => ({ ...s, password: e.target.value }));
+                        setLoginErrors((err) => ({ ...err, password: false }));
+                        setLoginServerError(null);
                       }}
                     />
                     <LockIcon />
@@ -284,29 +365,40 @@ export default function SignIn() {
                       className="eye-btn"
                       type="button"
                       onClick={() => setShowLoginPw(!showLoginPw)}
-                      aria-label={showLoginPw ? 'Hide password' : 'Show password'}
+                      aria-label={showLoginPw ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                     >
                       {showLoginPw ? <EyeOffIcon /> : <EyeOpenIcon />}
                     </button>
                   </div>
-                  {loginErrors.password && <div className="field-error">Password is required.</div>}
+                  {loginErrors.password && <div className="field-error">Vui lòng nhập mật khẩu.</div>}
                 </div>
 
+                {loginServerError && (
+                  <div className="server-error">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    {loginServerError}
+                  </div>
+                )}
+
                 <button className="btn-submit" type="submit" disabled={isSubmittingLogin}>
-                  {isSubmittingLogin ? 'Signing in…' : 'Sign in to CareerNav'}
+                  {isSubmittingLogin ? 'Đang đăng nhập…' : 'Đăng nhập vào CareerNav'}
                 </button>
               </form>
 
               <div className="switch-row">
-                Don&apos;t have an account?{' '}
+                Chưa có tài khoản?{' '}
                 <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('register'); }}>
-                  Create one
+                  Tạo tài khoản
                 </a>
               </div>
 
               <div className="divider">
                 <div className="divider-line"></div>
-                <span>or continue with</span>
+                <span>hoặc tiếp tục với</span>
                 <div className="divider-line"></div>
               </div>
 
@@ -316,7 +408,7 @@ export default function SignIn() {
                   <div className="oauth-icon">
                     <GoogleIcon />
                   </div>
-                  Continue with Google
+                  Tiếp tục với Google
                 </button>
               </div>
             </div>
@@ -325,14 +417,23 @@ export default function SignIn() {
           {/* ══ CREATE ACCOUNT PANEL ══ */}
           {activeTab === 'register' && (
             <div className="panel active" id="panel-register">
-              <div className="form-title">Create your account</div>
-              <div className="form-sub">Free forever — no credit card needed.</div>
+              <div className="form-title">Tạo tài khoản</div>
+              <div className="form-sub">Miễn phí mãi mãi — không cần thẻ tín dụng.</div>
+
+              {registerSuccess && (
+                <div className="server-success">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                  Đăng ký thành công! Đang chuyển sang trang đăng nhập…
+                </div>
+              )}
 
               <form onSubmit={handleRegisterSubmit} noValidate>
                 {/* Name Row */}
                 <div className="name-row">
                   <div className={`field ${registerErrors.firstName ? 'has-error' : ''}`}>
-                    <label htmlFor="r-firstname">First name</label>
+                    <label htmlFor="r-firstname">Tên</label>
                     <div className="input-wrap">
                       <input
                         type="text"
@@ -341,17 +442,17 @@ export default function SignIn() {
                         autoComplete="given-name"
                         value={registerState.firstName}
                         onChange={(e) => {
-                          setRegisterState(s => ({ ...s, firstName: e.target.value }));
-                          setRegisterErrors(err => ({ ...err, firstName: false }));
+                          setRegisterState((s) => ({ ...s, firstName: e.target.value }));
+                          setRegisterErrors((err) => ({ ...err, firstName: false }));
                         }}
                       />
                       <UserIcon />
                     </div>
-                    {registerErrors.firstName && <div className="field-error">Required.</div>}
+                    {registerErrors.firstName && <div className="field-error">Bắt buộc.</div>}
                   </div>
 
                   <div className={`field ${registerErrors.lastName ? 'has-error' : ''}`}>
-                    <label htmlFor="r-lastname">Last name</label>
+                    <label htmlFor="r-lastname">Họ</label>
                     <div className="input-wrap">
                       <input
                         type="text"
@@ -360,13 +461,13 @@ export default function SignIn() {
                         autoComplete="family-name"
                         value={registerState.lastName}
                         onChange={(e) => {
-                          setRegisterState(s => ({ ...s, lastName: e.target.value }));
-                          setRegisterErrors(err => ({ ...err, lastName: false }));
+                          setRegisterState((s) => ({ ...s, lastName: e.target.value }));
+                          setRegisterErrors((err) => ({ ...err, lastName: false }));
                         }}
                       />
                       <UserIcon />
                     </div>
-                    {registerErrors.lastName && <div className="field-error">Required.</div>}
+                    {registerErrors.lastName && <div className="field-error">Bắt buộc.</div>}
                   </div>
                 </div>
 
@@ -381,28 +482,29 @@ export default function SignIn() {
                       autoComplete="email"
                       value={registerState.email}
                       onChange={(e) => {
-                        setRegisterState(s => ({ ...s, email: e.target.value }));
-                        setRegisterErrors(err => ({ ...err, email: false }));
+                        setRegisterState((s) => ({ ...s, email: e.target.value }));
+                        setRegisterErrors((err) => ({ ...err, email: false }));
+                        setRegisterServerError(null);
                       }}
                     />
                     <EmailIcon />
                   </div>
-                  {registerErrors.email && <div className="field-error">Please enter a valid email.</div>}
+                  {registerErrors.email && <div className="field-error">Vui lòng nhập email hợp lệ.</div>}
                 </div>
 
                 {/* Password */}
                 <div className={`field ${registerErrors.password ? 'has-error' : ''}`}>
-                  <label htmlFor="r-password">Password</label>
+                  <label htmlFor="r-password">Mật khẩu</label>
                   <div className="input-wrap">
                     <input
                       type={showRegisterPw ? 'text' : 'password'}
                       id="r-password"
-                      placeholder="Min. 8 characters"
+                      placeholder="Ít nhất 8 ký tự"
                       autoComplete="new-password"
                       value={registerState.password}
                       onChange={(e) => {
-                        setRegisterState(s => ({ ...s, password: e.target.value }));
-                        setRegisterErrors(err => ({ ...err, password: false }));
+                        setRegisterState((s) => ({ ...s, password: e.target.value }));
+                        setRegisterErrors((err) => ({ ...err, password: false }));
                       }}
                     />
                     <LockIcon />
@@ -410,12 +512,12 @@ export default function SignIn() {
                       className="eye-btn"
                       type="button"
                       onClick={() => setShowRegisterPw(!showRegisterPw)}
-                      aria-label={showRegisterPw ? 'Hide password' : 'Show password'}
+                      aria-label={showRegisterPw ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
                     >
                       {showRegisterPw ? <EyeOffIcon /> : <EyeOpenIcon />}
                     </button>
                   </div>
-                  {registerErrors.password && <div className="field-error">Password must be at least 8 characters.</div>}
+                  {registerErrors.password && <div className="field-error">Mật khẩu phải có ít nhất 8 ký tự.</div>}
                 </div>
 
                 {/* Terms Checkbox */}
@@ -424,28 +526,39 @@ export default function SignIn() {
                     type="checkbox"
                     id="r-terms"
                     checked={registerState.terms}
-                    onChange={(e) => setRegisterState(s => ({ ...s, terms: e.target.checked }))}
+                    onChange={(e) => setRegisterState((s) => ({ ...s, terms: e.target.checked }))}
                   />
                   <label className="check-label" htmlFor="r-terms">
-                    I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>. No spam, ever.
+                    Tôi đồng ý với <a href="#">Điều khoản Dịch vụ</a> và <a href="#">Chính sách Bảo mật</a>.
                   </label>
                 </div>
 
-                <button className="btn-submit" type="submit" disabled={isSubmittingRegister}>
-                  {isSubmittingRegister ? 'Creating account…' : 'Create free account →'}
+                {registerServerError && (
+                  <div className="server-error">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                    {registerServerError}
+                  </div>
+                )}
+
+                <button className="btn-submit" type="submit" disabled={isSubmittingRegister || registerSuccess}>
+                  {isSubmittingRegister ? 'Đang tạo tài khoản…' : 'Tạo tài khoản miễn phí →'}
                 </button>
               </form>
 
               <div className="switch-row">
-                Already have an account?{' '}
-                <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('register'); }}>
-                  Sign in
+                Đã có tài khoản?{' '}
+                <a href="#" onClick={(e) => { e.preventDefault(); setActiveTab('login'); }}>
+                  Đăng nhập
                 </a>
               </div>
 
               <div className="divider">
                 <div className="divider-line"></div>
-                <span>or continue with</span>
+                <span>hoặc tiếp tục với</span>
                 <div className="divider-line"></div>
               </div>
 
@@ -455,7 +568,7 @@ export default function SignIn() {
                   <div className="oauth-icon">
                     <GoogleIcon />
                   </div>
-                  Sign up with Google
+                  Đăng ký với Google
                 </button>
               </div>
             </div>
