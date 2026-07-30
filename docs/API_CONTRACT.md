@@ -154,9 +154,6 @@ Gắn 1-1 với `profiles` (`profile_preferences.profile_id → profiles.id`).
   "id": "pref-uuid",
   "profile_id": "profile-uuid",
   "target_role": "Backend Engineer",
-  "expected_salary_min": 1500,
-  "expected_salary_max": 2500,
-  "currency": "VND",
   "preferred_locations": ["Ho Chi Minh City", "Remote"],
   "remote_preference": "hybrid"
 }
@@ -167,9 +164,6 @@ Request (không kèm `id`/`profile_id` — suy từ token):
 ```json
 {
   "target_role": "Backend Engineer",
-  "expected_salary_min": 1500,
-  "expected_salary_max": 2500,
-  "currency": "VND",
   "preferred_locations": ["Ho Chi Minh City", "Remote"],
   "remote_preference": "hybrid"
 }
@@ -230,6 +224,8 @@ Danh sách job phân trang.
       "title": "Backend Engineer",
       "company": "ACME",
       "location": "Ho Chi Minh City",
+      "employment_type": "Full-time",
+      "seniority_level": "Mid-Senior level",
       "url": "https://...",
       "description": "JD...",
       "posted_at": "2026-07-15T00:00:00Z",

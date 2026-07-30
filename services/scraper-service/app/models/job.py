@@ -26,6 +26,8 @@ class JobDB(Base):
     title: Mapped[str] = mapped_column(String, nullable=False)
     company: Mapped[str] = mapped_column(String, nullable=False)
     location: Mapped[str | None] = mapped_column(String, nullable=True)
+    employment_type: Mapped[str | None] = mapped_column(String, nullable=True)
+    seniority_level: Mapped[str | None] = mapped_column(String, nullable=True)
     url: Mapped[str | None] = mapped_column(String, nullable=True)
     description: Mapped[str] = mapped_column(Text, nullable=False)
     posted_at: Mapped[datetime | None] = mapped_column(

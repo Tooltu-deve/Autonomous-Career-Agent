@@ -51,10 +51,19 @@ def fetch_linkedin_jobs(
     client = _get_client()
     # Actor yêu cầu jobs_entries >= 10 — luôn gửi ít nhất 10, cắt kết quả sau
     actor_limit = max(limit, 10)
+    # Tối ưu location: thay vì truyền chung chung "Vietnam", ta lấy thành phố đầu tiên
+    # trong danh sách để search trên LinkedIn chính xác hơn.
+    primary_location = locations[0] if locations else "Vietnam"
+    if (
+        locations
+        and "vietnam" not in primary_location.lower()
+        and primary_location.lower() != "remote"
+    ):
+        primary_location += ", Vietnam"
+
     run_input = {
         "jobs_titles": [title],
-        "location": "Vietnam",  # Set broad location to Vietnam
-        "cities": locations,  # Pass the array of cities
+        "location": primary_location,
         "jobs_entries": actor_limit,
     }
 

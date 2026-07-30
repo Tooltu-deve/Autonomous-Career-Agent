@@ -54,6 +54,8 @@ def test_search_jobs_returns_200(monkeypatch):
     fake_job.location = "Ho Chi Minh City"
     fake_job.url = "https://linkedin.com/jobs/view/001"
     fake_job.description = "Build cool APIs"
+    fake_job.employment_type = "Full-time"
+    fake_job.seniority_level = "Senior"
     fake_job.posted_at = None
     fake_job.scraped_at = datetime.now(tz=timezone.utc)
     fake_job.status = "active"

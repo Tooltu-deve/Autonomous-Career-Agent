@@ -47,6 +47,8 @@ class JobOut(BaseModel):
     title: str
     company: str
     location: Optional[str] = None
+    employment_type: Optional[str] = None
+    seniority_level: Optional[str] = None
     url: Optional[str] = None
     description: str
     posted_at: Optional[datetime] = None
@@ -97,6 +99,8 @@ class JobPreviewItem(BaseModel):
     title: str
     company: str
     location: Optional[str] = None
+    employment_type: Optional[str] = None
+    seniority_level: Optional[str] = None
     url: Optional[str] = None
     description: str
     posted_at: Optional[datetime] = None
