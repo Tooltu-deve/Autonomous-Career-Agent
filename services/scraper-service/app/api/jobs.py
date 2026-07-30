@@ -128,22 +128,13 @@ def preview_jobs(body: JobSearchRequest) -> JobPreviewResponse:
     - Normalize trả đúng các fields không
     - Response format khớp API_CONTRACT.md không
 
-    ⚠ï¸ Không dùng trong production — không persist data.
+    ⚠ï¸  Không dùng trong production — không persist data.
     """
     limit = 30  # mặc định cho preview — limit không có trong contract request
 
-    from concurrent.futures import ThreadPoolExecutor
-
-    with ThreadPoolExecutor(max_workers=1) as executor:
-        future_linkedin = executor.submit(
-            fetch_linkedin_jobs,
-            body.target_role,
-            body.preferred_locations,
-            limit,
-            body.remote_preference,
-        )
-
-        linkedin_raws = future_linkedin.result()
+    linkedin_raws = fetch_linkedin_jobs(
+        body.target_role, body.preferred_locations, limit, body.remote_preference
+    )
 
     items: list[JobPreviewItem] = []
 

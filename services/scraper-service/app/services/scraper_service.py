@@ -35,25 +35,16 @@ def search_and_save(
     db: Session,
     remote_preference: str | None = None,
 ) -> list[JobDB]:
-    """Cào Indeed + LinkedIn theo tiêu chí, upsert vào DB, trả list JobDB.
+    """Cào LinkedIn theo tiêu chí, upsert vào DB, trả list JobDB.
 
     Cào tuần tự để tránh timeout đồng thời. Dùng upsert (ON CONFLICT DO NOTHING)
     theo (source, external_job_id) để tránh trùng lặp.
     """
     all_jobs: list[Job] = []
 
-    from concurrent.futures import ThreadPoolExecutor
-
-    with ThreadPoolExecutor(max_workers=1) as executor:
-        future_linkedin = executor.submit(
-            apify_client.fetch_linkedin_jobs,
-            target_role,
-            locations,
-            limit,
-            remote_preference,
-        )
-
-        linkedin_raws = future_linkedin.result()
+    linkedin_raws = apify_client.fetch_linkedin_jobs(
+        target_role, locations, limit, remote_preference
+    )
 
     # Normalize results
     for raw in linkedin_raws:
