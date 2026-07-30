@@ -26,8 +26,8 @@ from app.schemas.jobs import (
     SelectResponse,
 )
 from app.services import scraper_service
-from app.services.apify_client import fetch_indeed_jobs, fetch_linkedin_jobs
-from app.services.job_normalizer import normalize_indeed, normalize_linkedin
+from app.services.apify_client import fetch_linkedin_jobs
+from app.services.job_normalizer import normalize_linkedin
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
 
@@ -45,12 +45,13 @@ def search_jobs(
     """
     jobs = scraper_service.search_and_save(
         target_role=body.target_role,
-        preferred_locations=body.preferred_locations,
-        limit=10,  # mặc định 10 jobs/source — contract không expose limit ra ngoài
+        locations=body.preferred_locations,
+        remote_preference=body.remote_preference,
+        limit=30,  # mặc định 30 jobs/source — contract không expose limit ra ngoài
         db=db,
     )
     items = [JobOut.model_validate(j) for j in jobs]
-    return JobListResponse(items=items, page=1, limit=10, total=len(items))
+    return JobListResponse(items=items, page=1, limit=30, total=len(items))
 
 
 @router.post(
@@ -82,7 +83,7 @@ def select_jobs(
 @router.get("", response_model=JobListResponse)
 def list_jobs(
     page: int = Query(default=1, ge=1),
-    limit: int = Query(default=20, ge=1, le=100),
+    limit: int = Query(default=30, ge=1, le=100),
     db: Session = Depends(get_db),
     _: str = Depends(get_current_user_id),
 ) -> JobListResponse:
@@ -129,38 +130,22 @@ def preview_jobs(body: JobSearchRequest) -> JobPreviewResponse:
 
     ⚠ï¸ Không dùng trong production — không persist data.
     """
-    location = (
-        body.preferred_locations[0] if body.preferred_locations else "Ho Chi Minh City"
-    )
-    limit = 10  # mặc định cho preview — limit không có trong contract request
+    limit = 30  # mặc định cho preview — limit không có trong contract request
 
-    indeed_raws = fetch_indeed_jobs(
-        title=body.target_role, location=location, limit=limit
-    )
-    linkedin_raws = fetch_linkedin_jobs(
-        title=body.target_role, location=location, limit=limit
-    )
+    from concurrent.futures import ThreadPoolExecutor
+
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future_linkedin = executor.submit(
+            fetch_linkedin_jobs,
+            body.target_role,
+            body.preferred_locations,
+            limit,
+            body.remote_preference,
+        )
+
+        linkedin_raws = future_linkedin.result()
 
     items: list[JobPreviewItem] = []
-
-    for raw in indeed_raws:
-        job = normalize_indeed(raw)
-        if job:
-            items.append(
-                JobPreviewItem(
-                    source=job.source,
-                    external_job_id=job.external_job_id,
-                    title=job.title,
-                    company=job.company,
-                    location=job.location,
-                    url=job.url,
-                    description=job.description,
-                    posted_at=job.posted_at,
-                    scraped_at=job.scraped_at,
-                    status=job.status or "active",
-                    expires_at=job.expires_at,
-                )
-            )
 
     for raw in linkedin_raws:
         job = normalize_linkedin(raw)
@@ -182,7 +167,7 @@ def preview_jobs(body: JobSearchRequest) -> JobPreviewResponse:
             )
 
     return JobPreviewResponse(
-        indeed_count=len([i for i in items if i.source == "indeed"]),
+        indeed_count=0,
         linkedin_count=len([i for i in items if i.source == "linkedin"]),
         total=len(items),
         items=items,

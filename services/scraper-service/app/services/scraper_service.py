@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 from app.models.application import ApplicationDB
 from app.models.job import JobDB
 from app.services import apify_client
-from app.services.job_normalizer import normalize_indeed, normalize_linkedin
+from app.services.job_normalizer import normalize_linkedin
 from libs.common.logging import get_logger
 from libs.messaging.rabbitmq import QUEUE_CV_REQUESTED, publish
 from libs.schemas.models import CvRequest, Job
@@ -30,41 +30,39 @@ logger = get_logger(__name__)
 
 def search_and_save(
     target_role: str,
-    preferred_locations: list[str],
+    locations: list[str],
     limit: int,
     db: Session,
+    remote_preference: str | None = None,
 ) -> list[JobDB]:
     """Cào Indeed + LinkedIn theo tiêu chí, upsert vào DB, trả list JobDB.
 
     Cào tuần tự để tránh timeout đồng thời. Dùng upsert (ON CONFLICT DO NOTHING)
     theo (source, external_job_id) để tránh trùng lặp.
     """
-    # Dùng location đầu tiên cho actor (actor chỉ nhận 1 location)
-    location = preferred_locations[0] if preferred_locations else "Ho Chi Minh City"
-
     all_jobs: list[Job] = []
 
-    # --- Indeed ---
-    indeed_raws = apify_client.fetch_indeed_jobs(
-        title=target_role, location=location, limit=limit
-    )
-    for raw in indeed_raws:
-        job = normalize_indeed(raw)
-        if job:
-            all_jobs.append(job)
+    from concurrent.futures import ThreadPoolExecutor
 
-    # --- LinkedIn ---
-    linkedin_raws = apify_client.fetch_linkedin_jobs(
-        title=target_role, location=location, limit=limit
-    )
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future_linkedin = executor.submit(
+            apify_client.fetch_linkedin_jobs,
+            target_role,
+            locations,
+            limit,
+            remote_preference,
+        )
+
+        linkedin_raws = future_linkedin.result()
+
+    # Normalize results
     for raw in linkedin_raws:
         job = normalize_linkedin(raw)
         if job:
             all_jobs.append(job)
 
     logger.info(
-        "Scrape xong | indeed=%d linkedin=%d normalized=%d",
-        len(indeed_raws),
+        "Scrape xong | linkedin=%d normalized=%d",
         len(linkedin_raws),
         len(all_jobs),
     )

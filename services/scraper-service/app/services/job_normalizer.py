@@ -25,62 +25,6 @@ def _parse_dt(value: Optional[str | int]) -> Optional[datetime]:
         return None
 
 
-def normalize_indeed(raw: dict) -> Optional[Job]:
-    """Chuyển raw dict từ valig/indeed-jobs-scraper sang Job.
-
-    Field mapping (kiểm chứng từ mock_indeed_jobs_api.json):
-      - title       → raw["title"]
-      - company     → raw["employer"]["name"]        (nested object)
-      - external_id → raw["key"]
-      - url         → raw["url"]
-      - description → raw["description"]["text"]     (nested object)
-      - location    → raw["location"]["city"]        (nested object)
-      - posted_at   → raw["datePublished"]
-      - expires_at  → raw["expirationDate"]
-
-    Trả None nếu thiếu field bắt buộc (title hoặc company).
-    """
-    title: str = raw.get("title") or ""
-
-    # company nằm trong nested object "employer"
-    employer: dict = raw.get("employer") or {}
-    company: str = employer.get("name") or ""
-
-    if not title or not company:
-        return None
-
-    # description nằm trong nested object "description"
-    desc_obj = raw.get("description")
-    if isinstance(desc_obj, dict):
-        description: str = desc_obj.get("text") or desc_obj.get("html") or ""
-    else:
-        # fallback phòng trường hợp actor thay đổi schema
-        description = str(desc_obj) if desc_obj else ""
-
-    # location nằm trong nested object "location"
-    loc_obj = raw.get("location")
-    if isinstance(loc_obj, dict):
-        location: Optional[str] = (
-            loc_obj.get("city") or loc_obj.get("countryName") or None
-        )
-    else:
-        location = str(loc_obj) if loc_obj else None
-
-    return Job(
-        source="indeed",
-        external_job_id=str(raw.get("key") or ""),
-        title=title.strip(),
-        company=company.strip(),
-        location=location,
-        url=raw.get("url") or raw.get("jobUrl"),
-        description=description.strip(),
-        posted_at=_parse_dt(raw.get("datePublished") or raw.get("dateOnIndeed")),
-        expires_at=_parse_dt(raw.get("expirationDate")),
-        scraped_at=datetime.now(tz=timezone.utc),
-        raw_data=raw,
-    )
-
-
 def normalize_linkedin(raw: dict) -> Optional[Job]:
     """Chuyển raw dict từ worldunboxer/rapid-linkedin-scraper sang Job.
 

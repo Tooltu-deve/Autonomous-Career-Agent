@@ -15,8 +15,7 @@ from libs.common.logging import get_logger
 
 logger = get_logger(__name__)
 
-# Actor IDs — cập nhật nếu team chuyển sang actor khác
-_INDEED_ACTOR_ID = "valig/indeed-jobs-scraper"
+# Actor ID trên Apify
 _LINKEDIN_ACTOR_ID = "worldunboxer/rapid-linkedin-scraper"
 
 # Giới hạn timeout actor (phù hợp cho scrape nhỏ local/education)
@@ -32,65 +31,19 @@ def _get_client() -> ApifyClient:
     return ApifyClient(settings.apify_api_token)
 
 
-def fetch_indeed_jobs(title: str, location: str, limit: int = 10) -> list[dict]:
-    """Cào jobs từ Indeed qua Apify actor.
-
-    Args:
-        title: Tên vị trí tìm kiếm (vd "Backend Engineer").
-        location: Địa điểm (vd "Ho Chi Minh").
-        limit: Số lượng job tối đa muốn lấy.
-
-    Returns:
-        Danh sách raw dict từ Apify dataset.
-    """
-    client = _get_client()
-    run_input = {
-        "country": "vn",
-        "title": title,
-        "location": location,
-        "limit": limit,
-    }
-
-    logger.info(
-        "Gọi Indeed actor | title=%s location=%s limit=%d", title, location, limit
-    )
-    try:
-        run = client.actor(_INDEED_ACTOR_ID).call(
-            run_input=run_input,
-            memory_mbytes=_MEMORY_MB,
-            run_timeout=_RUN_TIMEOUT,
-            wait_duration=_WAIT_DURATION,
-            build="latest",
-        )
-    except Exception as exc:
-        logger.error("Indeed actor lỗi: %s", exc)
-        return []
-
-    if not run:
-        logger.warning("Indeed actor chưa hoàn tất trong thời gian chờ.")
-        return []
-
-    # run là ApifyClientAsync Run object — truy cập qua attribute hoặc dict key
-    dataset_id = (
-        run.get("defaultDatasetId")
-        if isinstance(run, dict)
-        else getattr(run, "default_dataset_id", None)
-    )
-    if not dataset_id:
-        logger.warning("Indeed actor: không lấy được dataset ID.")
-        return []
-    items: list[dict] = client.dataset(dataset_id).list_items().items
-    logger.info("Indeed trả về %d items", len(items))
-    return items
-
-
-def fetch_linkedin_jobs(title: str, location: str, limit: int = 10) -> list[dict]:
+def fetch_linkedin_jobs(
+    title: str,
+    locations: list[str],
+    limit: int = 10,
+    remote_preference: str | None = None,
+) -> list[dict]:
     """Cào jobs từ LinkedIn qua Apify actor.
 
     Args:
         title: Tên vị trí tìm kiếm (vd "Software Engineer").
-        location: Địa điểm (vd "Ho Chi Minh").
+        locations: Danh sách địa điểm (vd ["Ho Chi Minh", "Hanoi"]).
         limit: Số lượng job tối đa muốn lấy.
+        remote_preference: Hình thức làm việc
 
     Returns:
         Danh sách raw dict từ Apify dataset (đã cắt đến limit).
@@ -99,13 +52,27 @@ def fetch_linkedin_jobs(title: str, location: str, limit: int = 10) -> list[dict
     # Actor yêu cầu jobs_entries >= 10 — luôn gửi ít nhất 10, cắt kết quả sau
     actor_limit = max(limit, 10)
     run_input = {
-        "job_title": title,
-        "location": location,
+        "jobs_titles": [title],
+        "location": "Vietnam",  # Set broad location to Vietnam
+        "cities": locations,  # Pass the array of cities
         "jobs_entries": actor_limit,
     }
 
+    # Map remote_preference to LinkedIn expected values
+    if remote_preference:
+        work_arr_map = {
+            "REMOTE": "Remote",
+            "ON_SITE": "On-site",
+            "ONSITE": "On-site",
+            "onsite": "On-site",
+            "HYBRID": "Hybrid",
+        }
+        mapped_arr = work_arr_map.get(remote_preference.upper())
+        if mapped_arr:
+            run_input["work_arrangement"] = mapped_arr
+
     logger.info(
-        "Gọi LinkedIn actor | title=%s location=%s limit=%d", title, location, limit
+        "Gọi LinkedIn actor | title=%s locations=%s limit=%d", title, locations, limit
     )
     try:
         run = client.actor(_LINKEDIN_ACTOR_ID).call(

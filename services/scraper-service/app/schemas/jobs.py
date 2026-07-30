@@ -22,6 +22,9 @@ class JobSearchRequest(BaseModel):
     preferred_locations: list[str] = Field(
         default=["Ho Chi Minh City"], examples=[["Ho Chi Minh City", "Remote"]]
     )
+    remote_preference: Optional[str] = Field(
+        default=None, description="e.g., REMOTE, HYBRID"
+    )
 
 
 class JobSelectRequest(BaseModel):
