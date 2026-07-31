@@ -4,7 +4,7 @@ Kiến trúc microservice cho **Autonomous Career Agent** — nền tảng AI t�
 
 - **Sync (HTTP):** Frontend → API Gateway → các service nghiệp vụ.
 - **Async (RabbitMQ):** pipeline `scraper → cv-agent → ats-agent` qua 2 queue.
-- **Data:** Postgres (quan hệ) + Qdrant (embedding cho RAG).
+- **Data:** Postgres (quan hệ). cv-agent đọc profile trực tiếp từ Postgres (không dùng RAG/Qdrant).
 - **LLM:** gọi ra ngoài qua `libs/llm/adapter` (Anthropic mặc định `claude-opus-4-8`, hoặc OpenAI).
 
 ## Component Diagram
@@ -25,7 +25,7 @@ flowchart TB
         AUTH["🔐 auth-service"]
         PROF["👔 profile-service<br/>+ preferred_template"]
         SCRAPER["🕷️ scraper-service"]
-        CV["🤖 cv-agent-service<br/>(RAG) + CV editor API"]
+        CV["🤖 cv-agent-service<br/>CV gen + editor API"]
         ATS["📊 ats-agent-service"]
         PDF["🧾 pdf-service<br/>LaTeX → PDF"]
     end
@@ -37,7 +37,6 @@ flowchart TB
 
     subgraph data["Data Stores"]
         PG[("🐘 Postgres 16 · :5432<br/>users · profiles · jobs<br/>applications · cv_generations · ats_reports")]
-        QD[("🧠 Qdrant · :6333<br/>profile embeddings")]
     end
 
     subgraph external["External LLM (libs/llm/adapter)"]
@@ -57,13 +56,12 @@ flowchart TB
     %% Data access
     AUTH --> PG
     PROF --> PG
-    PROF -->|embeddings| QD
 
     %% Async pipeline (CV generation + scoring loop)
     SCRAPER -->|"scrape LinkedIn/Indeed (on request)"| PG
     SCRAPER -->|"publish selected jobs"| Q1
     Q1 -->|consume| CV
-    CV -->|RAG: read profile| QD
+    CV -->|"read profile by user_id + JD"| PG
     CV -->|"LLM call (+ retry feedback)"| LLM
     CV -->|"store CV draft + read/update"| PG
     CV -->|publish CV JSON| Q2
@@ -94,7 +92,6 @@ sequenceDiagram
     participant FE as 🖥️ Frontend (Tiptap)
     participant GW as 🚪 API Gateway
     participant PROF as 👔 profile-service
-    participant QD as 🧠 Qdrant
     participant SCR as 🕷️ scraper-service
     participant MQ as 🐰 RabbitMQ
     participant CV as 🤖 cv-agent-service
@@ -103,12 +100,11 @@ sequenceDiagram
     participant LLM as ✨ LLM (Anthropic/OpenAI)
     participant PG as 🐘 Postgres
 
-    Note over U,QD: Phase 1 — Setup hồ sơ + chọn template + tiêu chí job (sync)
+    Note over U,PG: Phase 1 — Setup hồ sơ + chọn template + tiêu chí job (sync)
     U->>FE: Cập nhật profile, chọn preferred_template + tiêu chí tìm job
     FE->>GW: PUT /profile {..., preferred_template, preferences}
     GW->>PROF: forward
     PROF->>PG: lưu profile + preferred_template
-    PROF->>QD: upsert embeddings (RAG index)
     PROF-->>FE: 200 OK
 
     Note over U,PG: Phase 2 — Tìm & chọn job (sync)
@@ -125,9 +121,9 @@ sequenceDiagram
     GW->>SCR: forward
     SCR->>MQ: publish → cv.requested (user_id, job_id, attempt=1)
 
-    Note over MQ,PG: Phase 3 — Sinh CV bằng RAG (async)
+    Note over MQ,PG: Phase 3 — Sinh CV (async)
     MQ-->>CV: consume cv.requested
-    CV->>QD: query profile embeddings (retrieve)
+    CV->>PG: đọc profile theo user_id + JD theo job_id
     CV->>LLM: generate CV JSON (job + profile [+ feedback nếu retry])
     LLM-->>CV: structured CV
     CV->>PG: upsert cv_generations (edit_status=draft)<br/>set applications.generation_status=cv_generated

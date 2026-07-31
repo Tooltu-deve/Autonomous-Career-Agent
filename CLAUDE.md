@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Core flow:
 1. `scraper-service` scrapes jobs from LinkedIn/Indeed → publishes to RabbitMQ queue `jobs.scraped`
-2. `cv-agent-service` (RAG) consumes queue → generates structured CV JSON using user profile from Qdrant → publishes to `cv.generated`
+2. `cv-agent-service` consumes queue → reads user profile from Postgres (by `user_id`) → generates structured CV JSON → publishes to `cv.generated`
 3. `ats-agent-service` consumes → scores CV, writes cover letter, exports PDF → stores to Postgres
 
 ## Commands
@@ -40,11 +40,10 @@ Service URLs when running:
 - API Gateway: http://localhost:8000
 - Frontend: http://localhost:3000
 - RabbitMQ UI: http://localhost:15672
-- Qdrant dashboard: http://localhost:6333/dashboard
 
 ## Architecture
 
-**Tech stack:** Python/FastAPI (backend), Next.js 14 App Router (frontend), Qdrant (vector DB), Postgres 16 (relational), RabbitMQ (async messaging), Docker Compose (orchestration).
+**Tech stack:** Python/FastAPI (backend), Next.js 14 App Router (frontend), Postgres 16 (relational), RabbitMQ (async messaging), Docker Compose (orchestration).
 
 **LLM layer:** `libs/llm/adapter.py` defines `LLMClient` ABC with `AnthropicClient` and `OpenAIClient` implementations. Switch provider via `settings.llm_provider` (`"anthropic"` | `"openai"`). Default model: `claude-opus-4-8`.
 
@@ -70,7 +69,7 @@ Every service exposes `GET /health`.
 
 **Database schema** (`infra/init-db/01_schema.sql`, applied on first Postgres container start): tables `users`, `jobs`, `ats_reports`.
 
-**Qdrant** stores user profile embeddings for RAG in `cv-agent-service` and `profile-service`.
+**Profile access:** `cv-agent-service` reads the candidate profile directly from Postgres by `user_id` (no vector DB / RAG).
 
 ## Code Conventions
 

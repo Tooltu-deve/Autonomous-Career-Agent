@@ -10,7 +10,6 @@ Tài liệu quy định cách **dữ liệu CV, hồ sơ người dùng và AI p
 | -------------------------------------| -----------------| ------------------------------------------| ----------------------------------------------------|
 | Thông tin cá nhân (tên, email, SĐT) | 🔴 Rất cao　　　| Postgres – bảng `users`, `profiles`      | Vĩnh viễn (đến khi xóa tài khoản)                  |
 | Kinh nghiệm, học vấn, kỹ năng       | 🔴 Rất cao　　　| Postgres – bảng `profiles`               | Vĩnh viễn (đến khi xóa tài khoản)                  |
-| Profile embeddings (RAG index)      | 🟠 Cao　　　　　 | Qdrant – collection `profile_embeddings` | Đồng bộ với profile; xóa khi tài khoản bị xóa      |
 | CV đã sinh (cv_json)                | 🟠 Cao　　　　　 | Postgres – bảng `cv_generations`         | Vĩnh viễn (đến khi user xóa hoặc tài khoản bị xóa) |
 | ATS report & cover letter           | 🟡 Trung bình　　| Postgres – bảng `ats_reports`            | Vĩnh viễn (đến khi user xóa hoặc tài khoản bị xóa) |
 | AI Prompts gửi đến LLM              | 🟠 Cao　　　　　 | **Không lưu** – ephemeral                | Không lưu; phụ thuộc chính sách LLM provider       |
@@ -31,20 +30,14 @@ Tài liệu quy định cách **dữ liệu CV, hồ sơ người dùng và AI p
 
 ```
 profile-service     → ĐỌC/GHI bảng profiles, users
-cv-agent-service    → ĐỌC profile qua Qdrant (RAG); GHI bảng cv_generations
+cv-agent-service    → ĐỌC profile (theo user_id) + jobs (JD) từ Postgres; GHI bảng cv_generations
 ats-agent-service   → ĐỌC cv_generations (qua message); GHI bảng ats_reports
 pdf-service         → KHÔNG truy cập DB; nhận cv_data qua HTTP request
 scraper-service     → ĐỌC/GHI bảng jobs; ĐỌC application theo user_id
 api-gateway         → KHÔNG truy cập DB trực tiếp (proxy và auth check)
 ```
 
-**Nguyên tắc Least Privilege:** mỗi service chỉ được phép đọc/ghi bảng mà nó sở hữu hoặc được phép tường minh. Không service nào được đọc thẳng bảng của service khác qua DB connection.
-
-### Embeddings trong Qdrant
-
-- Profile embeddings được sinh và upsert bởi `profile-service` sau mỗi lần cập nhật profile.
-- Embedding chứa thông tin kỹ năng, kinh nghiệm — **không chứa thông tin định danh** (tên, SĐT, email).
-- Khi tài khoản bị xóa: `profile-service` phải xóa embedding tương ứng trong Qdrant theo `user_id`.
+**Nguyên tắc Least Privilege:** mỗi service chỉ GHI vào bảng mình sở hữu. Ngoại lệ có chủ đích: các service trong pipeline sinh CV (`cv-agent`, `ats-agent`) được **ĐỌC** các bảng cần cho pipeline (`profiles`, `jobs`) theo id, và cùng cập nhật `applications.generation_status` (bảng orchestration dùng chung).
 
 ---
 
@@ -129,9 +122,9 @@ async def get_cv(cv_id: UUID, user_id: UUID):  # user_id từ request → nguy c
 | **Xem** dữ liệu của mình | `GET /profile`, `GET /cvs`, `GET /reports` |
 | **Sửa** profile và CV | `PUT /profile`, `PUT /cvs/{id}` |
 | **Xóa** CV cụ thể | `DELETE /cvs/{id}` — xóa `cv_generations` + `ats_reports` liên quan |
-| **Xóa tài khoản** | `DELETE /users/me` — xóa cascade toàn bộ data + Qdrant embeddings |
+| **Xóa tài khoản** | `DELETE /users/me` — xóa cascade toàn bộ data trong Postgres |
 
-Khi implement `DELETE /users/me`: phải xóa Qdrant embeddings theo `user_id` (gọi `profile-service` cleanup hook) **trước** khi xóa DB row để tránh orphan data.
+Khi implement `DELETE /users/me`: xóa user row → Postgres tự cascade toàn bộ profile/application/CV/report liên quan (xem FK `ON DELETE CASCADE` trong schema).
 
 ---
 

@@ -17,13 +17,6 @@ services:
       timeout: 5s
       retries: 5
 
-  qdrant:
-    image: qdrant/qdrant:latest
-    ports:
-      - "6333:6333"
-    volumes:
-      - qdrant_storage:/qdrant/storage
-
   rabbitmq:
     image: rabbitmq:3-management
     environment:
@@ -64,8 +57,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      qdrant:
-        condition: service_started
 
   scraper-service:
     build:
@@ -83,7 +74,7 @@ services:
     env_file: .env
     depends_on:
       - rabbitmq
-      - qdrant
+      - postgres
 
   ats-agent-service:
     build:
@@ -104,5 +95,4 @@ services:
 
 volumes:
   postgres_data:
-  qdrant_storage:
   rabbitmq_data:

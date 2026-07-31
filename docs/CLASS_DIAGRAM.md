@@ -109,7 +109,7 @@ classDiagram
 
 ## 3. profile-service
 
-Lưu hồ sơ + `preferred_template`, index embedding cho RAG.
+Lưu hồ sơ + `preferred_template` + job preferences (Postgres). cv-agent đọc profile trực tiếp từ Postgres — không dùng Qdrant/RAG.
 
 ```mermaid
 classDiagram
@@ -132,13 +132,9 @@ classDiagram
         +target_role
         +preferred_locations
     }
-    class QdrantRepository {
-        +upsert(vector)
-    }
     ProfileRouter --> ProfileService
     ProfileService --> ProfileORM
     ProfileService --> ProfilePreferencesORM
-    ProfileService --> QdrantRepository
 ```
 
 ## 4. scraper-service

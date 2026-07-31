@@ -1,6 +1,6 @@
 -- Schema khởi tạo Postgres (chạy tự động khi container postgres lần đầu lên)
 -- Đồng bộ với spec: docs/superpowers/specs/2026-07-18-cv-editor-pdf-latex-design.md
--- Ghi chú: profile embeddings cho RAG nằm ở Qdrant, không lưu ở đây.
+-- Ghi chú: cv-agent đọc profile trực tiếp từ Postgres (không dùng Qdrant/RAG).
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;  -- cho gen_random_uuid()
 
@@ -78,7 +78,6 @@ CREATE TABLE profiles (
     preferred_template  VARCHAR NOT NULL DEFAULT 'classic'
                         CHECK (preferred_template IN ('classic', 'modern', 'academic')),
     completeness_pct    INT NOT NULL DEFAULT 0,  -- range 0-100
-    embedding_synced_at TIMESTAMP,               -- lần upsert Qdrant gần nhất
     created_at          TIMESTAMP NOT NULL DEFAULT NOW(),
     updated_at          TIMESTAMP NOT NULL DEFAULT NOW()
 );

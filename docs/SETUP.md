@@ -62,7 +62,6 @@ Các service URLs sau khi lên:
 | API Gateway | http://localhost:8000 |
 | Frontend | http://localhost:3000 |
 | RabbitMQ UI | http://localhost:15672 (guest/guest) |
-| Qdrant Dashboard | http://localhost:6333/dashboard |
 
 ---
 
