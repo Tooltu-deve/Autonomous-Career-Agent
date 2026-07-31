@@ -72,6 +72,8 @@ def search_and_save(
             "location": job.location,
             "url": job.url,
             "description": job.description,
+            "employment_type": job.employment_type,
+            "seniority_level": job.seniority_level,
             "posted_at": job.posted_at,
             "scraped_at": job.scraped_at,
             "status": job.status,
@@ -81,10 +83,15 @@ def search_and_save(
         for job in all_jobs
     ]
 
-    stmt = (
-        pg_insert(JobDB)
-        .values(rows)
-        .on_conflict_do_nothing(index_elements=["source", "external_job_id"])
+    stmt = pg_insert(JobDB).values(rows)
+    stmt = stmt.on_conflict_do_update(
+        index_elements=["source", "external_job_id"],
+        set_={
+            "employment_type": stmt.excluded.employment_type,
+            "seniority_level": stmt.excluded.seniority_level,
+            "raw_data": stmt.excluded.raw_data,
+            "scraped_at": stmt.excluded.scraped_at,
+        },
     )
     db.execute(stmt)
     db.commit()

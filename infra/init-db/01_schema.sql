@@ -122,9 +122,6 @@ CREATE TABLE profile_preferences (
     id                  UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     profile_id          UUID NOT NULL UNIQUE REFERENCES profiles(id) ON DELETE CASCADE,
     target_role         VARCHAR NOT NULL,  -- e.g. Software Engineer, Data Scientist
-    expected_salary_min INT,
-    expected_salary_max INT,
-    currency            VARCHAR DEFAULT 'VND',
     preferred_locations TEXT[],            -- danh sách địa điểm
     remote_preference   VARCHAR,           -- remote | hybrid | onsite
     created_at          TIMESTAMP NOT NULL DEFAULT NOW(),
@@ -142,6 +139,8 @@ CREATE TABLE jobs (
     url             VARCHAR,
     company         VARCHAR NOT NULL,
     location        VARCHAR,
+    employment_type VARCHAR,
+    seniority_level VARCHAR,
     description     TEXT NOT NULL,
     posted_at       TIMESTAMP,
     scraped_at      TIMESTAMP NOT NULL DEFAULT NOW(),

@@ -58,6 +58,8 @@ def normalize_linkedin(raw: dict) -> Optional[Job]:
         title=title.strip(),
         company=company.strip(),
         location=raw.get("location"),
+        employment_type=raw.get("work_arrangement") or raw.get("employment_type"),
+        seniority_level=raw.get("seniority_level"),
         url=raw.get("job_url") or raw.get("apply_url") or raw.get("url"),
         description=description.strip(),
         posted_at=posted_at,

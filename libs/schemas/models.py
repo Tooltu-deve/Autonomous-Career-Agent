@@ -44,6 +44,8 @@ class Job(BaseModel):
     title: str
     company: str
     location: Optional[str] = None
+    employment_type: Optional[str] = None
+    seniority_level: Optional[str] = None
     url: Optional[str] = None
     description: str  # job description (JD)
     posted_at: Optional[datetime] = None
