@@ -1,0 +1,464 @@
+/* ════════════════════════════════════════
+   SHARED AUTH STYLES (components/auth/*)
+   Carved from app/auth.css. Field/input/eye-toggle
+   groups live in components/ui/TextField.module.css.
+════════════════════════════════════════ */
+.authPage {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  min-height: 100vh;
+  width: 100%;
+}
+
+.left {
+  background: var(--ink);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 48px 56px;
+  position: relative;
+  overflow: hidden;
+}
+
+.left::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 80% 60% at 20% 80%, rgba(240,106,106,0.18) 0%, transparent 60%),
+             radial-gradient(ellipse 60% 50% at 80% 20%, rgba(69,115,210,0.14) 0%, transparent 55%),
+             radial-gradient(ellipse 50% 40% at 60% 60%, rgba(157,122,217,0.10) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 8px 28px;
+}
+
+.brand-mark {
+  width: 28px;
+  height: 28px;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.brand-mark span {
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.brand-mark span:nth-child(1) { top: 0; left: 10px; }
+.brand-mark span:nth-child(2) { bottom: 0; left: 0; background: var(--accent-blue); }
+.brand-mark span:nth-child(3) { bottom: 0; right: 0; background: var(--accent-purple); }
+
+.brand-name {
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 16px;
+  letter-spacing: -0.01em;
+}
+
+.left-body {
+  position: relative;
+  z-index: 1;
+  max-width: 380px;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
+.left-body h2 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 44px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  color: #ffffff;
+  margin-bottom: 16px;
+}
+
+.left-body h2 em {
+  font-style: italic;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.left-body p {
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.7);
+  max-width: 360px;
+}
+
+/* Floating ATS Match Score Card */
+.visual-card {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 220px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-right: none;
+  border-radius: var(--r-lg) 0 0 var(--r-lg);
+  padding: 20px 22px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  z-index: 2;
+  box-shadow: -10px 10px 30px rgba(0, 0, 0, 0.25);
+  color: #ffffff;
+}
+
+.vc-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-subtle);
+  margin-bottom: 6px;
+}
+
+.vc-score {
+  font-size: 34px;
+  font-weight: 800;
+  line-height: 1;
+  color: #ffffff;
+  letter-spacing: -0.02em;
+  margin-bottom: 4px;
+}
+
+.vc-sub {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-green);
+  margin-bottom: 16px;
+}
+
+.vc-bar-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.vc-bar-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+
+.vc-bar-label {
+  width: 70px;
+  font-size: 11px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+  flex-shrink: 0;
+}
+
+.vc-bar-track {
+  flex: 1;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: var(--r-pill);
+  overflow: hidden;
+}
+
+.vc-bar-fill {
+  height: 100%;
+  border-radius: var(--r-pill);
+}
+
+.stats {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  border-radius: var(--r-lg);
+  padding: 14px 18px;
+  width: fit-content;
+}
+
+.stat-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sd-red { background: var(--primary); }
+.sd-blue { background: var(--accent-blue); }
+.sd-green { background: var(--accent-green); }
+
+.stat-text {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 500;
+}
+
+.stat-text b {
+  color: #ffffff;
+}
+
+/* Right Form Section */
+.right {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 48px;
+  background: var(--canvas);
+  position: relative;
+}
+
+.form-box {
+  width: 100%;
+  max-width: 520px;
+}
+
+.tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 4px;
+  margin-bottom: 32px;
+}
+
+.tab {
+  padding: 11px;
+  border-radius: var(--r-pill);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink-muted);
+  background: transparent;
+  border: none;
+  transition: background var(--ease) 120ms, color var(--ease) 120ms, box-shadow var(--ease) 120ms;
+  cursor: pointer;
+  text-align: center;
+}
+
+.tab.active {
+  background: var(--surface-1);
+  color: var(--ink);
+  box-shadow: var(--shadow-card);
+}
+
+.panel {
+  display: block;
+}
+
+.form-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  margin-bottom: 6px;
+  color: var(--ink);
+}
+
+.form-title em {
+  font-style: italic;
+  color: var(--primary);
+}
+
+.form-sub {
+  font-size: 15px;
+  color: var(--ink-muted);
+  margin-bottom: 32px;
+}
+
+.oauth-row {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+/* Referenced in JSX (`oauth-row single`) but has no rule body in the
+   source app/auth.css — declared empty here only so the CSS Modules
+   export resolves the class name instead of `undefined`; this does not
+   change visual behavior. */
+.single {
+}
+
+.btn-oauth {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 13px 20px;
+  width: 100%;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+  transition: background var(--ease) 120ms, border-color var(--ease) 120ms, box-shadow var(--ease) 120ms;
+  box-shadow: var(--shadow-card);
+  cursor: pointer;
+}
+
+.btn-oauth:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-elevated);
+}
+
+/* Referenced in JSX as the icon wrapper inside .btn-oauth but has no
+   rule body in the source app/auth.css — declared empty here only so
+   the CSS Modules export resolves the class name instead of
+   `undefined`; this does not change visual behavior. */
+.oauth-icon {
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 26px 0;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+.divider span {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-subtle);
+}
+
+.name-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 24px;
+  margin-top: 4px;
+}
+
+.check-row input[type=checkbox] {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  accent-color: var(--primary);
+  padding: 0;
+  border-radius: var(--r-sm);
+  border: 1px solid var(--border-strong);
+}
+
+.check-label {
+  font-size: 13.5px;
+  color: var(--ink-muted);
+  line-height: 1.5;
+}
+
+.check-label a {
+  color: var(--primary-hover);
+  font-weight: 500;
+}
+
+.btn-submit {
+  width: 100%;
+  background: var(--primary);
+  color: var(--on-primary);
+  padding: 14px;
+  border-radius: var(--r-pill);
+  border: none;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: var(--shadow-card);
+  transition: background 120ms var(--ease), transform 120ms var(--ease), box-shadow 120ms var(--ease);
+  margin-top: 8px;
+  margin-bottom: 24px;
+  cursor: pointer;
+}
+
+.btn-submit:hover {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-elevated);
+}
+
+.btn-submit:active {
+  transform: translateY(0);
+}
+
+.field-hint {
+  font-size: 13px;
+  color: var(--primary-hover);
+  font-weight: 500;
+  cursor: pointer;
+  background: none;
+  border: none;
+}
+
+.field-hint:hover {
+  text-decoration: underline;
+}
+
+.switch-row {
+  text-align: center;
+  font-size: 14px;
+  color: var(--ink-muted);
+}
+
+.switch-row a {
+  color: var(--primary-hover);
+  font-weight: 600;
+}
+
+.switch-row a:hover {
+  text-decoration: underline;
+}
+
+.server-error {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(232,56,79,0.12);
+  border: 1px solid rgba(232,56,79,0.3);
+  color: var(--error);
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.server-success {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: rgba(98,210,111,0.12);
+  border: 1px solid rgba(98,210,111,0.3);
+  color: var(--success);
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 12px;
+}
