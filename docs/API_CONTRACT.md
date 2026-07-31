@@ -12,7 +12,8 @@ Có **hai loại contract**, cả hai đều bắt buộc:
 >
 > **Flow tổng quát:** user bấm "Tìm job" (`POST /jobs/search` → scraper cào + ghi jobs, trả list) →
 > user tick chọn → bấm "Tạo CV" (`POST /jobs/select` → publish `cv.requested`) → cv-agent sinh CV
-> (RAG) → publish `cv.generated` → ats-agent chấm điểm (retry nếu dưới ngưỡng).
+> (đọc profile từ Postgres theo user_id + JD → prompt → LLM) → publish `cv.generated` →
+> ats-agent chấm điểm (retry nếu dưới ngưỡng).
 
 ## Quy ước chung
 

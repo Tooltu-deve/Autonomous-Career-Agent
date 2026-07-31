@@ -53,7 +53,7 @@ class Job(BaseModel):
     raw_data: Optional[dict] = None  # payload gốc lúc scrape
 
 
-# ---- Item lồng dùng chung cho cả profile (RAG input) và CV content ----
+# ---- Item lồng dùng chung cho cả profile (input sinh CV) và CV content ----
 class ExperienceItem(BaseModel):
     """Một mục kinh nghiệm (dùng trong profile lẫn CV)."""
 
@@ -76,7 +76,7 @@ class EducationItem(BaseModel):
 
 
 class ProfileData(BaseModel):
-    """Hồ sơ user dạng JSON dùng cho RAG khi sinh CV."""
+    """Hồ sơ user dạng JSON, cv-agent dùng làm input khi sinh CV."""
 
     user_id: str
     full_name: str
@@ -114,8 +114,8 @@ class CVContent(BaseModel):
 
 
 class GeneratedCV(BaseModel):
-    """Một bản CV do cv-agent (RAG) sinh ra — khớp bảng `cv_generations`
-    và response `GET /cvs/{id}`. Khoá theo `application_id` (1:1)."""
+    """Một bản CV do cv-agent sinh ra (profile Postgres + JD → LLM) — khớp bảng
+    `cv_generations` và response `GET /cvs/{id}`. Khoá theo `application_id` (1:1)."""
 
     id: Optional[str] = None
     application_id: str

@@ -173,7 +173,7 @@ classDiagram
 
 ## 5. cv-agent-service
 
-Consumer `cv.requested` → sinh CV (RAG, dùng feedback khi retry) → lưu `cvs` → publish `cv.generated`. Kèm API đọc/sửa CV. Sở hữu bảng `cvs`.
+Consumer `cv.requested` → đọc profile từ Postgres + JD → LLM sinh CV (dùng feedback khi retry) → lưu `cvs` → publish `cv.generated`. Kèm API đọc/sửa CV. Sở hữu bảng `cvs`.
 
 ```mermaid
 classDiagram

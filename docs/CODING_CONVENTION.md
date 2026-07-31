@@ -46,7 +46,7 @@ Tài liệu thống nhất phong cách code cho cả nhóm. **Mọi PR phải tu
 ```python
 # Tốt
 def generate_cv(profile: ProfileData, job: Job) -> GeneratedCV:
-    """Sinh CV cho một job từ user data (RAG)."""
+    """Sinh CV cho một job từ user profile (đọc Postgres) + JD."""
     ...
 ```
 

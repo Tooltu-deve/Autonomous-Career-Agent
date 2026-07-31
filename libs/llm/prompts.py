@@ -5,7 +5,7 @@ Mỗi hàm trả về `(system, prompt)` để truyền thẳng vào `LLMClient.
 
 from typing import Optional
 
-# ---- CV generation (cv-agent, RAG) ----
+# ---- CV generation (cv-agent: profile Postgres + JD → LLM) ----
 CV_SYSTEM = (
     "Bạn là trợ lý viết CV chuyên nghiệp. Dựa trên hồ sơ ứng viên và mô tả "
     "công việc, sinh nội dung CV ở dạng JSON đúng schema gồm các khóa: "
