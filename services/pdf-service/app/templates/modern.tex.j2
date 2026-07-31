@@ -1,0 +1,94 @@
+\documentclass[10pt,a4paper]{article}
+
+\usepackage[margin=0cm]{geometry}
+\usepackage{xcolor}
+\usepackage[hidelinks]{hyperref}
+\usepackage{enumitem}
+\usepackage{paracol}
+\usepackage{microtype}
+
+\definecolor{Charcoal}{HTML}{252525}
+\definecolor{Ink}{HTML}{282828}
+\definecolor{Muted}{HTML}{6B6B6B}
+\definecolor{Rule}{HTML}{D9D9D9}
+
+\renewcommand{\familydefault}{\sfdefault}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+\setlength{\fboxsep}{0pt}
+\pagestyle{empty}
+\emergencystretch=1em
+
+\newcommand{\sidebarheading}[1]{%
+  \vspace{13pt}{\color{white}\bfseries\fontsize{10}{12}\selectfont #1}\par
+  \vspace{4pt}\textcolor{white!35}{\rule{\linewidth}{0.45pt}}\vspace{6pt}}
+
+\newcommand{\cvsection}[1]{%
+  \vspace{11pt}{\color{Ink}\bfseries\fontsize{12}{14}\selectfont #1}\par
+  \vspace{3pt}\textcolor{Rule}{\rule{\dimexpr\linewidth-16pt\relax}{0.55pt}}\vspace{5pt}}
+
+\newcommand{\cventry}[4]{%
+  {\bfseries\color{Ink}#1}\hfill {\color{Muted}\small #2}\par
+  {\itshape\color{Muted}\small #3}\par
+  \vspace{2pt}{\small #4}\par\vspace{5pt}}
+
+\setlist[itemize]{leftmargin=1.2em,itemsep=1.5pt,topsep=2pt,parsep=0pt,partopsep=0pt}
+
+\begin{document}
+\color{Ink}
+
+\columnratio{0.34}
+\setlength{\columnsep}{0.04\paperwidth}
+\begin{paracol}{2}
+
+% ---------- LEFT SIDEBAR: summary + skills ----------
+\switchcolumn[0]
+\raggedright\noindent\colorbox{Charcoal}{%
+\begin{minipage}[t][\dimexpr\paperheight-5pt\relax][t]{\linewidth}
+\vspace{20pt}\hspace{18pt}\begin{minipage}{\dimexpr\linewidth-36pt\relax}
+
+\BLOCK{ if hdr.full_name }{\color{white}\bfseries\fontsize{18}{20}\selectfont \raggedright \VAR{hdr.full_name | tex}}\par\BLOCK{ endif }%
+\BLOCK{ if hdr.headline }\vspace{4pt}{\color{white!68}\fontsize{10}{12}\selectfont \VAR{hdr.headline | tex}}\par\BLOCK{ endif }
+
+\BLOCK{ if hdr.email or hdr.phone or hdr.location or hdr.github_url or hdr.linkedin_url }
+\sidebarheading{CONTACT}
+\BLOCK{ if hdr.email }{\color{white!88}\small \textbf{Email}\\ \VAR{hdr.email | tex}}\par\vspace{6pt}\BLOCK{ endif }%
+\BLOCK{ if hdr.phone }{\color{white!88}\small \textbf{Phone}\\ \VAR{hdr.phone | tex}}\par\vspace{6pt}\BLOCK{ endif }%
+\BLOCK{ if hdr.location }{\color{white!88}\small \textbf{Location}\\ \VAR{hdr.location | tex}}\par\vspace{6pt}\BLOCK{ endif }%
+\BLOCK{ if hdr.github_url }{\color{white!88}\small \textbf{GitHub}\\ \VAR{hdr.github_url | tex}}\par\vspace{6pt}\BLOCK{ endif }%
+\BLOCK{ if hdr.linkedin_url }{\color{white!88}\small \textbf{LinkedIn}\\ \VAR{hdr.linkedin_url | tex}}\par\vspace{6pt}\BLOCK{ endif }
+\BLOCK{ endif }
+
+\sidebarheading{SUMMARY}
+{\color{white!88}\small \VAR{cv.summary | tex}}\par
+
+\BLOCK{ if cv.skills }
+\sidebarheading{SKILLS}
+\BLOCK{ for s in cv.skills }
+{\color{white!88}\small \VAR{s | tex}}\par\vspace{3pt}
+\BLOCK{ endfor }
+\BLOCK{ endif }
+
+\end{minipage}\end{minipage}}
+
+% ---------- RIGHT COLUMN: experience + education ----------
+\switchcolumn[1]
+\vspace*{24pt}
+\rightskip=16pt
+
+\BLOCK{ if cv.experience }
+\cvsection{WORK EXPERIENCE}
+\BLOCK{ for e in cv.experience }
+\cventry{\VAR{e.title | tex}}{\BLOCK{ if e.start_date }\VAR{e.start_date | tex} -- \VAR{(e.end_date or "Present") | tex}\BLOCK{ endif }}{\VAR{e.organization | tex}}{\BLOCK{ if e.description }\VAR{e.description | tex}\BLOCK{ endif }}
+\BLOCK{ endfor }
+\BLOCK{ endif }
+
+\BLOCK{ if cv.education }
+\cvsection{EDUCATION}
+\BLOCK{ for ed in cv.education }
+\cventry{\VAR{ed.school | tex}}{\BLOCK{ if ed.start_date }\VAR{ed.start_date | tex} -- \VAR{(ed.end_date or "Present") | tex}\BLOCK{ endif }}{\BLOCK{ if ed.degree }\VAR{ed.degree | tex}\BLOCK{ endif }\BLOCK{ if ed.field_of_study } --- \VAR{ed.field_of_study | tex}\BLOCK{ endif }}{\BLOCK{ if ed.description }\VAR{ed.description | tex}\BLOCK{ endif }}
+\BLOCK{ endfor }
+\BLOCK{ endif }
+
+\end{paracol}
+\end{document}
