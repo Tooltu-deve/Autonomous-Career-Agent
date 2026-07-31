@@ -4,12 +4,15 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:chrome": "sh -c 'next dev & sleep 1; open -a \"Google Chrome\" http://localhost:3000'",
     "build": "next build",
     "start": "next start -p 3000",
     "lint": "next lint",
     "test": "vitest run"
   },
   "dependencies": {
+    "@tiptap/react": "^2.11.5",
+    "@tiptap/starter-kit": "^2.11.5",
     "next": "^14.2.35",
     "react": "^18.3.0",
     "react-dom": "^18.3.0"

@@ -1,16 +1,17 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import landing from './images/landing.png';
 
 export const metadata: Metadata = {
-  title: "CareerNav — Sign in",
-  description: "Tìm việc & thiết kế CV bằng AI",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'),
+  title: 'CareerNav — Navigate Your Career Autonomously',
+  description: 'AI-powered job search, tailored resumes, and ATS insights.',
+  openGraph: {
+    images: [{ url: landing.src, alt: 'CareerNav landing page' }],
+  },
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="vi">
       <head>

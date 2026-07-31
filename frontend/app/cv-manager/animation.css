@@ -1,0 +1,37 @@
+@keyframes cv-card-enter {
+  from { opacity: 0; transform: translateY(18px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes cv-overlay-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes cv-modal-enter {
+  from { opacity: 0; transform: translateY(18px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.cm-cv-card {
+  animation: cv-card-enter 560ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  transition: box-shadow 200ms ease, transform 200ms ease;
+}
+
+.cm-cv-card:nth-child(1) { animation-delay: 40ms; }
+.cm-cv-card:nth-child(2) { animation-delay: 110ms; }
+.cm-cv-card:nth-child(3) { animation-delay: 180ms; }
+.cm-cv-card:nth-child(4) { animation-delay: 250ms; }
+.cm-cv-card:nth-child(5) { animation-delay: 320ms; }
+
+.cm-new-cv {
+  animation: cv-card-enter 560ms 390ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.cm-cv-card:hover { transform: translateY(-3px); }
+.cm-overlay { animation: cv-overlay-enter 200ms ease-out both; }
+.cm-modal { animation: cv-modal-enter 320ms cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cm-cv-card, .cm-new-cv, .cm-overlay, .cm-modal { animation: none; }
+}
