@@ -31,8 +31,8 @@ def mock_embedding(monkeypatch):
 
     calls = []
 
-    def _fake_sync(profile_id, text):
-        calls.append((profile_id, text))
+    def _fake_sync(profile_id, user_id, text):
+        calls.append((profile_id, user_id, text))
         return True
 
     monkeypatch.setattr(
@@ -155,11 +155,14 @@ def test_prefs_empty_target_role_422(client):
 # ---- Embedding side-effect ----
 def test_put_profile_calls_embedding_with_text(client, mock_embedding):
     _put_profile(client)
-    # sync được gọi đúng 1 lần, text chứa headline + skills đã ghép
+    # sync được gọi đúng 1 lần với (profile_id, user_id, text)
     assert len(mock_embedding) == 1
-    _profile_id, text = mock_embedding[0]
+    _profile_id, user_id, text = mock_embedding[0]
+    assert str(user_id) == USER_ID  # user_id truyền đúng để cv-agent lọc RAG
     assert "Backend Engineer" in text  # headline
     assert "python" in text and "fastapi" in text  # skills
+    assert "Dev" in text and "ACME" in text  # experience title + org
+    assert "HCMUS" in text and "BSc" in text  # education school + degree
 
 
 def test_put_profile_sets_synced_at_when_embedding_ok(client):
@@ -176,7 +179,7 @@ def test_put_profile_ok_even_if_embedding_fails(client, monkeypatch):
     monkeypatch.setattr(
         profile_repository.qdrant_sync,
         "sync_profile_embedding",
-        lambda pid, text: False,
+        lambda pid, uid, text: False,
     )
     r = _put_profile(client)
     assert r.status_code == 200  # profile vẫn lưu dù embedding fail

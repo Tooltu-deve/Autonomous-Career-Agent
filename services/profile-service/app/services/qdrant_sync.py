@@ -62,8 +62,13 @@ def _embed(text: str) -> list[float]:
     return resp.data[0].embedding
 
 
-def sync_profile_embedding(profile_id: uuid.UUID, text: str) -> bool:
+def sync_profile_embedding(
+    profile_id: uuid.UUID, user_id: uuid.UUID, text: str
+) -> bool:
     """Sinh embedding từ `text` và upsert lên Qdrant theo `profile_id`.
+
+    Payload lưu `user_id` (để cv-agent lọc đúng user khi RAG) và `profile_text`
+    (để đưa thẳng vào prompt, khỏi quay lại Postgres). Point id = profile_id.
 
     Trả True nếu upsert thành công, False nếu lỗi (đã log). KHÔNG raise —
     caller (repository) dựa vào giá trị trả về để set `embedding_synced_at`.
@@ -80,7 +85,11 @@ def sync_profile_embedding(profile_id: uuid.UUID, text: str) -> bool:
                 PointStruct(
                     id=str(profile_id),
                     vector=vector,
-                    payload={"profile_id": str(profile_id)},
+                    payload={
+                        "profile_id": str(profile_id),
+                        "user_id": str(user_id),
+                        "profile_text": text,
+                    },
                 )
             ],
         )

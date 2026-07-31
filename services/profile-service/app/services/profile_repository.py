@@ -58,7 +58,9 @@ def upsert_profile(db: Session, user_id: uuid.UUID, data: ProfileUpdate) -> Prof
 
     # Side-effect: embed lên Qdrant. Lỗi KHÔNG làm hỏng PUT (đã lưu Postgres ở trên).
     # Chỉ đánh dấu embedding_synced_at khi upsert thành công.
-    if qdrant_sync.sync_profile_embedding(profile.id, _profile_text(profile)):
+    if qdrant_sync.sync_profile_embedding(
+        profile.id, profile.user_id, _profile_text(profile)
+    ):
         profile.embedding_synced_at = func.now()
         db.commit()
         db.refresh(profile)
@@ -95,8 +97,20 @@ def upsert_preferences(
 
 
 def _profile_text(profile: Profile) -> str:
-    """Ghép text profile để embed (dùng cho Qdrant sync)."""
+    """Ghép toàn bộ text profile để embed (dùng cho Qdrant sync / RAG).
+
+    Gộp mọi trường có ý nghĩa ngữ nghĩa: headline, summary, skills, và từng mục
+    experience/education kèm mô tả. Càng đầy đủ, RAG càng khớp job description tốt.
+    """
     parts = [profile.headline or "", profile.summary or ""]
     parts += [s.skill_name for s in profile.skills]
-    parts += [f"{e.title} {e.organization}" for e in profile.experiences]
+    for e in profile.experiences:
+        parts += [e.title, e.organization, e.description or ""]
+    for edu in profile.educations:
+        parts += [
+            edu.school,
+            edu.degree or "",
+            edu.field_of_study or "",
+            edu.description or "",
+        ]
     return " ".join(p for p in parts if p)
