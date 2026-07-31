@@ -4,5 +4,3 @@ pydantic
 pydantic-settings
 sqlalchemy
 psycopg[binary]
-qdrant-client
-openai

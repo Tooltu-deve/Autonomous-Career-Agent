@@ -1,12 +1,11 @@
 """Business logic profile-service: CRUD profile lồng + preferences.
 
 PUT /profile là idempotent (contract §A2): thay TOÀN BỘ profile + bảng con.
-Sau khi ghi, gọi qdrant_sync (side-effect, hiện stub).
 """
 
 import uuid
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models.profile import (
@@ -17,7 +16,6 @@ from app.models.profile import (
     ProfileSkill,
 )
 from app.schemas.profile import PreferencesUpdate, ProfileUpdate
-from app.services import qdrant_sync
 
 
 class ProfileNotFound(Exception):
@@ -55,15 +53,6 @@ def upsert_profile(db: Session, user_id: uuid.UUID, data: ProfileUpdate) -> Prof
 
     db.commit()
     db.refresh(profile)
-
-    # Side-effect: embed lên Qdrant. Lỗi KHÔNG làm hỏng PUT (đã lưu Postgres ở trên).
-    # Chỉ đánh dấu embedding_synced_at khi upsert thành công.
-    if qdrant_sync.sync_profile_embedding(
-        profile.id, profile.user_id, _profile_text(profile)
-    ):
-        profile.embedding_synced_at = func.now()
-        db.commit()
-        db.refresh(profile)
     return profile
 
 
@@ -94,23 +83,3 @@ def upsert_preferences(
     db.commit()
     db.refresh(pref)
     return pref
-
-
-def _profile_text(profile: Profile) -> str:
-    """Ghép toàn bộ text profile để embed (dùng cho Qdrant sync / RAG).
-
-    Gộp mọi trường có ý nghĩa ngữ nghĩa: headline, summary, skills, và từng mục
-    experience/education kèm mô tả. Càng đầy đủ, RAG càng khớp job description tốt.
-    """
-    parts = [profile.headline or "", profile.summary or ""]
-    parts += [s.skill_name for s in profile.skills]
-    for e in profile.experiences:
-        parts += [e.title, e.organization, e.description or ""]
-    for edu in profile.educations:
-        parts += [
-            edu.school,
-            edu.degree or "",
-            edu.field_of_study or "",
-            edu.description or "",
-        ]
-    return " ".join(p for p in parts if p)
