@@ -6,16 +6,16 @@ Nền tảng agentic AI hỗ trợ **tìm việc** và **thiết kế CV**, ch�
 
 - Login / logout, quản lý profile
 - Tự động cào job từ LinkedIn / Indeed (Bot)
-- **Agent 1 (RAG):** sinh CV theo từng job description từ user data trong vector DB
+- **Agent 1:** sinh CV theo từng job description từ profile user (đọc từ Postgres)
 - **Agent 2 (ATS Audit):** chấm điểm CV, đánh giá, lời khuyên, cover letter, xuất PDF
 - Dashboard theo dõi
 
 ## Kiến trúc
 
 ```
-User → api-gateway → auth / profile-service → [Qdrant: embed user data]
+User → api-gateway → auth / profile-service → Postgres
 scraper-service → cào job → RabbitMQ → Postgres
-   → cv-agent (RAG) → sinh CV JSON → RabbitMQ
+   → cv-agent (đọc profile từ Postgres) → sinh CV JSON → RabbitMQ
    → ats-agent → chấm điểm + cover letter + PDF → Postgres
 Dashboard ← api-gateway
 ```
@@ -25,7 +25,6 @@ Dashboard ← api-gateway
 | Backend services | Python / FastAPI |
 | Frontend | Next.js |
 | LLM | Cloud API (Claude/OpenAI) |
-| Vector DB | Qdrant |
 | Relational DB | Postgres |
 | Messaging | RabbitMQ |
 | Orchestration | Docker Compose |
@@ -63,7 +62,6 @@ make logs s=api-gateway
 | API Gateway | http://localhost:8000 |
 | Frontend | http://localhost:3000 |
 | RabbitMQ UI | http://localhost:15672 |
-| Qdrant | http://localhost:6333/dashboard |
 
 ## Quy trình nhóm
 

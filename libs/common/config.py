@@ -32,10 +32,6 @@ class Settings(BaseSettings):
     postgres_host: str = "postgres"
     postgres_port: int = 5432
 
-    # Qdrant
-    qdrant_host: str = "qdrant"
-    qdrant_port: int = 6333
-
     # RabbitMQ
     rabbitmq_host: str = "rabbitmq"
     rabbitmq_port: int = 5672

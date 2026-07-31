@@ -95,10 +95,8 @@ Lỗi: `401` sai thông tin đăng nhập.
 Quản lý hồ sơ dùng để sinh CV. Một user có đúng một `profiles` row; các phần chi tiết
 (experiences, educations, skills) là bảng con `profile_id → profiles.id`.
 
-> **Embedding lên Qdrant KHÔNG có endpoint riêng trong contract này.** Đây là **side-effect nội bộ**
-> của profile-service: mỗi khi user `PUT /profile`, service tự sinh embedding từ dữ liệu profile và
-> upsert lên Qdrant (index cho RAG mà cv-agent dùng). Không ai kích hoạt việc này qua HTTP. Thời điểm
-> đồng bộ gần nhất lưu ở cột `profiles.embedding_synced_at` (nội bộ, không trả ra API).
+> **Profile lưu ở Postgres.** cv-agent đọc profile trực tiếp từ Postgres theo `user_id` khi sinh CV —
+> không dùng Qdrant/embedding/RAG. Không có side-effect vector nào ở `PUT /profile`.
 
 ### `GET /profile` → `200`
 Trả về profile lồng của user hiện tại (`user_id` lấy từ token; `profiles.id` gộp các bảng con).
@@ -137,7 +135,7 @@ Lỗi: `404` chưa có profile.
 
 ### `PUT /profile` → `200`
 Tạo mới hoặc thay toàn bộ profile + các bảng con (idempotent). Body giống response nhưng
-**không kèm `id`/`user_id`** (lấy từ token). Response = profile sau cập nhật. Side-effect: re-embed Qdrant.
+**không kèm `id`/`user_id`** (lấy từ token). Response = profile sau cập nhật.
 > `preferred_template` phải thuộc whitelist `"classic" | "modern" | "academic"` — giá trị ngoài → `422`.
 > Template chọn lúc setup profile và cố định cho các lần dùng sau (đổi phải sửa profile).
 
@@ -379,7 +377,7 @@ Mọi payload là **một JSON object**. Trường `schema_version` bắt buộc
 ## B1. Queue `cv.requested`   (scraper → cv-agent)
 
 **Producer:** `POST /jobs/select` (khi user bấm "Tạo CV"). Với mỗi `job_id` đã chọn, publish một
-message `CvRequest`. cv-agent (consumer) → RAG truy vấn profile embeddings trên Qdrant + JD →
+message `CvRequest`. cv-agent (consumer) → đọc profile (theo `user_id`) + JD (theo `job_id`) từ Postgres →
 LLM sinh CV JSON → ghi `cv_generations` → cập nhật `applications.generation_status=cv_generated`
 → publish `cv.generated`.
 
