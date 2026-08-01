@@ -16,7 +16,9 @@ router = APIRouter(prefix="/pdf", tags=["pdf"])
 @router.post("/export")
 def export_pdf(data: ExportRequest) -> Response:
     try:
-        tex = renderer.render(data.template, data.cv_data, data.header.model_dump())
+        tex = renderer.render(
+            data.template, data.cv_data.model_dump(), data.header.model_dump()
+        )
     except TemplateNotFound:
         # whitelist đã chặn ở Pydantic; đây là phòng khi thiếu file template.
         raise HTTPException(

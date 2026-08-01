@@ -55,6 +55,13 @@ def test_missing_cv_data_422():
     assert r.status_code == 422
 
 
+def test_invalid_cv_data_422():
+    # cv_data có mặt nhưng sai schema (thiếu summary) -> 422, không phải 500
+    bad = {"experience": [], "education": [], "skills": []}
+    r = client.post("/pdf/export", json={"template": "classic", "cv_data": bad})
+    assert r.status_code == 422
+
+
 def test_compile_error_422(monkeypatch):
     def _boom(tex):
         raise compiler.CompileError("LaTeX hỏng")
@@ -65,14 +72,15 @@ def test_compile_error_422(monkeypatch):
 
 
 # ---- Renderer: escape LaTeX (bảo mật) ----
-def test_render_escapes_latex_special_chars():
+@pytest.mark.parametrize("tpl", ["classic", "modern", "academic"])
+def test_render_escapes_latex_special_chars(tpl):
     danger = {
         "summary": r"100% & $5 #1 _x {y} ~z ^w \evil",
         "experience": [],
         "education": [],
         "skills": [],
     }
-    tex = renderer.render("classic", danger)
+    tex = renderer.render(tpl, danger)
     # ký tự đặc biệt phải bị escape, KHÔNG còn nguyên bản gây injection
     assert r"\%" in tex and r"\&" in tex and r"\$" in tex and r"\#" in tex
     assert r"\_" in tex and r"\{" in tex and r"\}" in tex
