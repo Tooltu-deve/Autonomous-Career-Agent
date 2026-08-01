@@ -1,0 +1,67 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=2.2cm]{geometry}
+\usepackage[hidelinks]{hyperref}
+\usepackage{enumitem}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0pt}
+\pagestyle{empty}
+
+\newcommand{\cvsection}[1]{%
+  \vspace{14pt}{\large\bfseries\scshape #1}\par
+  \vspace{2pt}\hrule height 0.5pt \vspace{6pt}}
+
+\newcommand{\academicentry}[3]{%
+  \textbf{#1} \hfill #2\par
+  \textit{#3}\par\vspace{4pt}}
+
+\setlist[itemize]{leftmargin=1.5em,itemsep=2pt,topsep=2pt,parsep=0pt}
+
+\begin{document}
+
+% ---------- HEADER ----------
+\begin{center}
+\BLOCK{ if hdr.full_name }{\Large\bfseries \VAR{hdr.full_name | tex}}\\[4pt]\BLOCK{ endif }%
+\BLOCK{ if hdr.headline }\VAR{hdr.headline | tex}\\\BLOCK{ endif }%
+\BLOCK{ if hdr.location }\VAR{hdr.location | tex}\\[2pt]\BLOCK{ endif }%
+\BLOCK{ if hdr.email or hdr.phone or hdr.github_url or hdr.linkedin_url }
+\begin{tabular}{r@{~~\textbar~~}l}
+\BLOCK{ if hdr.email or hdr.phone }Email:~\VAR{hdr.email | tex} & Phone:~\VAR{hdr.phone | tex} \\[2pt]\BLOCK{ endif }%
+\BLOCK{ if hdr.github_url or hdr.linkedin_url }GitHub:~\VAR{hdr.github_url | tex} & LinkedIn:~\VAR{hdr.linkedin_url | tex}\BLOCK{ endif }%
+\end{tabular}
+\BLOCK{ endif }
+\end{center}
+\vspace{-4pt}
+
+% ---------- SUMMARY ----------
+\cvsection{Summary}
+\VAR{cv.summary | tex}
+
+% ---------- EDUCATION ----------
+\BLOCK{ if cv.education }
+\cvsection{Education}
+\BLOCK{ for ed in cv.education }
+\academicentry{\VAR{ed.degree | tex}\BLOCK{ if ed.field_of_study } in \VAR{ed.field_of_study | tex}\BLOCK{ endif }}{\BLOCK{ if ed.start_date }\VAR{ed.start_date | tex} -- \VAR{(ed.end_date or "Present") | tex}\BLOCK{ endif }}{\VAR{ed.school | tex}}
+\BLOCK{ if ed.description }\begin{itemize}\item \VAR{ed.description | tex}\end{itemize}\BLOCK{ endif }
+\BLOCK{ endfor }
+\BLOCK{ endif }
+
+% ---------- EXPERIENCE ----------
+\BLOCK{ if cv.experience }
+\cvsection{Professional Appointments}
+\BLOCK{ for e in cv.experience }
+\academicentry{\VAR{e.title | tex}}{\BLOCK{ if e.start_date }\VAR{e.start_date | tex} -- \VAR{(e.end_date or "Present") | tex}\BLOCK{ endif }}{\VAR{e.organization | tex}}
+\BLOCK{ if e.description }\begin{itemize}\item \VAR{e.description | tex}\end{itemize}\BLOCK{ endif }
+\BLOCK{ endfor }
+\BLOCK{ endif }
+
+% ---------- SKILLS ----------
+\BLOCK{ if cv.skills }
+\cvsection{Technical Skills \& Competencies}
+\begin{itemize}
+  \item \VAR{ (cv.skills | map("tex") | join(", ")) }
+\end{itemize}
+\BLOCK{ endif }
+
+\end{document}
