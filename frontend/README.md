@@ -39,7 +39,7 @@ lib/         (logic thuần, KHÔNG React) không import hooks/components
 types/       (kiểu TS)                  không import gì
 ```
 
-Nhớ: **`app` dùng `components`; `components` dùng `hooks` + `lib`; `lib` không biết gì về React/UII.** Theo đúng chiều này thì code luôn tách bạch, dễ test, ít đụng nhau.
+Nhớ: **`app` dùng `components`; `components` dùng `hooks` + `lib`; `lib` không biết gì về React/UI.** Theo đúng chiều này thì code luôn tách bạch, dễ test, ít đụng nhau.
 
 Mọi import dùng alias `@/…` (cấu hình trong `tsconfig.json`), không dùng `../../..`:
 
@@ -54,15 +54,17 @@ import { findUser } from '@/lib/auth';
 
 ```
 frontend/
-├── app/                      # Next.js App Router — CHỈ chứa route
+├── app/                      # Next.js App Router — route + component RIÊNG của trang (colocate)
 │   ├── layout.tsx            # khung gốc (<html>/<body>, font, metadata)
-│   ├── globals.css           # CSS toàn cục: token :root + reset + vài class chung (nav)
-│   ├── page.tsx              # route "/" = trang đăng nhập (thin, ~47 dòng)
-│   ├── signin/page.tsx       # "/signin" — re-export ../page
+│   ├── globals.css           # CSS toàn cục: token :root + reset + class chung (sidebar/nav…)
+│   ├── page.tsx              # route "/" = landing (lắp ráp landing/*)
+│   ├── landing/              # component riêng trang landing (Hero.tsx… + *.module.css)
+│   ├── signin/page.tsx       # "/signin" = đăng nhập (dùng components/auth/*)
+│   ├── cv-manager/           # /cv-manager (CvManager.tsx, CvEditor.tsx + cv-manager.module.css)
 │   ├── jobs/                 # (chưa refactor)
 │   ├── profile-setup/        # (chưa refactor)
 │   └── profile-preferences/  # (chưa refactor)
-├── components/               # UI tái dùng — chia theo LOẠI
+├── components/               # UI tái dùng NHIỀU trang — chia theo LOẠI
 │   ├── ui/                   # generic dùng cả app (TextField, …)
 │   ├── icons/                # SVG icon dùng chung (index.tsx)
 │   └── auth/                 # theo feature: LoginForm, RegisterForm, AuthHero, auth.module.css
@@ -81,13 +83,22 @@ frontend/
 
 | Thư mục | Chứa gì | Ví dụ |
 |---|---|---|
-| `app/` | Chỉ route + lắp ráp component. **Không viết logic nghiệp vụ.** | `app/page.tsx` giữ state `tab`, render form |
+| `app/<route>/` | Route + component **riêng của trang đó** (colocate, kèm `.module.css`). Không viết logic nghiệp vụ. | `app/cv-manager/CvManager.tsx` |
 | `components/ui/` | UI generic, không dính nghiệp vụ | `TextField` |
 | `components/icons/` | Icon SVG dùng chung | `EmailIcon`, `LockIcon` |
-| `components/<feature>/` | UI riêng của một tính năng + `.module.css` của nó | `components/auth/LoginForm` |
+| `components/<feature>/` | UI **dùng lại ở nhiều trang** + `.module.css` | `components/auth/LoginForm` |
 | `lib/` | Hàm thuần, test độc lập, không React. Nơi đổi mock→API thật | `lib/auth.ts` |
 | `hooks/` | State React dùng lại nhiều nơi | `useAuth()` |
 | `types/` | Kiểu dữ liệu dùng chung | `StoredUser` |
+
+### Đặt component ở đâu?
+
+Quy tắc một câu: **tái dùng → `components/`; riêng một trang → cạnh `page.tsx`.** Cả hai đều dùng CSS Modules.
+
+- **Dùng lại ở nhiều trang** (Button, TextField, form auth, icon…) → `components/` (`ui/`, `icons/`, `<feature>/`).
+- **Chỉ phục vụ MỘT trang** (Hero của landing, CvManager của `/cv-manager`…) → **colocate ngay trong route folder** `app/<route>/`, cùng file `.module.css` của nó — không cần nhét vào `components/`.
+
+Đây là pattern chuẩn của Next.js App Router: component riêng của trang nằm cạnh trang, dễ tìm; chỉ thứ gì dùng lại mới tách ra `components/`.
 
 ---
 
@@ -114,7 +125,7 @@ frontend/
 Conflict xảy ra khi hai người sửa cùng một file. Kiến trúc này giảm điều đó tối đa:
 
 - **Một trang = một thư mục riêng** trong `app/`. Khác thư mục → không đụng nhau.
-- **Một file = một trách nhiệm.** Logic ở `lib/`, form ở `components/<feature>/`, state ở `hooks/` → mỗi người một file.
+- **Một file = một trách nhiệm.** Logic ở `lib/`, state ở `hooks/`, UI tái dùng ở `components/<feature>/`, UI riêng trang colocate trong `app/<route>/` → mỗi người một file.
 - **CSS Modules = hết đụng tên class.** Mỗi component có `.module.css` co-locate, class được hash tự động và scope riêng. Style của trang nào để trong `.module.css` của trang đó.
 - **Component chung → chia nhỏ**, mỗi thứ một file trong `components/ui/`.
 
