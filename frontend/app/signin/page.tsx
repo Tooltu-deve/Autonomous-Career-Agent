@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { AuthHero } from '@/components/auth/AuthHero';
 import { LoginForm } from '@/components/auth/LoginForm';
 import { RegisterForm } from '@/components/auth/RegisterForm';
 import s from '@/components/auth/auth.module.css';
 
-export default function SignInPage() {
+function SignInContent() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
   const [tab, setTab] = useState<'login' | 'register'>(tabParam === 'register' ? 'register' : 'login');
@@ -53,5 +53,13 @@ export default function SignInPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignInContent />
+    </Suspense>
   );
 }

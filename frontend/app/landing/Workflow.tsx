@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import styles from "./landing.module.css";
 
 const steps = [
   {
@@ -20,20 +21,20 @@ const steps = [
 
 export function Workflow() {
   return (
-    <section className="steps" id="get-started">
-      <div className="wrap">
-        <div className="steps-head" data-aos="fade-up">
+    <section className={styles.steps} id="get-started">
+      <div className={styles.wrap}>
+        <div className={styles["steps-head"]} data-aos="fade-up">
           <h2>
             From Profile to <em>Interview</em> in Just a Few Steps.
           </h2>
           <p>CareerNav helps you get noticed and get hired.</p>
         </div>
-        <div className="steps-grid">
+        <div className={styles["steps-grid"]}>
           {steps.map(({ className, title, body }, index) => (
-            <article className="step-card" data-aos="fade-up" style={{ "--aos-delay": `${index * 120}ms` } as CSSProperties} key={title}>
-              <div className={`step-visual ${className}`} aria-hidden="true">
+            <article className={styles["step-card"]} data-aos="fade-up" style={{ "--aos-delay": `${index * 120}ms` } as CSSProperties} key={title}>
+              <div className={[styles["step-visual"], styles[className]].filter(Boolean).join(" ")} aria-hidden="true">
                 {index === 0 ? (
-                  <div className="profile-sheet">
+                  <div className={styles["profile-sheet"]}>
                     <span>●</span>
                     {[1, 2, 3].map((item) => (
                       <i key={item} />
@@ -42,10 +43,10 @@ export function Workflow() {
                   </div>
                 ) : (
                   <>
-                    <div className="floating-card">
+                    <div className={styles["floating-card"]}>
                       {index === 1 ? "▣ ━━━" : "━━━\n━━"}
                     </div>
-                    <div className="floating-card second">
+                    <div className={`${styles["floating-card"]} ${styles.second}`}>
                       {index === 1 ? "▣ ━━━" : "━━━\n━━"}
                     </div>
                   </>

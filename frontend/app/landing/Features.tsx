@@ -1,17 +1,18 @@
 import type { CSSProperties } from "react";
+import styles from "./landing.module.css";
 
 const lines = (widths: string[]) => (
   <>
     {widths.map((width) => (
-      <i className="mock-line" style={{ width }} key={width} />
+      <i className={styles["mock-line"]} style={{ width }} key={width} />
     ))}
   </>
 );
 
 function AtsVisual() {
   return (
-    <div className="tool-visual ats-visual">
-      <div className="ats-checklist">
+    <div className={`${styles["tool-visual"]} ${styles["ats-visual"]}`}>
+      <div className={styles["ats-checklist"]}>
         <p>
           <b>✓</b>Your project contains metrics.
         </p>
@@ -19,11 +20,11 @@ function AtsVisual() {
           <b>✓</b>Phone number is valid.
         </p>
         <p>
-          <b className="bad">×</b>Github link is missing.
+          <b className={styles.bad}>×</b>Github link is missing.
         </p>
       </div>
-      <div className="ats-score-card">
-        <span className="ats-gauge">75</span>
+      <div className={styles["ats-score-card"]}>
+        <span className={styles["ats-gauge"]}>75</span>
         <span>
           <strong>Resume Score</strong>
           <small>View 12 issues found</small>
@@ -36,15 +37,15 @@ function AtsVisual() {
 
 function BrowserVisual({ networking = false }: { networking?: boolean }) {
   return (
-    <div className="tool-visual">
-      <div className="browser-mock">
-        <div className="browser-topbar">
+    <div className={styles["tool-visual"]}>
+      <div className={styles["browser-mock"]}>
+        <div className={styles["browser-topbar"]}>
           <i />
           <i />
           <i />
           <span />
         </div>
-        <div className="browser-body">
+        <div className={styles["browser-body"]}>
           <div>
             <b>● Nguyen Van Phu</b>
             <strong>Software Engineer</strong>
@@ -56,7 +57,7 @@ function BrowserVisual({ networking = false }: { networking?: boolean }) {
             </b>
             {networking ? (
               <>
-                <p className="avatar-line">● {lines(["60%"])}</p>
+                <p className={styles["avatar-line"]}>● {lines(["60%"])}</p>
                 {lines(["85%", "70%"])}
               </>
             ) : (
@@ -72,10 +73,10 @@ function BrowserVisual({ networking = false }: { networking?: boolean }) {
 
 function JournalVisual() {
   return (
-    <div className="tool-visual">
-      <div className="journal-mock">
+    <div className={styles["tool-visual"]}>
+      <div className={styles["journal-mock"]}>
         <b>💪 &nbsp; Building Momentum</b>
-        <div className="journal-tools">B <i>I</i> ≔ 🔗</div>
+        <div className={styles["journal-tools"]}>B <i>I</i> ≔ 🔗</div>
         {lines(["45%"])}
         <p>
           <strong>💡 AI Assistant</strong>
@@ -90,8 +91,8 @@ function JournalVisual() {
 
 function ListVisual() {
   return (
-    <div className="tool-visual">
-      <div className="joblist-mock">
+    <div className={styles["tool-visual"]}>
+      <div className={styles["joblist-mock"]}>
         <div>
           <b>New Grad Product Management Jobs</b>
           <p>
@@ -146,9 +147,9 @@ const featureCards = [
 
 export function Features() {
   return (
-    <section className="tools section-bordered" id="features">
-      <div className="wrap">
-        <div className="tools-head" data-aos="zoom-in">
+    <section className={`${styles.tools} ${styles["section-bordered"]}`} id="features">
+      <div className={styles.wrap}>
+        <div className={styles["tools-head"]} data-aos="zoom-in">
           <h2>
             More tools to help you
             <br />
@@ -159,13 +160,13 @@ export function Features() {
             internship search.
           </p>
         </div>
-        <div className="tools-grid">
+        <div className={styles["tools-grid"]}>
           {featureCards.map(({ title, description, visual }, index) => {
             const animation = ["fade-right", "fade-left", "fade-right", "fade-up", "fade-left"][index];
             const delay = [0, 150, 100, 250, 400][index];
 
             return (
-            <article className="tool-card" data-aos={animation} style={{ "--aos-delay": `${delay}ms` } as CSSProperties} key={title}>
+            <article className={styles["tool-card"]} data-aos={animation} style={{ "--aos-delay": `${delay}ms` } as CSSProperties} key={title}>
               {visual}
               <h3>{title}</h3>
               <p>{description}</p>

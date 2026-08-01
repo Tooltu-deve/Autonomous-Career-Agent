@@ -2,9 +2,8 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import "./animation.css";
+import styles from "./cv-manager.module.css";
 import {
-  createMockGeneratedCV,
   deleteMockGeneratedCV,
   getMockGeneratedCVs,
   requestCvExport,
@@ -142,12 +141,12 @@ function Modal({
 }) {
   return (
     <div
-      className="cm-overlay"
+      className={styles["cm-overlay"]}
       onMouseDown={(event) => {
         if (event.currentTarget === event.target) close();
       }}
     >
-      <div className="cm-modal">{children}</div>
+      <div className={styles["cm-modal"]}>{children}</div>
     </div>
   );
 }
@@ -184,7 +183,7 @@ function ResumeSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="cm-resume-section">
+    <section className={styles["cm-resume-section"]}>
       <h3>{title}</h3>
       {children}
     </section>
@@ -196,7 +195,7 @@ function AtsReport({ cv, close }: { cv: GeneratedCV; close: () => void }) {
   const offset = 389.6 * (1 - cv.ats_score / 100);
   return (
     <Modal close={close}>
-      <header className="cm-modal-header">
+      <header className={styles["cm-modal-header"]}>
         <div>
           <h2>ATS Report — {cv.title}</h2>
           <p>Scanned against the target role</p>
@@ -205,13 +204,13 @@ function AtsReport({ cv, close }: { cv: GeneratedCV; close: () => void }) {
           ×
         </button>
       </header>
-      <div className="cm-ats-content">
-        <section className="cm-score-panel">
-          <div className="cm-gauge">
+      <div className={styles["cm-ats-content"]}>
+        <section className={styles["cm-score-panel"]}>
+          <div className={styles["cm-gauge"]}>
             <svg viewBox="0 0 148 148">
               <circle cx="74" cy="74" r="62" />
               <circle
-                className="value"
+                className={styles.value}
                 cx="74"
                 cy="74"
                 r="62"
@@ -237,15 +236,15 @@ function AtsReport({ cv, close }: { cv: GeneratedCV; close: () => void }) {
           </div>
         </section>
         <section>
-          <h3 className="cm-section-title">Keyword Match</h3>
-          <div className="cm-keywords">
+          <h3 className={styles["cm-section-title"]}>Keyword Match</h3>
+          <div className={styles["cm-keywords"]}>
             <KeywordCard good title="Matching Keywords" words={cv.matched} />
             <KeywordCard title="Missing Keywords" words={cv.missing} />
           </div>
         </section>
         <section>
-          <h3 className="cm-section-title">Recommendations</h3>
-          <div className="cm-recommendations">
+          <h3 className={styles["cm-section-title"]}>Recommendations</h3>
+          <div className={styles["cm-recommendations"]}>
             <p>
               <b>△ Add missing tools to your Skills section</b>Most listings
               you’re tracking mention several missing terms.
@@ -261,11 +260,11 @@ function AtsReport({ cv, close }: { cv: GeneratedCV; close: () => void }) {
           </div>
         </section>
       </div>
-      <footer className="cm-modal-footer">
+      <footer className={styles["cm-modal-footer"]}>
         <span>Formatted for ATS scanning</span>
         <div>
-          <button className="cm-secondary">View Full Report</button>
-          <button className="cm-primary" onClick={close}>
+          <button className={styles["cm-secondary"]}>View Full Report</button>
+          <button className={styles["cm-primary"]} onClick={close}>
             Close
           </button>
         </div>
@@ -283,7 +282,13 @@ function KeywordCard({
   good?: boolean;
 }) {
   return (
-    <article className={good ? "cm-keyword good" : "cm-keyword missing"}>
+    <article
+      className={
+        good
+          ? `${styles["cm-keyword"]} ${styles.good}`
+          : `${styles["cm-keyword"]} ${styles.missing}`
+      }
+    >
       <h4>
         <i />
         {title}
@@ -300,6 +305,7 @@ function KeywordCard({
 
 export function CvManager() {
   const [query, setQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"recent" | "ats">("recent");
   const [cvs, setCvs] = useState(getMockGeneratedCVs);
   const [preview, setPreview] = useState<GeneratedCV | null>(null);
   const [report, setReport] = useState<GeneratedCV | null>(null);
@@ -327,21 +333,23 @@ export function CvManager() {
       setNotice("Saved. PDF export is pending the pdf-service backend.");
     } else setNotice("Saved in this session.");
   };
-  const visible = useMemo(
-    () =>
-      cvs.filter((cv) =>
-        `${cv.title} ${cv.source_job}`
-          .toLowerCase()
-          .includes(query.toLowerCase()),
-      ),
-    [cvs, query],
-  );
+  const visible = useMemo(() => {
+    const filtered = cvs.filter((cv) =>
+      `${cv.title} ${cv.source_job}`
+        .toLowerCase()
+        .includes(query.toLowerCase()),
+    );
+    if (sortBy === "ats") {
+      return [...filtered].sort((a, b) => b.ats_score - a.ats_score);
+    }
+    return filtered;
+  }, [cvs, query, sortBy]);
   return (
-    <div className="cv-manager">
-      <div className="cm-app">
+    <div className={styles["cv-manager"]}>
+      <div className={styles["cm-app"]}>
         <Sidebar />
-        <main className="cm-main">
-          <header className="cm-page-header">
+        <main className={styles["cm-main"]}>
+          <header className={styles["cm-page-header"]}>
             <div>
               <h1>CV Manager</h1>
               <p>
@@ -349,11 +357,8 @@ export function CvManager() {
                 preview, edit, or export any version.
               </p>
             </div>
-            <button className="cm-primary" type="button" onClick={() => { const created = createMockGeneratedCV(); setCvs(getMockGeneratedCVs()); setError(null); setNotice(null); setPreview(created); }}>
-              + New CV
-            </button>
           </header>
-          <div className="cm-toolbar">
+          <div className={styles["cm-toolbar"]}>
             <label>
               ⌕
               <input
@@ -362,44 +367,74 @@ export function CvManager() {
                 placeholder="Search CVs..."
               />
             </label>
-            <button className="cm-filter">
-              ☰ &nbsp; Sort: Recently updated
-            </button>
+            <select
+              className={styles["cm-filter"]}
+              value={sortBy}
+              onChange={(event) =>
+                setSortBy(event.target.value as "recent" | "ats")
+              }
+              aria-label="Sort CVs"
+            >
+              <option value="recent">Sort: Recently updated</option>
+              <option value="ats">Sort: ATS score</option>
+            </select>
           </div>
-          <section className="cm-cv-list">
+          <section className={styles["cm-cv-list"]}>
             {visible.map((cv) => (
-              <article className="cm-cv-card" key={cv.id}>
-                <span className="cm-document">▤</span>
-                <div className="cm-cv-title">
+              <article
+                className={styles["cm-cv-card"]}
+                key={cv.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => {
+                  setError(null);
+                  setNotice(null);
+                  setPreview(cv);
+                }}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setError(null);
+                    setNotice(null);
+                    setPreview(cv);
+                  }
+                }}
+              >
+                <span className={styles["cm-document"]}>▤</span>
+                <div className={styles["cm-cv-title"]}>
                   <h2>{cv.title}</h2>
                   <p>{cv.source_job}</p>
                   <small>
                     Last updated {cv.updated_at} · {cv.edit_status}
                   </small>
                 </div>
-                <strong className={`cm-score ${scoreClass(cv.ats_score)}`}>
+                <strong
+                  className={`${styles["cm-score"]} ${styles[scoreClass(cv.ats_score)]}`}
+                >
                   {cv.ats_score}%
                 </strong>
-                <div className="cm-actions">
+                <div className={styles["cm-actions"]}>
                   <button
-                    onClick={() => {
-                      setError(null);
-                      setNotice(null);
-                      setPreview(cv);
+                    className={styles["cm-ats"]}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setReport(cv);
                     }}
                   >
-                    Preview & Edit
-                  </button>
-                  <button onClick={() => setReport(cv)}>
                     ✓ &nbsp; ATS Report
                   </button>
-                  <button className="cm-danger" onClick={() => setPendingDelete(cv)}>Delete</button>
+                  <button
+                    className={styles["cm-danger"]}
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setPendingDelete(cv);
+                    }}
+                  >
+                    Delete
+                  </button>
                 </div>
               </article>
             ))}
-            <button className="cm-new-cv" id="new-cv" type="button" onClick={() => { const created = createMockGeneratedCV(); setCvs(getMockGeneratedCVs()); setError(null); setNotice(null); setPreview(created); }}>
-              ＋ <span>Add New CV</span>
-            </button>
           </section>
         </main>
       </div>
@@ -413,7 +448,7 @@ export function CvManager() {
         />
       )}
       {report && <AtsReport cv={report} close={() => setReport(null)} />}
-      {pendingDelete && <Modal close={() => setPendingDelete(null)}><section className="cm-confirm"><h2>Delete “{pendingDelete.title}”?</h2><p>This removes the CV from the local mock session. This action cannot be undone.</p><div><button className="cm-secondary" onClick={() => setPendingDelete(null)}>Cancel</button><button className="cm-danger" onClick={() => { deleteMockGeneratedCV(pendingDelete.id); setCvs(getMockGeneratedCVs()); setPendingDelete(null); }}>Delete CV</button></div></section></Modal>}
+      {pendingDelete && <Modal close={() => setPendingDelete(null)}><section className={styles["cm-confirm"]}><h2>Delete “{pendingDelete.title}”?</h2><p>This removes the CV from the local mock session. This action cannot be undone.</p><div><button className={styles["cm-secondary"]} onClick={() => setPendingDelete(null)}>Cancel</button><button className={styles["cm-danger"]} onClick={() => { deleteMockGeneratedCV(pendingDelete.id); setCvs(getMockGeneratedCVs()); setPendingDelete(null); }}>Delete CV</button></div></section></Modal>}
     </div>
   );
 }

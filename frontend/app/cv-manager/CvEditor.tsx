@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import type { GeneratedCV, GeneratedCVContent } from "@/lib/mock/cv";
+import styles from "./cv-manager.module.css";
 
 type Props = {
   cv: GeneratedCV;
@@ -33,7 +34,9 @@ function TextEditor({
   const editor = useEditor({
     extensions: [StarterKit],
     content: value,
-    editorProps: { attributes: { class: "cm-tiptap", "aria-label": label } },
+    editorProps: {
+      attributes: { class: styles["cm-tiptap"], "aria-label": label },
+    },
     onUpdate: ({ editor }) => onChange(editor.getText()),
   });
   useEffect(() => {
@@ -54,7 +57,7 @@ export function CvEditor({ cv, onSave, onClose, error, notice }: Props) {
   const experience = draft.experience[0];
   return (
     <>
-      <header className="cm-modal-header">
+      <header className={styles["cm-modal-header"]}>
         <div>
           <h2>Edit — {cv.title}</h2>
           <p>Source job: {cv.source_job}</p>
@@ -63,9 +66,9 @@ export function CvEditor({ cv, onSave, onClose, error, notice }: Props) {
           ×
         </button>
       </header>
-      <div className="cm-editor-layout">
+      <div className={styles["cm-editor-layout"]}>
         <form
-          className="cm-editor"
+          className={styles["cm-editor"]}
           onSubmit={(event) => {
             event.preventDefault();
             onSave(draft, false, title);
@@ -175,17 +178,19 @@ export function CvEditor({ cv, onSave, onClose, error, notice }: Props) {
             />
           </label>
         </form>
-        <article className="cm-resume cm-live-preview">
+        <article
+          className={`${styles["cm-resume"]} ${styles["cm-live-preview"]}`}
+        >
           <h1>{draft.name}</h1>
           <h2>{draft.headline}</h2>
-          <p className="cm-contact">
+          <p className={styles["cm-contact"]}>
             {draft.email} · {draft.location}
           </p>
-          <section className="cm-resume-section">
+          <section className={styles["cm-resume-section"]}>
             <h3>Summary</h3>
             <p>{draft.summary}</p>
           </section>
-          <section className="cm-resume-section">
+          <section className={styles["cm-resume-section"]}>
             <h3>Experience</h3>
             <b>
               {experience.role} — {experience.company}
@@ -195,9 +200,9 @@ export function CvEditor({ cv, onSave, onClose, error, notice }: Props) {
               <p key={index}>• {bullet}</p>
             ))}
           </section>
-          <section className="cm-resume-section">
+          <section className={styles["cm-resume-section"]}>
             <h3>Skills</h3>
-            <div className="cm-skills">
+            <div className={styles["cm-skills"]}>
               {draft.skills.map((skill) => (
                 <span key={skill}>{skill}</span>
               ))}
@@ -205,17 +210,23 @@ export function CvEditor({ cv, onSave, onClose, error, notice }: Props) {
           </section>
         </article>
       </div>
-      <footer className="cm-modal-footer">
+      <footer className={styles["cm-modal-footer"]}>
         <span>
           {error ??
             notice ??
             "Generic HTML preview — PDF export will be added with pdf-service."}
         </span>
         <div>
-          <button className="cm-secondary" onClick={() => onSave(draft, false, title)}>
+          <button
+            className={styles["cm-secondary"]}
+            onClick={() => onSave(draft, false, title)}
+          >
             Save
           </button>
-          <button className="cm-primary" onClick={() => onSave(draft, true, title)}>
+          <button
+            className={styles["cm-primary"]}
+            onClick={() => onSave(draft, true, title)}
+          >
             Save &amp; Export
           </button>
         </div>

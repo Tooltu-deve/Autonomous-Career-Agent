@@ -1,9 +1,10 @@
 import { Brand } from "./Brand";
+import styles from "./landing.module.css";
 
 export function Footer() {
 	return (
 		<footer>
-			<div className="wrap footer-row">
+			<div className={`${styles.wrap} ${styles["footer-row"]}`}>
 				<Brand />
 				<span>© 2026 CareerNav</span>
 				<span>
