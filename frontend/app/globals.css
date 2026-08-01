@@ -28,6 +28,17 @@
   --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.12);
   --shadow-glow: 0 4px 20px rgba(240, 106, 106, 0.25);
   --ease: cubic-bezier(0.25, 0.1, 0.25, 1);
+  /* landing.module.css tokens (moved from app/landing/landing.css) */
+  --primary-dark: #e5544f;
+  --soft: #fce8e6;
+  --muted: #6d6e6f;
+  --subtle: #9ca1a8;
+  --surface: #fff;
+  --blue: #4573d2;
+  --purple: #9d7ad9;
+  --green: #62d26f;
+  --yellow: #f1bd6c;
+  --shadow: 0 8px 24px #0000001f;
 }
 
 * {

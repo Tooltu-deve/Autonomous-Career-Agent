@@ -1,50 +1,23 @@
-'use client';
+import { Features } from './landing/Features';
+import { Footer } from './landing/Footer';
+import { Header } from './landing/Header';
+import { Hero } from './landing/Hero';
+import { ScrollAnimations } from './landing/ScrollAnimations';
+import styles from './landing/ScrollAnimations.module.css';
+import landingStyles from './landing/landing.module.css';
+import { Showcase } from './landing/Showcase';
+import { Workflow } from './landing/Workflow';
 
-import { useState } from 'react';
-import { AuthHero } from '@/components/auth/AuthHero';
-import { LoginForm } from '@/components/auth/LoginForm';
-import { RegisterForm } from '@/components/auth/RegisterForm';
-import s from '@/components/auth/auth.module.css';
-
-export default function SignIn() {
-  const [tab, setTab] = useState<'login' | 'register'>('login');
-
+export default function Home() {
   return (
-    <div className={s.authPage}>
-      <AuthHero />
-      <main className={s.right}>
-        <div className={s['form-box']}>
-          <div className={s.tabs} role="tablist">
-            <button
-              className={`${s.tab} ${tab === 'login' ? s.active : ''}`}
-              role="tab"
-              aria-selected={tab === 'login'}
-              onClick={() => setTab('login')}
-              type="button"
-            >
-              Đăng nhập
-            </button>
-            <button
-              className={`${s.tab} ${tab === 'register' ? s.active : ''}`}
-              role="tab"
-              aria-selected={tab === 'register'}
-              onClick={() => setTab('register')}
-              type="button"
-            >
-              Tạo tài khoản
-            </button>
-          </div>
-
-          {tab === 'login' ? (
-            <LoginForm onSwitchToRegister={() => setTab('register')} />
-          ) : (
-            <RegisterForm
-              onSuccess={() => setTab('login')}
-              onSwitchToLogin={() => setTab('login')}
-            />
-          )}
-        </div>
-      </main>
-    </div>
+    <main className={`${styles.scrollRoot} ${landingStyles.root}`}>
+      <ScrollAnimations />
+      <Header />
+      <Hero />
+      <Showcase />
+      <Features />
+      <Workflow />
+      <Footer />
+    </main>
   );
 }
