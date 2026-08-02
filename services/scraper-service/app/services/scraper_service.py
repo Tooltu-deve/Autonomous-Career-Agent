@@ -10,6 +10,7 @@ from uuid import UUID
 
 from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert as pg_insert
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.application import ApplicationDB
@@ -115,6 +116,40 @@ def search_and_save(
 # Select Jobs
 # ---------------------------------------------------------------------------
 
+# Trạng thái terminal được phép chạy lại pipeline khi user chọn lại job.
+# Đang chạy dở (cv_queued/cv_generating/cv_generated/ats_scoring) hoặc đã
+# completed thì giữ nguyên — tránh double-publish và tránh đè CV user đã sửa.
+RETRYABLE_STATUSES = {"saved", "needs_review", "failed"}
+
+
+def _upsert_applications(
+    db: Session, user_uuid: uuid.UUID, job_ids: list[UUID]
+) -> None:
+    """Tạo application còn thiếu; reset application kẹt ở trạng thái terminal."""
+    for job_id in job_ids:
+        app_row = db.scalar(
+            select(ApplicationDB).where(
+                ApplicationDB.user_id == user_uuid,
+                ApplicationDB.job_id == job_id,
+            )
+        )
+        if app_row is None:
+            db.add(
+                ApplicationDB(
+                    id=uuid.uuid4(),
+                    user_id=user_uuid,
+                    job_id=job_id,
+                    generation_status="cv_queued",
+                    pipeline_stage="saved",
+                    attempt=1,
+                )
+            )
+        elif app_row.generation_status in RETRYABLE_STATUSES:
+            app_row.generation_status = "cv_queued"
+            app_row.attempt = 1
+            app_row.error_message = None
+    db.commit()
+
 
 def select_jobs(
     user_id: str,
@@ -123,8 +158,10 @@ def select_jobs(
 ) -> list[ApplicationDB]:
     """Upsert applications cho (user_id, job_id), publish cv.requested.
 
-    Idempotent: nếu application đã tồn tại thì trả lại cái cũ, không tạo trùng.
-    Publish mỗi job vào queue cv.requested (scraper là producer).
+    - Chưa có application -> tạo mới (cv_queued, attempt=1).
+    - Đã có nhưng kẹt ở trạng thái terminal (saved/needs_review/failed)
+      -> reset về cv_queued, attempt=1 để pipeline chạy lại (retry của user).
+    - Đang chạy dở hoặc completed -> giữ nguyên, không publish lại.
     """
     # Kiểm tra job tồn tại
     existing_jobs = db.scalars(select(JobDB).where(JobDB.id.in_(job_ids))).all()
@@ -134,28 +171,17 @@ def select_jobs(
     if missing:
         raise ValueError(f"Job không tồn tại: {missing}")
 
-    applications: list[ApplicationDB] = []
     user_uuid = uuid.UUID(user_id)
 
-    for job_id in job_ids:
-        # Upsert: ON CONFLICT (user_id, job_id) DO NOTHING
-        stmt = (
-            pg_insert(ApplicationDB)
-            .values(
-                id=uuid.uuid4(),
-                user_id=user_uuid,
-                job_id=job_id,
-                generation_status="cv_queued",
-                pipeline_stage="saved",
-                attempt=1,
-            )
-            .on_conflict_do_nothing(index_elements=["user_id", "job_id"])
-        )
-        db.execute(stmt)
+    try:
+        _upsert_applications(db, user_uuid, job_ids)
+    except IntegrityError:
+        # Race hiếm: 2 request song song cùng tạo một (user, job) -> UNIQUE nổ.
+        # Chạy lại: lần này row đã tồn tại -> đi nhánh reset/giữ nguyên.
+        db.rollback()
+        _upsert_applications(db, user_uuid, job_ids)
 
-    db.commit()
-
-    # Load lại tất cả application (mới tạo hoặc đã tồn tại)
+    # Load lại tất cả application (mới tạo / vừa reset / giữ nguyên)
     apps = db.scalars(
         select(ApplicationDB).where(
             ApplicationDB.user_id == user_uuid,
@@ -164,7 +190,7 @@ def select_jobs(
     ).all()
     applications = list(apps)
 
-    # Publish cv.requested cho các application mới (generation_status = cv_queued)
+    # Publish cv.requested cho application sẵn sàng chạy (cv_queued)
     for app in applications:
         if app.generation_status == "cv_queued":
             msg = CvRequest(

@@ -7,8 +7,12 @@ from sqlalchemy import DateTime, Enum, String, Text
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
+from sqlalchemy.types import JSON
 
 from app.core.database import Base
+
+# JSONB trên Postgres; JSON thường trên SQLite (test) — cùng interface dict.
+JsonType = JSONB().with_variant(JSON, "sqlite")
 
 
 class JobDB(Base):
@@ -44,4 +48,4 @@ class JobDB(Base):
     expires_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
-    raw_data: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    raw_data: Mapped[dict | None] = mapped_column(JsonType, nullable=True)
