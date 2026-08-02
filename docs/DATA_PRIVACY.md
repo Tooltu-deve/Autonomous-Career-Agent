@@ -119,7 +119,7 @@ async def get_cv(cv_id: UUID, user_id: UUID):  # user_id từ request → nguy c
 
 | Quyền | Endpoint |
 |---|---|
-| **Xem** dữ liệu của mình | `GET /profile`, `GET /cvs`, `GET /reports` |
+| **Xem** dữ liệu của mình | `GET /profile`, `GET /cvs`, `GET /applications` |
 | **Sửa** profile và CV | `PUT /profile`, `PUT /cvs/{id}` |
 | **Xóa** CV cụ thể | `DELETE /cvs/{id}` — xóa `cv_generations` + `ats_reports` liên quan |
 | **Xóa tài khoản** | `DELETE /users/me` — xóa cascade toàn bộ data trong Postgres |

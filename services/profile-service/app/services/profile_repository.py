@@ -74,9 +74,6 @@ def upsert_preferences(
         db.add(pref)
 
     pref.target_role = data.target_role
-    pref.expected_salary_min = data.expected_salary_min
-    pref.expected_salary_max = data.expected_salary_max
-    pref.currency = data.currency
     pref.preferred_locations = data.preferred_locations
     pref.remote_preference = data.remote_preference
 

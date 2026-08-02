@@ -208,6 +208,7 @@ Response `202`:
 }
 ```
 - **Idempotent:** đã có application cho `(user_id, job_id)` thì trả lại cái cũ, không tạo trùng.
+- **Retry:** application đang ở trạng thái terminal (`needs_review`/`failed`/`saved`) sẽ được reset (`cv_queued`, `attempt=1`) và chạy lại pipeline; đang chạy dở hoặc `completed` thì giữ nguyên, không publish lại.
 - Lỗi: `404` nếu `job_id` không tồn tại; `422` nếu `job_ids` rỗng.
 
 ### `GET /jobs?page=1&limit=20` → `200`

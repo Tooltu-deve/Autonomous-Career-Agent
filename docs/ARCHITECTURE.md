@@ -50,7 +50,7 @@ flowchart TB
     GW -->|"HTTP: /profile"| PROF
     GW -->|"HTTP: POST /jobs/search, /jobs/select"| SCRAPER
     GW -->|"HTTP: GET/PUT /cvs"| CV
-    GW -->|"HTTP: GET /reports"| ATS
+    GW -->|"HTTP: GET /applications"| ATS
     GW -->|"HTTP: POST /pdf/export"| PDF
 
     %% Data access
@@ -173,7 +173,7 @@ sequenceDiagram
 - **Config** duy nhất qua `libs.common.config.settings` — không đọc `os.environ` trực tiếp (vd `ATS_PASS_THRESHOLD`, `ATS_MAX_ATTEMPTS`).
 - Mọi service đều expose `GET /health`.
 - **`scraper-service` sở hữu bảng `jobs`**: (1) **API đồng bộ** `POST /jobs/search` (cào theo tiêu chí → trả jobs) và `POST /jobs/select` (publish job user chọn vào `cv.requested`); nó là **producer** của queue `cv.requested`.
-- **`ats-agent-service` sở hữu bảng `ats_reports`** và đảm nhiệm: (1) **consumer** nghe `cv.generated` → chấm điểm + cover letter, ghi report (score, breakdown, keywords, cover letter); cập nhật `applications.generation_status`: PASS → `completed`, dưới ngưỡng & còn lượt → republish `cv.requested` (attempt+1, kèm weaknesses/advice), hết lượt → `needs_review`; (2) **read API** `GET /reports`. ats **không** ghi vào `cv_generations`.
+- **`ats-agent-service` sở hữu bảng `ats_reports`** và đảm nhiệm: (1) **consumer** nghe `cv.generated` → chấm điểm + cover letter, ghi report (score, breakdown, keywords, cover letter); cập nhật `applications.generation_status`: PASS → `completed`, dưới ngưỡng & còn lượt → republish `cv.requested` (attempt+1, kèm weaknesses/advice), hết lượt → `needs_review`; (2) **read API** `GET /applications` (list + detail gộp cv + report). ats **không** ghi vào `cv_generations`.
 - **`cv-agent-service` sở hữu bảng `cv_generations`** và đảm nhiệm hai vai trò: (1) **consumer** nghe `cv.requested` → sinh CV bằng RAG (dùng feedback nếu là retry) → upsert `cv_generations` (`edit_status=draft`) → publish `cv.generated`; (2) **read/update API** (`GET/PUT /cvs/{id}`) phục vụ CV Editor (`edit_status` chuyển `edited` khi user lưu).
 - **`applications` là bảng orchestration dùng chung** (anchor row per user-job): nhiều service cùng cập nhật `generation_status` khi CV đi qua pipeline. Đây là **ngoại lệ có chủ đích** với nguyên tắc single-writer, đổi lại có một anchor trạng thái duy nhất để frontend poll. Các bảng nội dung (`cv_generations`, `ats_reports`) vẫn single-writer.
 - **`pdf-service` là stateless** — nhận `{template, cv_data}` qua HTTP, compile LaTeX (`.tex`) → PDF và stream về, **không lưu file**. PDF luôn tái tạo được từ `cv_generations.cv_json` + `profiles.preferred_template`.

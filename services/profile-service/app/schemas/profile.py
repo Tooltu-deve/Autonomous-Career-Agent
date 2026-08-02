@@ -81,9 +81,6 @@ class ProfileResponse(BaseModel):
 # ---- Preferences ----
 class PreferencesUpdate(BaseModel):
     target_role: str = Field(min_length=1)
-    expected_salary_min: Optional[int] = None
-    expected_salary_max: Optional[int] = None
-    currency: Optional[str] = "VND"
     preferred_locations: list[str] = []
     remote_preference: Optional[Literal["remote", "hybrid", "onsite"]] = None
 
@@ -94,8 +91,5 @@ class PreferencesResponse(BaseModel):
     id: uuid.UUID
     profile_id: uuid.UUID
     target_role: str
-    expected_salary_min: Optional[int] = None
-    expected_salary_max: Optional[int] = None
-    currency: Optional[str] = None
     preferred_locations: list[str] = []
     remote_preference: Optional[str] = None
