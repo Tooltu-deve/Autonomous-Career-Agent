@@ -1,5 +1,3 @@
-'use client';
-
 import { useCallback, useEffect, useState } from 'react';
 import { KEYS } from '@/lib/storage';
 import type { SessionUser } from '@/types/auth';

@@ -38,6 +38,8 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
         return;
       }
       login({ email: user.email, firstName: user.firstName, lastName: user.lastName });
+      // Set cookie so middleware (middleware.ts) can detect auth on server side
+      document.cookie = 'careernav_session=1; path=/; SameSite=Lax';
       const profileDone =
         typeof window !== 'undefined' ? window.localStorage.getItem(KEYS.profileDone) : null;
       const prefsDone =
