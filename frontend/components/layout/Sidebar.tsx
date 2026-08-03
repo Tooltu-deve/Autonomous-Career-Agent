@@ -81,13 +81,13 @@ export function Sidebar() {
           <div className={s.profileName} title={displayName}>
             {displayName}
           </div>
-          <div className={s.profileSub}>Tài khoản của bạn</div>
+          <div className={s.profileSub}>Your Account</div>
         </div>
         <button
           className={s.logoutBtn}
           onClick={handleLogout}
-          title="Đăng xuất"
-          aria-label="Đăng xuất"
+          title="Logout"
+          aria-label="Logout"
           type="button"
         >
           <LogoutIcon />

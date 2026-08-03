@@ -58,13 +58,13 @@ function formatDate(iso?: string) {
    StatusPill
 ───────────────────────────────────────────────────────────────── */
 const PILL_MAP: Record<string, { label: string; cls: string }> = {
-  not_applied: { label: 'Chưa apply', cls: 'pillNeutral' },
-  pending:     { label: 'Đang chờ',  cls: 'pillPending' },
-  under_review:{ label: 'Đang xét',  cls: 'pillReview' },
-  scheduled:   { label: 'Đã lên lịch', cls: 'pillScheduled' },
-  final_round: { label: 'Vòng cuối', cls: 'pillScheduled' },
+  not_applied: { label: 'Not applied', cls: 'pillNeutral' },
+  pending:     { label: 'Pending',  cls: 'pillPending' },
+  under_review:{ label: 'Under review',  cls: 'pillReview' },
+  scheduled:   { label: 'Scheduled', cls: 'pillScheduled' },
+  final_round: { label: 'Final round', cls: 'pillScheduled' },
   offer:       { label: 'Offer!',    cls: 'pillOffer' },
-  rejected:    { label: 'Từ chối',   cls: 'pillRejected' },
+  rejected:    { label: 'Rejected',   cls: 'pillRejected' },
 };
 
 function StatusPill({ status }: { status: string }) {
@@ -136,7 +136,7 @@ function PipelineJobCard({
       className={`pipe-job-card ${isOverlay ? 'pipe-job-card--overlay' : ''}`}
       {...attributes}
       {...listeners}
-      title="Kéo để di chuyển sang cột hoặc vị trí khác"
+      title="Drag to move to another column or position"
     >
       <div className="pipe-grip" style={{ cursor: isOverlay ? 'grabbing' : 'grab' }}>
         <GripIcon />
@@ -162,9 +162,9 @@ function PipelineJobCard({
    PipelineColumn (drop target)
 ───────────────────────────────────────────────────────────────── */
 const COL_META: Record<string, { label: string; dotCls: string }> = {
-  saved:       { label: 'Đã lưu',       dotCls: 'dot-saved' },
-  applied:     { label: 'Đã apply',     dotCls: 'dot-applied' },
-  interviewing:{ label: 'Phỏng vấn',   dotCls: 'dot-interview' },
+  saved:       { label: 'Saved',       dotCls: 'dot-saved' },
+  applied:     { label: 'Applied',     dotCls: 'dot-applied' },
+  interviewing:{ label: 'Interviewing',   dotCls: 'dot-interview' },
 };
 
 
@@ -196,7 +196,7 @@ function PipelineColumn({
 
       <SortableContext items={items.map((i) => i.id)} strategy={verticalListSortingStrategy}>
         {items.length === 0 && (
-          <div className="pipe-empty">Kéo card vào đây</div>
+          <div className="pipe-empty">Drag card here</div>
         )}
         {items.map((item) => (
           <PipelineJobCard key={item.id} item={item} />
@@ -247,8 +247,8 @@ function RecommendationItem({ rec }: { rec: Recommendation }) {
         <button
           className="rec-dismiss-btn"
           onClick={() => setDismissed(true)}
-          title="Ẩn gợi ý này"
-          aria-label="Ẩn gợi ý"
+          title="Dismiss recommendation"
+          aria-label="Dismiss recommendation"
           type="button"
         >
           ×
@@ -275,27 +275,27 @@ function NewTargetModal({ onClose }: { onClose: () => void }) {
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-box" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
-          <h3 className="modal-title">+ Thêm Target mới</h3>
+          <h3 className="modal-title">+ Add New Target</h3>
           <button className="modal-close" onClick={onClose} type="button">×</button>
         </div>
         {saved ? (
-          <div className="modal-success">✅ Đã lưu target! (mock — chưa gọi API)</div>
+          <div className="modal-success">✅ Target saved! (mock — no API call)</div>
         ) : (
           <>
             <label className="modal-label">
-              Tên vị trí / công ty
+              Role / Company Name
               <input
                 className="modal-input"
                 type="text"
-                placeholder="vd. Senior Backend Engineer tại Shopee"
+                placeholder="e.g. Senior Backend Engineer at Shopee"
                 value={value}
                 onChange={(e) => setValue(e.target.value)}
                 autoFocus
               />
             </label>
             <div className="modal-footer">
-              <button className="btn-secondary-sm" onClick={onClose} type="button">Huỷ</button>
-              <button className="btn-primary-sm" onClick={handleSave} type="button">Lưu target</button>
+              <button className="btn-secondary-sm" onClick={onClose} type="button">Cancel</button>
+              <button className="btn-primary-sm" onClick={handleSave} type="button">Save target</button>
             </div>
           </>
         )}
@@ -313,7 +313,7 @@ export default function DashboardPage() {
   const [showModal, setShowModal] = useState(false);
   const [activeItem, setActiveItem] = useState<PipelineItem | null>(null);
 
-  const firstName = session?.firstName ?? 'bạn';
+  const firstName = session?.firstName ?? 'there';
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
@@ -419,9 +419,9 @@ export default function DashboardPage() {
       {/* Page Header */}
       <div className="dash-page-header">
         <div>
-          <h1 className="dash-h1">Chào trở lại, {firstName} 👋</h1>
+          <h1 className="dash-h1">Welcome back, {firstName} 👋</h1>
           <p className="dash-subtitle">
-            Theo dõi career targets của bạn — đây là tổng quan hôm nay.
+            Track your career targets — here is today&apos;s overview.
           </p>
         </div>
         <button
@@ -435,7 +435,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Metrics */}
-      <section className="metrics" aria-label="Tổng quan số liệu">
+      <section className="metrics" aria-label="Metrics Overview">
         <MetricCard
           label="Avg ATS Score"
           value={`${MOCK_STATS.avgAtsScore}%`}
@@ -450,13 +450,13 @@ export default function DashboardPage() {
           iconVariant="blue"
         />
         <MetricCard
-          label="Đã ứng tuyển"
+          label="Applied"
           value={totalApps}
           icon={<InboxIcon />}
           iconVariant="purple"
         />
         <MetricCard
-          label="Phỏng vấn"
+          label="Interviewing"
           value={pipeline.interviewing.length}
           icon={<CalendarIcon />}
           iconVariant="yellow"
@@ -467,7 +467,7 @@ export default function DashboardPage() {
       <section className="dash-section" aria-label="Application Pipeline">
         <div className="section-head">
           <h2 className="section-title">Active Application Pipeline</h2>
-          <span className="section-badge">Kéo thả để di chuyển</span>
+          <span className="section-badge">Drag & drop to move</span>
         </div>
         <DndContext
           sensors={sensors}
@@ -495,7 +495,7 @@ export default function DashboardPage() {
       <section className="dash-section" aria-label="AI Recommendations">
         <div className="section-head">
           <h2 className="section-title">AI Agent Recommendations</h2>
-          <span className="section-hint">Mock — chưa kết nối backend</span>
+          <span className="section-hint">Mock — backend not connected</span>
         </div>
         <div className="rec-panel">
           {MOCK_RECOMMENDATIONS.map((rec) => (

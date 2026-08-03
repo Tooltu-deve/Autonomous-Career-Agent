@@ -44,21 +44,21 @@ export function RegisterForm({
     const passwordValid = isValidPassword(form.password);
 
     setErrors({
-      firstName: fnValid ? undefined : 'Bắt buộc.',
-      lastName: lnValid ? undefined : 'Bắt buộc.',
-      email: emailValid ? undefined : 'Vui lòng nhập email hợp lệ.',
-      password: passwordValid ? undefined : 'Mật khẩu phải có ít nhất 8 ký tự.',
+      firstName: fnValid ? undefined : 'Required.',
+      lastName: lnValid ? undefined : 'Required.',
+      email: emailValid ? undefined : 'Please enter a valid email.',
+      password: passwordValid ? undefined : 'Password must be at least 8 characters.',
     });
 
     if (!form.terms) {
-      setServerError('Bạn cần đồng ý với Điều khoản Dịch vụ để tiếp tục.');
+      setServerError('You must agree to the Terms of Service to continue.');
       return;
     }
     if (!fnValid || !lnValid || !emailValid || !passwordValid) return;
 
     if (emailExists(form.email.trim().toLowerCase())) {
-      setErrors((p) => ({ ...p, email: 'Email này đã được đăng ký. Hãy thử đăng nhập.' }));
-      setServerError('Email này đã được đăng ký. Hãy thử đăng nhập.');
+      setErrors((p) => ({ ...p, email: 'This email is already registered. Try logging in.' }));
+      setServerError('This email is already registered. Try logging in.');
       return;
     }
 
@@ -80,15 +80,15 @@ export function RegisterForm({
 
   return (
     <div className={s.panel}>
-      <div className={s['form-title']}>Tạo tài khoản</div>
-      <div className={s['form-sub']}>Miễn phí mãi mãi — không cần thẻ tín dụng.</div>
+      <div className={s['form-title']}>Create an account</div>
+      <div className={s['form-sub']}>Free forever — no credit card required.</div>
 
       {success && (
         <div className={s['server-success']}>
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <polyline points="20 6 9 17 4 12" />
           </svg>
-          Đăng ký thành công! Đang chuyển sang trang đăng nhập…
+          Registration successful! Redirecting to login…
         </div>
       )}
 
@@ -96,8 +96,8 @@ export function RegisterForm({
         <div className={s['name-row']}>
           <TextField
             id="r-firstname"
-            label="Tên"
-            placeholder="Văn A"
+            label="First Name"
+            placeholder="John"
             autoComplete="given-name"
             value={form.firstName}
             onChange={(v) => { set({ firstName: v }); setErrors((e) => ({ ...e, firstName: undefined })); }}
@@ -106,8 +106,8 @@ export function RegisterForm({
           />
           <TextField
             id="r-lastname"
-            label="Họ"
-            placeholder="Nguyễn"
+            label="Last Name"
+            placeholder="Doe"
             autoComplete="family-name"
             value={form.lastName}
             onChange={(v) => { set({ lastName: v }); setErrors((e) => ({ ...e, lastName: undefined })); }}
@@ -130,9 +130,9 @@ export function RegisterForm({
 
         <TextField
           id="r-password"
-          label="Mật khẩu"
+          label="Password"
           type="password"
-          placeholder="Ít nhất 8 ký tự"
+          placeholder="At least 8 characters"
           autoComplete="new-password"
           value={form.password}
           onChange={(v) => { set({ password: v }); setErrors((e) => ({ ...e, password: undefined })); }}
@@ -148,7 +148,7 @@ export function RegisterForm({
             onChange={(e) => set({ terms: e.target.checked })}
           />
           <label className={s['check-label']} htmlFor="r-terms">
-            Tôi đồng ý với <a href="#">Điều khoản Dịch vụ</a> và <a href="#">Chính sách Bảo mật</a>.
+            I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
           </label>
         </div>
 
@@ -164,12 +164,12 @@ export function RegisterForm({
         )}
 
         <button className={s['btn-submit']} type="submit" disabled={submitting || success}>
-          {submitting ? 'Đang tạo tài khoản…' : 'Tạo tài khoản miễn phí →'}
+          {submitting ? 'Creating account…' : 'Create free account →'}
         </button>
       </form>
 
       <div className={s['switch-row']}>
-        Đã có tài khoản?{' '}
+        Already have an account?{' '}
         <a
           href="#"
           onClick={(e) => {
@@ -177,13 +177,13 @@ export function RegisterForm({
             onSwitchToLogin();
           }}
         >
-          Đăng nhập
+          Log in
         </a>
       </div>
 
       <div className={s['divider']}>
         <div className={s['divider-line']}></div>
-        <span>hoặc tiếp tục với</span>
+        <span>or continue with</span>
         <div className={s['divider-line']}></div>
       </div>
 
@@ -191,12 +191,12 @@ export function RegisterForm({
         <button
           className={s['btn-oauth']}
           type="button"
-          onClick={() => alert('Đăng nhập với Google — (demo, tính năng OAuth đang phát triển)')}
+          onClick={() => alert('Sign up with Google — (demo, OAuth feature in development)')}
         >
           <div className={s['oauth-icon']}>
             <GoogleIcon />
           </div>
-          Đăng ký với Google
+          Sign up with Google
         </button>
       </div>
     </div>
