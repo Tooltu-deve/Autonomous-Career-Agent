@@ -25,7 +25,7 @@ export default function JobRadar() {
     setIsScanning(true);
     setTimeout(() => {
       setIsScanning(false);
-      triggerToast('✓ Đã quét 24 nguồn việc làm mới. Tìm thấy 2 công việc có độ khớp > 85%!');
+      triggerToast('✓ Scanned 24 new job sources. Found 2 jobs with match > 85%!');
     }, 2200);
   };
 
@@ -35,7 +35,7 @@ export default function JobRadar() {
       prev.map(j => {
         if (j.id === id) {
           const nextSaved = !j.isSaved;
-          triggerToast(nextSaved ? '✓ Đã lưu vị trí mục tiêu' : 'Đã bỏ lưu mục tiêu');
+          triggerToast(nextSaved ? '✓ Target position saved' : 'Target removed from saved');
           return { ...j, isSaved: nextSaved };
         }
         return j;
@@ -57,11 +57,11 @@ export default function JobRadar() {
         return j;
       })
     );
-    triggerToast(`✓ Đã thêm "${skill}" vào Master Profile`);
+    triggerToast(`✓ Added "${skill}" to Master Profile`);
   };
 
   const tailorCV = (jobTitle: string) => {
-    triggerToast(`⚡ Đang kích hoạt AI Agent tạo CV Tailored cho "${jobTitle}"…`);
+    triggerToast(`⚡ Activating AI Agent to generate Tailored CV for "${jobTitle}"…`);
   };
 
   // Filter & Sort Logic
@@ -111,10 +111,10 @@ export default function JobRadar() {
         <header className="top-header">
           <div className="top-header-info">
             <h1>
-              <span className="live-dot" title="Hệ thống đang hoạt động realtime"></span>
+              <span className="live-dot" title="System is running in realtime"></span>
               Job Radar
             </h1>
-            <p>Agent quét và ghép nối vị trí tuyển dụng với Master Profile của bạn theo thời gian thực.</p>
+            <p>Agent scans and matches job listings against your Master Profile in real time.</p>
           </div>
           <div className="top-actions">
             <Link href="/profile-preferences" className="btn-secondary">
@@ -122,7 +122,7 @@ export default function JobRadar() {
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
               </svg>
-              Thiết lập radar
+              Radar Settings
             </Link>
             <button
               className={`btn-primary ${isScanning ? 'scanning' : ''}`}
@@ -131,7 +131,7 @@ export default function JobRadar() {
               <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
               </svg>
-              {isScanning ? 'Đang quét...' : 'Quét Job Mới'}
+              {isScanning ? 'Scanning...' : 'Scan New Jobs'}
             </button>
           </div>
         </header>
@@ -152,8 +152,8 @@ export default function JobRadar() {
               </svg>
             </div>
             <div className="stat-info">
-              <div className="stat-val">{stats.total} Job</div>
-              <div className="stat-lbl">Phù hợp trên Radar</div>
+              <div className="stat-val">{stats.total} Jobs</div>
+              <div className="stat-lbl">Matched on Radar</div>
             </div>
           </div>
 
@@ -164,8 +164,8 @@ export default function JobRadar() {
               </svg>
             </div>
             <div className="stat-info">
-              <div className="stat-val">{stats.savedCount} Mục tiêu</div>
-              <div className="stat-lbl">Đã lưu theo dõi</div>
+              <div className="stat-val">{stats.savedCount} Saved</div>
+              <div className="stat-lbl">Tracked targets</div>
             </div>
           </div>
 
@@ -177,8 +177,8 @@ export default function JobRadar() {
               </svg>
             </div>
             <div className="stat-info">
-              <div className="stat-val">{stats.appliedCount} Đã nộp</div>
-              <div className="stat-lbl">CV đã tailored</div>
+              <div className="stat-val">{stats.appliedCount} Applied</div>
+              <div className="stat-lbl">Tailored CVs sent</div>
             </div>
           </div>
         </div>
@@ -195,7 +195,7 @@ export default function JobRadar() {
                 </svg>
                 <input
                   type="text"
-                  placeholder="Tìm theo vị trí, công ty, kỹ năng..."
+                  placeholder="Search by role, company, skill..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                 />
@@ -206,19 +206,19 @@ export default function JobRadar() {
                   className={`tab-chip ${activeFilter === 'all' ? 'active' : ''}`}
                   onClick={() => setActiveFilter('all')}
                 >
-                  Tất cả ({jobs.length})
+                  All ({jobs.length})
                 </button>
                 <button
                   className={`tab-chip ${activeFilter === 'saved' ? 'active' : ''}`}
                   onClick={() => setActiveFilter('saved')}
                 >
-                  Đã lưu ({jobs.filter(j => j.isSaved).length})
+                  Saved ({jobs.filter(j => j.isSaved).length})
                 </button>
                 <button
                   className={`tab-chip ${activeFilter === 'applied' ? 'active' : ''}`}
                   onClick={() => setActiveFilter('applied')}
                 >
-                  Đã nộp ({jobs.filter(j => j.stage === 'applied' || j.stage === 'interview').length})
+                  Applied ({jobs.filter(j => j.stage === 'applied' || j.stage === 'interview').length})
                 </button>
               </div>
             </div>
@@ -227,7 +227,7 @@ export default function JobRadar() {
             <div className="cards-scroll-container">
               {filteredJobs.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--ink-subtle)', fontSize: '13px' }}>
-                  Không tìm thấy công việc phù hợp với tiêu chí của bạn.
+                  No jobs found matching your criteria.
                 </div>
               ) : (
                 filteredJobs.map(job => {
@@ -256,11 +256,11 @@ export default function JobRadar() {
                       </div>
 
                       <div className="card-footer">
-                        {job.stage === 'saved' && <span className="status-tag st-saved">Mục tiêu lưu</span>}
-                        {job.stage === 'applied' && <span className="status-tag st-applied">Đã ứng tuyển</span>}
-                        {job.stage === 'interview' && <span className="status-tag st-interview">Vào Phỏng vấn</span>}
+                        {job.stage === 'saved' && <span className="status-tag st-saved">Saved target</span>}
+                        {job.stage === 'applied' && <span className="status-tag st-applied">Applied</span>}
+                        {job.stage === 'interview' && <span className="status-tag st-interview">Interviewing</span>}
                         {job.stage === 'none' && <span className="time-ago">{job.postedAgo}</span>}
-                        <span className="time-ago">Hạn còn {job.deadlineDays} ngày</span>
+                        <span className="time-ago">{job.deadlineDays} days left</span>
                       </div>
                     </div>
                   );
@@ -311,7 +311,7 @@ export default function JobRadar() {
                       <line x1="12" y1="18" x2="12" y2="12"></line>
                       <line x1="9" y1="15" x2="15" y2="15"></line>
                     </svg>
-                    Tạo CV Tailored cho vị trí này
+                     Generate Tailored CV for this role
                   </button>
 
                   <button
@@ -321,7 +321,7 @@ export default function JobRadar() {
                     <svg viewBox="0 0 24 24" fill={selectedJob.isSaved ? 'currentColor' : 'none'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
                     </svg>
-                    {selectedJob.isSaved ? 'Đã lưu mục tiêu' : 'Lưu mục tiêu'}
+                     {selectedJob.isSaved ? 'Saved' : 'Save target'}
                   </button>
                 </div>
               </div>
@@ -332,13 +332,13 @@ export default function JobRadar() {
                   className={`d-tab ${detailTab === 'desc' ? 'active' : ''}`}
                   onClick={() => setDetailTab('desc')}
                 >
-                  Mô tả công việc
+                  Job Description
                 </button>
                 <button
                   className={`d-tab ${detailTab === 'preview' ? 'active' : ''}`}
                   onClick={() => setDetailTab('preview')}
                 >
-                  Xem trước CV Tailored
+                  Tailored CV Preview
                 </button>
               </div>
 
@@ -351,7 +351,7 @@ export default function JobRadar() {
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                         <polyline points="14 2 14 8 20 8"></polyline>
                       </svg>
-                      Chi tiết tuyển dụng từ nhà tuyển dụng
+                      Job details from the employer
                     </div>
                     <div
                       className="block-text"
@@ -368,7 +368,7 @@ export default function JobRadar() {
                         <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                         </svg>
-                        AI Executive Summary được tạo riêng cho {selectedJob.company}
+                        AI Executive Summary generated specifically for {selectedJob.company}
                       </div>
                       <div className="ai-summary-highlight">
                         &quot;{selectedJob.aiSummary}&quot;
@@ -380,7 +380,7 @@ export default function JobRadar() {
             </div>
           ) : (
             <div className="detail-pane" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-subtle)' }}>
-              Chọn một công việc để xem chi tiết
+              Select a job to view details
             </div>
           )}
         </div>

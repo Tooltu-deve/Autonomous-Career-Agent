@@ -13,37 +13,37 @@ export const INITIAL_JOBS: Job[] = [
     tagline: 'Internet & Technology',
     logoText: 'VNG',
     logoBg: 'linear-gradient(135deg, #F06A6A, #E5544F)',
-    location: 'TP. Hồ Chí Minh',
-    address: '182 Lê Đại Hành, Quận 11, TP.HCM',
-    salary: '30M – 45M ₫',
+    location: 'Ho Chi Minh City',
+    address: '182 Le Dai Hanh, District 11, HCMC',
+    salary: '$1,200 – $1,800 / mo',
     format: 'hybrid',
     match: 94,
     stage: 'saved',
     isSaved: true,
-    postedAgo: '1 giờ trước',
+    postedAgo: '1 hour ago',
     deadlineDays: 14,
     tags: ['Python', 'LangChain', 'FastAPI', 'Agentic AI'],
     skills: ['Python', 'LangChain', 'FastAPI', 'Docker', 'PostgreSQL', 'Vector DB'],
     matchedSkills: ['Python', 'LangChain', 'FastAPI', 'Git', 'REST API'],
     missingSkills: ['Docker', 'VectorDB (Qdrant)'],
     description: `
-      <p>VNG đang tìm kiếm <strong>AI Developer / LLM Engineer</strong> nhiệt huyết để gia nhập đội ngũ R&D AI, trực tiếp xây dựng hệ thống AI Agent thế hệ mới.</p>
+      <p>VNG is seeking a passionate <strong>AI Developer / LLM Engineer</strong> to join the AI R&D team and directly build next-generation AI Agent systems.</p>
       <br/>
-      <h4>Trách nhiệm công việc:</h4>
+      <h4>Responsibilities:</h4>
       <ul>
-        <li>Nghiên cứu và triển khai các mô hình Large Language Models (LLMs), RAG &amp; Agentic Workflows.</li>
-        <li>Xây dựng Backend REST API hiệu năng cao với Python &amp; FastAPI.</li>
-        <li>Tối ưu hóa vector search và lưu trữ tri thức doanh nghiệp.</li>
+        <li>Research and implement Large Language Models (LLMs), RAG &amp; Agentic Workflows.</li>
+        <li>Build high-performance REST APIs with Python &amp; FastAPI.</li>
+        <li>Optimize vector search and enterprise knowledge storage.</li>
       </ul>
       <br/>
-      <h4>Yêu cầu ứng viên:</h4>
+      <h4>Requirements:</h4>
       <ul>
-        <li>Tốt nghiệp hoặc sinh viên năm cuối chuyên ngành Khoa học Máy tính / CNTT.</li>
-        <li>Thành thạo Python, kinh nghiệm với LangChain/LlamaIndex hoặc các AI Frameworks.</li>
-        <li>Tư duy thuật toán tốt, chủ động học hỏi công nghệ mới.</li>
+        <li>Graduated or final-year student in Computer Science / IT.</li>
+        <li>Proficient in Python, experience with LangChain/LlamaIndex or AI Frameworks.</li>
+        <li>Strong algorithmic thinking, proactive in learning new technologies.</li>
       </ul>
     `,
-    aiSummary: 'Lập trình viên Computer Science có kinh nghiệm thiết kế AI Agentic Workflows và làm việc với Python, FastAPI, LangChain. Sẵn sàng đóng góp vào hệ thống AI Agent tại VNG Corporation.',
+    aiSummary: 'Computer Science developer experienced in designing AI Agentic Workflows and working with Python, FastAPI, and LangChain. Ready to contribute to VNG Corporation\'s AI Agent systems.',
   },
   {
     id: 2,
@@ -52,29 +52,29 @@ export const INITIAL_JOBS: Job[] = [
     tagline: 'Fintech & Digital Wallet',
     logoText: 'MM',
     logoBg: 'linear-gradient(135deg, #A50064, #D82D8B)',
-    location: 'TP. Hồ Chí Minh',
-    address: 'MoMo Tower, Cộng Hòa, Tân Bình, TP.HCM',
-    salary: '25M – 38M ₫',
+    location: 'Ho Chi Minh City',
+    address: 'MoMo Tower, Cong Hoa, Tan Binh, HCMC',
+    salary: '$1,000 – $1,500 / mo',
     format: 'onsite',
     match: 89,
     stage: 'applied',
     isSaved: false,
-    postedAgo: '3 giờ trước',
+    postedAgo: '3 hours ago',
     deadlineDays: 10,
     tags: ['Python', 'FastAPI', 'Microservices', 'PostgreSQL'],
     skills: ['Python', 'FastAPI', 'PostgreSQL', 'Redis', 'Kafka', 'Docker'],
     matchedSkills: ['Python', 'FastAPI', 'PostgreSQL', 'Git'],
     missingSkills: ['Redis Cache', 'Kafka'],
     description: `
-      <p>MoMo tuyển dụng <strong>Backend Engineer</strong> tham gia xây dựng hệ thống microservices có độ tin cậy và hiệu năng cao cho hàng triệu người dùng.</p>
+      <p>MoMo is hiring a <strong>Backend Engineer</strong> to help build highly reliable, high-performance microservices for millions of users.</p>
       <br/>
-      <h4>Trách nhiệm công việc:</h4>
+      <h4>Responsibilities:</h4>
       <ul>
-        <li>Phát triển các tính năng thanh toán cốt lõi sử dụng Python &amp; FastAPI.</li>
-        <li>Thiết kế cơ sở dữ liệu PostgreSQL chuẩn hóa, xử lý giao dịch tải cao.</li>
+        <li>Develop core payment features using Python &amp; FastAPI.</li>
+        <li>Design normalized PostgreSQL databases capable of handling high-load transactions.</li>
       </ul>
     `,
-    aiSummary: 'Sinh viên Computer Science có nền tảng Python vững chắc, kinh nghiệm xây dựng REST API bằng FastAPI và làm việc với PostgreSQL.',
+    aiSummary: 'Computer Science student with a solid Python foundation, experienced in building REST APIs with FastAPI and working with PostgreSQL.',
   },
   {
     id: 3,
@@ -84,22 +84,22 @@ export const INITIAL_JOBS: Job[] = [
     logoText: 'TK',
     logoBg: 'linear-gradient(135deg, #1A94FF, #0D5CB6)',
     location: 'Remote',
-    address: 'Làm việc từ xa — toàn quốc',
-    salary: '20M – 30M ₫',
+    address: 'Fully remote — nationwide',
+    salary: '$800 – $1,200 / mo',
     format: 'remote',
     match: 82,
     stage: 'none',
     isSaved: true,
-    postedAgo: '5 giờ trước',
+    postedAgo: '5 hours ago',
     deadlineDays: 8,
     tags: ['SQL', 'Python', 'Power BI', 'A/B Testing'],
     skills: ['SQL', 'Python', 'Power BI', 'Tableau', 'BigQuery'],
     matchedSkills: ['SQL', 'Python', 'Power BI'],
     missingSkills: ['Tableau', 'BigQuery'],
     description: `
-      <p>Tiki đang mở rộng đội ngũ Data &amp; Product Analytics. Bạn sẽ biến dữ liệu thô thành các quyết định kinh doanh đột phá.</p>
+      <p>Tiki is expanding its Data &amp; Product Analytics team. You will turn raw data into breakthrough business decisions.</p>
     `,
-    aiSummary: 'Có kinh nghiệm truy vấn SQL và trực quan hóa dữ liệu bằng Power BI, cùng nền tảng Python cho phân tích.',
+    aiSummary: 'Experienced in SQL querying and data visualization with Power BI, with a Python foundation for analysis.',
   },
   {
     id: 4,
@@ -108,22 +108,22 @@ export const INITIAL_JOBS: Job[] = [
     tagline: 'AI & Software Outsourcing',
     logoText: 'FPT',
     logoBg: 'linear-gradient(135deg, #F36F21, #BA4A00)',
-    location: 'TP. Hồ Chí Minh',
-    address: 'Lô T2, Khu Công nghệ cao, TP. Thủ Đức, TP.HCM',
-    salary: '12M – 18M ₫',
+    location: 'Ho Chi Minh City',
+    address: 'Lot T2, Hi-Tech Park, Thu Duc City, HCMC',
+    salary: '$500 – $750 / mo',
     format: 'hybrid',
     match: 95,
     stage: 'interview',
     isSaved: false,
-    postedAgo: '1 ngày trước',
+    postedAgo: '1 day ago',
     deadlineDays: 20,
     tags: ['Python', 'C++', 'PyTorch', 'Computer Vision'],
     skills: ['Python', 'C++', 'PyTorch', 'OpenCV', 'Linear Algebra'],
     matchedSkills: ['Python', 'C++', 'AI / Algorithm', 'First-Order Logic'],
     missingSkills: ['OpenCV'],
     description: `
-      <p>FPT Software tuyển dụng <strong>ML Intern / Fresher</strong> xuất sắc, làm việc trực tiếp với các chuyên gia AI hàng đầu.</p>
+      <p>FPT Software is hiring outstanding <strong>ML Intern / Freshers</strong> to work directly with leading AI experts.</p>
     `,
-    aiSummary: 'Sinh viên năm cuối ngành Khoa học Máy tính / Khoa học Dữ liệu có nền tảng Toán, Thuật toán và Lập trình C++/Python vững chắc. Thành thạo PyTorch.',
+    aiSummary: 'Final-year Computer Science / Data Science student with a solid foundation in Mathematics, Algorithms, and C++/Python programming. Proficient with PyTorch.',
   },
 ];
