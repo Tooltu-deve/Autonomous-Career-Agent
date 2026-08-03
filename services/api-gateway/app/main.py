@@ -10,7 +10,7 @@ from app.api.proxy import router as proxy_router
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.http_client = httpx.AsyncClient(timeout=30.0)
+    app.state.http_client = httpx.AsyncClient(timeout=httpx.Timeout(5.0, read=120.0))
     yield
     await app.state.http_client.aclose()
 

@@ -8,7 +8,7 @@ ngoại lệ single-writer có chủ đích (xem ARCHITECTURE.md).
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Integer, String, Uuid, func
+from sqlalchemy import DateTime, Enum, Integer, String, Uuid, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.db import Base
@@ -20,7 +20,19 @@ class ApplicationORM(Base):
     id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
     user_id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True))
     job_id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True))
-    generation_status: Mapped[str] = mapped_column(String)
+    generation_status: Mapped[str] = mapped_column(
+        Enum(
+            "saved",
+            "cv_queued",
+            "cv_generating",
+            "cv_generated",
+            "ats_scoring",
+            "completed",
+            "needs_review",
+            "failed",
+            name="generation_status",
+        )
+    )
     pipeline_stage: Mapped[str] = mapped_column(String, default="saved")
     attempt: Mapped[int] = mapped_column(Integer, default=1)
     created_at: Mapped[datetime] = mapped_column(

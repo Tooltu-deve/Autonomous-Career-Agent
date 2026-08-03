@@ -51,5 +51,5 @@ def update_cv(
     db: Session = Depends(get_db),
 ) -> CvResponse:
     cv = _get_owned_cv(db, cv_id, user_id)
-    updated = cv_repository.update_cv(db, cv, body.cv_json.model_dump())
+    updated = cv_repository.update_cv(db, cv, body.cv_json.model_dump(mode="json"))
     return CvResponse.model_validate(updated)
