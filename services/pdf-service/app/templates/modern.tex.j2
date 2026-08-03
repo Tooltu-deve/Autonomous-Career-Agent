@@ -59,9 +59,6 @@
 \BLOCK{ if hdr.linkedin_url }{\color{white!88}\small \textbf{LinkedIn}\\ \VAR{hdr.linkedin_url | tex}}\par\vspace{6pt}\BLOCK{ endif }
 \BLOCK{ endif }
 
-\sidebarheading{SUMMARY}
-{\color{white!88}\small \VAR{cv.summary | tex}}\par
-
 \BLOCK{ if cv.skills }
 \sidebarheading{SKILLS}
 \BLOCK{ for s in cv.skills }
@@ -75,6 +72,11 @@
 \switchcolumn[1]
 \vspace*{24pt}
 \rightskip=16pt
+
+\BLOCK{ if cv.summary }
+\cvsection{SUMMARY}
+{\small \VAR{cv.summary | tex}}\par
+\BLOCK{ endif }
 
 \BLOCK{ if cv.experience }
 \cvsection{WORK EXPERIENCE}
