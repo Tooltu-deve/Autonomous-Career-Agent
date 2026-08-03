@@ -5,6 +5,5 @@ pydantic-settings
 pika
 anthropic
 openai
-reportlab
 psycopg[binary]
 sqlalchemy

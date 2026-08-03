@@ -82,7 +82,10 @@ def generate(db: Session, req: CvRequest) -> uuid.UUID | None:
         return None
 
     cv = cv_repository.upsert_cv_generation(
-        db, application.id, content.model_dump(), model_used=settings.llm_model
+        db,
+        application.id,
+        content.model_dump(mode="json"),
+        model_used=settings.llm_model,
     )
     cv_repository.set_generation_status(db, application, "cv_generated")
 

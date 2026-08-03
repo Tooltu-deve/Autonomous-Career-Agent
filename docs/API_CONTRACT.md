@@ -208,6 +208,7 @@ Response `202`:
 }
 ```
 - **Idempotent:** đã có application cho `(user_id, job_id)` thì trả lại cái cũ, không tạo trùng.
+- **Retry:** application đang ở trạng thái terminal (`needs_review`/`failed`/`saved`) sẽ được reset (`cv_queued`, `attempt=1`) và chạy lại pipeline; đang chạy dở hoặc `completed` thì giữ nguyên, không publish lại.
 - Lỗi: `404` nếu `job_id` không tồn tại; `422` nếu `job_ids` rỗng.
 
 ### `GET /jobs?page=1&limit=20` → `200`
@@ -353,15 +354,29 @@ cập nhật + `edit_status="edited"`. Sai schema → `422`.
 Do **pdf-service** sở hữu (stateless — render LaTeX, **không lưu file**).
 
 ### `POST /pdf/export` → `200`
-User bấm "Xuất PDF". FE gửi `template` (đọc từ `preferred_template` qua `GET /profile`) + `cv_data`.
-Service render template LaTeX + data → compile PDF → stream về.
+User bấm "Xuất PDF". FE gửi `template` + `cv_data` + `header`. FE gộp từ `GET /profile`:
+`template` = `preferred_template`; `cv_data` = `cv_json` (từ `GET /cvs/{id}`); `header` = thông tin
+cá nhân cho phần đầu CV. Service render template LaTeX + data → compile PDF → stream về.
 Request:
 ```json
 {
   "template": "modern",
-  "cv_data": { "...": "cv_json của bản CV cuối" }
+  "cv_data": { "...": "cv_json của bản CV cuối" },
+  "header": {
+    "full_name": "Nguyen Van A",
+    "email": "a@example.com",
+    "phone": "+84...",
+    "headline": "Backend Engineer",
+    "location": "Ho Chi Minh City",
+    "github_url": "github.com/...",
+    "linkedin_url": "linkedin.com/in/..."
+  }
 }
 ```
+> `header` và mọi field bên trong đều **optional** — profile chưa điền field nào thì template bỏ
+> field đó. `cv_data` chỉ chứa nội dung CV (summary/experience/education/skills); thông tin cá nhân
+> tách sang `header` vì không thuộc `cv_json`.
+
 Response `200`: `Content-Type: application/pdf` (binary stream, không JSON).
 - `template` phải thuộc whitelist `"classic" | "modern" | "academic"` — sai → `400` (chống path injection).
 - Lỗi/treo khi compile LaTeX → `422`.

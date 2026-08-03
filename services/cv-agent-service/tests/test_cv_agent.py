@@ -28,7 +28,9 @@ JOB_ID = uuid.uuid4()
 _VALID_CV = json.dumps(
     {
         "summary": "Backend engineer 3 năm",
-        "experience": [{"title": "Dev", "organization": "ACME"}],
+        "experience": [
+            {"title": "Dev", "organization": "ACME", "start_date": "2023-01-01"}
+        ],
         "education": [],
         "skills": ["python"],
     }

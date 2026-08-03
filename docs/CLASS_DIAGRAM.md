@@ -204,20 +204,21 @@ classDiagram
 
 ## 6. ats-agent-service
 
-Consumer `cv.generated`: chấm điểm + cover letter, quyết định PASS/FAIL/NEEDS_REVIEW; FAIL → republish `cv.requested`. Read API `/reports`. Sở hữu bảng `ats_reports`.
+Consumer `cv.generated`: chấm điểm + cover letter, quyết định PASS/FAIL/NEEDS_REVIEW; FAIL → republish `cv.requested`. Read API `/applications`. Sở hữu bảng `ats_reports`.
 
 ```mermaid
 classDiagram
     class CvGeneratedConsumer {
         +on_message(CvGenerated)
     }
-    class ReportsRouter {
-        +get_reports()
+    class ApplicationsRouter {
+        +list_applications()
+        +get_application()
     }
     class ATSAgentService {
         +process(GeneratedCV)
         +evaluate(score, attempt) generation_status
-        +list_reports(user_id)
+        +list_applications(user_id)
     }
     class ATSReportORM {
         <<ORM>>
@@ -226,7 +227,7 @@ classDiagram
         +cover_letter_text
     }
     CvGeneratedConsumer --> ATSAgentService
-    ReportsRouter --> ATSAgentService
+    ApplicationsRouter --> ATSAgentService
     ATSAgentService --> ATSReportORM
     ATSAgentService --> LLMClient
 ```

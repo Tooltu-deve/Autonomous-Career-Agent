@@ -11,7 +11,7 @@ ROUTES = [
     {"prefix": "/profile", "url": settings.profile_service_url, "auth": True},
     {"prefix": "/jobs", "url": settings.scraper_service_url, "auth": True},
     {"prefix": "/cvs", "url": settings.cv_service_url, "auth": True},
-    {"prefix": "/reports", "url": settings.ats_service_url, "auth": True},
+    {"prefix": "/applications", "url": settings.ats_service_url, "auth": True},
     {"prefix": "/pdf", "url": settings.pdf_service_url, "auth": True},
 ]
 

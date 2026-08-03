@@ -39,6 +39,10 @@ services:
     depends_on:
       - auth-service
       - profile-service
+      - scraper-service
+      - cv-agent-service
+      - ats-agent-service
+      - pdf-service
 
   auth-service:
     build:
@@ -64,8 +68,10 @@ services:
       dockerfile: services/scraper-service/Dockerfile
     env_file: .env
     depends_on:
-      - rabbitmq
-      - postgres
+      rabbitmq:
+        condition: service_started
+      postgres:
+        condition: service_healthy
 
   cv-agent-service:
     build:
@@ -73,8 +79,10 @@ services:
       dockerfile: services/cv-agent-service/Dockerfile
     env_file: .env
     depends_on:
-      - rabbitmq
-      - postgres
+      rabbitmq:
+        condition: service_started
+      postgres:
+        condition: service_healthy
 
   ats-agent-service:
     build:
@@ -82,8 +90,16 @@ services:
       dockerfile: services/ats-agent-service/Dockerfile
     env_file: .env
     depends_on:
-      - rabbitmq
-      - postgres
+      rabbitmq:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+
+  pdf-service:
+    build:
+      context: .
+      dockerfile: services/pdf-service/Dockerfile
+    env_file: .env
 
   frontend:
     build: ./frontend

@@ -119,9 +119,6 @@ class ProfilePreference(Base):
         unique=True,
     )
     target_role: Mapped[str] = mapped_column(String, nullable=False)
-    expected_salary_min: Mapped[int | None] = mapped_column(Integer)
-    expected_salary_max: Mapped[int | None] = mapped_column(Integer)
-    currency: Mapped[str | None] = mapped_column(String, default="VND")
     preferred_locations: Mapped[list[str] | None] = mapped_column(StringArray)
     remote_preference: Mapped[str | None] = mapped_column(String)
     created_at: Mapped[datetime] = mapped_column(

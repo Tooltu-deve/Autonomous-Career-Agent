@@ -100,9 +100,6 @@ def test_missing_user_id_header_422(client):
 def _put_prefs(client, **over):
     body = {
         "target_role": "Backend Engineer",
-        "expected_salary_min": 1500,
-        "expected_salary_max": 2500,
-        "currency": "USD",
         "preferred_locations": ["Ho Chi Minh City", "Remote"],
         "remote_preference": "hybrid",
     }
