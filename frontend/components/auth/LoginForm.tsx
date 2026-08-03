@@ -24,8 +24,8 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
     const emailValid = isValidEmail(form.email.trim());
     const passwordValid = form.password.length > 0;
     setErrors({
-      email: emailValid ? undefined : 'Vui lòng nhập email hợp lệ.',
-      password: passwordValid ? undefined : 'Vui lòng nhập mật khẩu.',
+      email: emailValid ? undefined : 'Please enter a valid email.',
+      password: passwordValid ? undefined : 'Please enter a password.',
     });
     if (!emailValid || !passwordValid) return;
 
@@ -34,10 +34,12 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
       const user = findUser(form.email.trim().toLowerCase(), form.password);
       setSubmitting(false);
       if (!user) {
-        setServerError('Email hoặc mật khẩu không đúng. Vui lòng thử lại.');
+        setServerError('Incorrect email or password. Please try again.');
         return;
       }
       login({ email: user.email, firstName: user.firstName, lastName: user.lastName });
+      // Set cookie so middleware (middleware.ts) can detect auth on server side
+      document.cookie = 'careernav_session=1; path=/; SameSite=Lax';
       const profileDone =
         typeof window !== 'undefined' ? window.localStorage.getItem(KEYS.profileDone) : null;
       const prefsDone =
@@ -54,14 +56,14 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
       return;
     }
     alert(
-      `Nếu email ${form.email.trim()} tồn tại, chúng tôi sẽ gửi link đặt lại mật khẩu.\n\n(demo — email chưa thực sự gửi)`,
+      `If the email ${form.email.trim()} exists, we will send a password reset link.\n\n(demo — email not actually sent)`,
     );
   };
 
   return (
     <div className={s.panel}>
-      <div className={s['form-title']}>Chào mừng trở lại</div>
-      <div className={s['form-sub']}>Đăng nhập để tiếp tục tìm việc của bạn.</div>
+      <div className={s['form-title']}>Welcome back</div>
+      <div className={s['form-sub']}>Log in to continue your job search.</div>
 
       <form onSubmit={handleSubmit} noValidate>
         <TextField
@@ -81,9 +83,9 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
         />
         <TextField
           id="l-password"
-          label="Mật khẩu"
+          label="Password"
           type="password"
-          placeholder="Mật khẩu của bạn"
+          placeholder="Your password"
           autoComplete="current-password"
           value={form.password}
           onChange={(v) => {
@@ -95,7 +97,7 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
           icon={<LockIcon />}
           hint={
             <button type="button" className={s['field-hint']} onClick={handleForgot}>
-              Quên mật khẩu?
+              Forgot password?
             </button>
           }
         />
@@ -112,12 +114,12 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
         )}
 
         <button className={s['btn-submit']} type="submit" disabled={submitting}>
-          {submitting ? 'Đang đăng nhập…' : 'Đăng nhập vào CareerNav'}
+          {submitting ? 'Logging in…' : 'Log in to CareerNav'}
         </button>
       </form>
 
       <div className={s['switch-row']}>
-        Chưa có tài khoản?{' '}
+        Don&apos;t have an account?{' '}
         <a
           href="#"
           onClick={(e) => {
@@ -125,13 +127,13 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
             onSwitchToRegister();
           }}
         >
-          Tạo tài khoản
+          Create an account
         </a>
       </div>
 
       <div className={s['divider']}>
         <div className={s['divider-line']}></div>
-        <span>hoặc tiếp tục với</span>
+        <span>or continue with</span>
         <div className={s['divider-line']}></div>
       </div>
 
@@ -139,12 +141,12 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
         <button
           className={s['btn-oauth']}
           type="button"
-          onClick={() => alert('Đăng nhập với Google — (demo, tính năng OAuth đang phát triển)')}
+          onClick={() => alert('Sign in with Google — (demo, OAuth feature in development)')}
         >
           <div className={s['oauth-icon']}>
             <GoogleIcon />
           </div>
-          Tiếp tục với Google
+          Continue with Google
         </button>
       </div>
     </div>

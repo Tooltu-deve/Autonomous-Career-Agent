@@ -6,6 +6,8 @@ import StarterKit from "@tiptap/starter-kit";
 import type { GeneratedCV, GeneratedCVContent } from "@/lib/mock/cv";
 import styles from "./cv-manager.module.css";
 
+type ExperienceEntry = GeneratedCVContent["experience"][number];
+
 type Props = {
   cv: GeneratedCV;
   onSave: (content: GeneratedCVContent, exportAfterSave: boolean, title: string) => void;
@@ -13,13 +15,21 @@ type Props = {
   error: string | null;
   notice: string | null;
 };
-const clone = (content: GeneratedCVContent) => ({
+
+const clone = (content: GeneratedCVContent): GeneratedCVContent => ({
   ...content,
   skills: [...content.skills],
   experience: content.experience.map((item) => ({
     ...item,
     bullets: [...item.bullets],
   })),
+});
+
+const emptyExperience = (): ExperienceEntry => ({
+  company: "",
+  role: "",
+  dates: "",
+  bullets: [""],
 });
 
 function TextEditor({
@@ -45,16 +55,39 @@ function TextEditor({
   return <EditorContent editor={editor} />;
 }
 
+/** Update a single experience entry at the given index, return new array */
+function updateExp(
+  experience: ExperienceEntry[],
+  index: number,
+  patch: Partial<ExperienceEntry>,
+): ExperienceEntry[] {
+  return experience.map((e, i) => (i === index ? { ...e, ...patch } : e));
+}
+
 export function CvEditor({ cv, onSave, onClose, error, notice }: Props) {
   const [draft, setDraft] = useState(() => clone(cv.cv_json.content));
   const [title, setTitle] = useState(cv.title);
+
   useEffect(() => setDraft(clone(cv.cv_json.content)), [cv]);
   useEffect(() => setTitle(cv.title), [cv]);
+
   const set = <K extends keyof GeneratedCVContent>(
     key: K,
     value: GeneratedCVContent[K],
   ) => setDraft((current) => ({ ...current, [key]: value }));
-  const experience = draft.experience[0];
+
+  const addExperience = () =>
+    setDraft((current) => ({
+      ...current,
+      experience: [...current.experience, emptyExperience()],
+    }));
+
+  const removeExperience = (index: number) =>
+    setDraft((current) => ({
+      ...current,
+      experience: current.experience.filter((_, i) => i !== index),
+    }));
+
   return (
     <>
       <header className={styles["cm-modal-header"]}>
@@ -74,7 +107,17 @@ export function CvEditor({ cv, onSave, onClose, error, notice }: Props) {
             onSave(draft, false, title);
           }}
         >
-          <label>CV title<input value={title} onChange={(event) => setTitle(event.target.value)} placeholder="e.g. Backend Engineer — MoMo" /></label>
+          {/* CV Title */}
+          <label>
+            CV title
+            <input
+              value={title}
+              onChange={(event) => setTitle(event.target.value)}
+              placeholder="e.g. Backend Engineer — MoMo"
+            />
+          </label>
+
+          {/* Basic Info */}
           <label>
             Name
             <input
@@ -111,57 +154,86 @@ export function CvEditor({ cv, onSave, onClose, error, notice }: Props) {
               onChange={(summary) => set("summary", summary)}
             />
           </label>
-          <fieldset>
-            <legend>Experience</legend>
-            <label>
-              Company
-              <input
-                value={experience.company}
-                onChange={(event) =>
-                  set("experience", [
-                    { ...experience, company: event.target.value },
-                  ])
-                }
-              />
-            </label>
-            <label>
-              Role
-              <input
-                value={experience.role}
-                onChange={(event) =>
-                  set("experience", [
-                    { ...experience, role: event.target.value },
-                  ])
-                }
-              />
-            </label>
-            <label>
-              Dates
-              <input
-                value={experience.dates}
-                onChange={(event) =>
-                  set("experience", [
-                    { ...experience, dates: event.target.value },
-                  ])
-                }
-              />
-            </label>
-            <label>
-              Bullet{" "}
-              <TextEditor
-                label="Experience bullet"
-                value={experience.bullets[0]}
-                onChange={(bullet) =>
-                  set("experience", [
-                    {
-                      ...experience,
-                      bullets: [bullet, ...experience.bullets.slice(1)],
-                    },
-                  ])
-                }
-              />
-            </label>
-          </fieldset>
+
+          {/* Experience — supports multiple entries */}
+          {draft.experience.map((exp, index) => (
+            <fieldset key={index} className={styles["cm-experience-fieldset"]}>
+              <legend>
+                Experience {draft.experience.length > 1 ? `#${index + 1}` : ""}
+                {draft.experience.length > 1 && (
+                  <button
+                    type="button"
+                    className={styles["cm-danger-sm"]}
+                    onClick={() => removeExperience(index)}
+                    aria-label={`Remove experience #${index + 1}`}
+                  >
+                    Remove
+                  </button>
+                )}
+              </legend>
+              <label>
+                Company
+                <input
+                  value={exp.company}
+                  onChange={(event) =>
+                    set(
+                      "experience",
+                      updateExp(draft.experience, index, { company: event.target.value }),
+                    )
+                  }
+                />
+              </label>
+              <label>
+                Role
+                <input
+                  value={exp.role}
+                  onChange={(event) =>
+                    set(
+                      "experience",
+                      updateExp(draft.experience, index, { role: event.target.value }),
+                    )
+                  }
+                />
+              </label>
+              <label>
+                Dates
+                <input
+                  value={exp.dates}
+                  onChange={(event) =>
+                    set(
+                      "experience",
+                      updateExp(draft.experience, index, { dates: event.target.value }),
+                    )
+                  }
+                />
+              </label>
+              <label>
+                Bullet{" "}
+                <TextEditor
+                  label={`Experience #${index + 1} bullet`}
+                  value={exp.bullets[0] ?? ""}
+                  onChange={(bullet) =>
+                    set(
+                      "experience",
+                      updateExp(draft.experience, index, {
+                        bullets: [bullet, ...exp.bullets.slice(1)],
+                      }),
+                    )
+                  }
+                />
+              </label>
+            </fieldset>
+          ))}
+
+          <button
+            type="button"
+            className={styles["cm-secondary"]}
+            onClick={addExperience}
+          >
+            + Add Experience
+          </button>
+
+          {/* Skills */}
           <label>
             Skills (comma-separated)
             <input
@@ -178,6 +250,8 @@ export function CvEditor({ cv, onSave, onClose, error, notice }: Props) {
             />
           </label>
         </form>
+
+        {/* Live Preview */}
         <article
           className={`${styles["cm-resume"]} ${styles["cm-live-preview"]}`}
         >
@@ -190,16 +264,18 @@ export function CvEditor({ cv, onSave, onClose, error, notice }: Props) {
             <h3>Summary</h3>
             <p>{draft.summary}</p>
           </section>
-          <section className={styles["cm-resume-section"]}>
-            <h3>Experience</h3>
-            <b>
-              {experience.role} — {experience.company}
-            </b>
-            <small>{experience.dates}</small>
-            {experience.bullets.map((bullet, index) => (
-              <p key={index}>• {bullet}</p>
-            ))}
-          </section>
+          {draft.experience.map((exp, index) => (
+            <section key={index} className={styles["cm-resume-section"]}>
+              <h3>{index === 0 ? "Experience" : ""}</h3>
+              <b>
+                {exp.role} — {exp.company}
+              </b>
+              <small>{exp.dates}</small>
+              {exp.bullets.map((bullet, bIdx) => (
+                <p key={bIdx}>• {bullet}</p>
+              ))}
+            </section>
+          ))}
           <section className={styles["cm-resume-section"]}>
             <h3>Skills</h3>
             <div className={styles["cm-skills"]}>

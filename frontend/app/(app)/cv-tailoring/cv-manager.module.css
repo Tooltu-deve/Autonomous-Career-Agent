@@ -687,3 +687,73 @@
 @media (prefers-reduced-motion: reduce) {
   .cm-cv-card, .cm-new-cv, .cm-overlay, .cm-modal { animation: none; }
 }
+
+/* ── Modal / Editor button classes ── */
+.cm-primary {
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: none;
+  background: var(--cm-primary);
+  color: #fff;
+  font: 600 13px inherit;
+  cursor: pointer;
+  transition: background 120ms ease, transform 80ms ease;
+}
+.cm-primary:hover { background: #e5544f; }
+.cm-primary:active { transform: scale(0.97); }
+
+.cm-secondary {
+  padding: 9px 18px;
+  border-radius: 8px;
+  border: 1px solid var(--cm-border);
+  background: #fff;
+  color: var(--cm-muted);
+  font: 600 13px inherit;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease;
+}
+.cm-secondary:hover { background: var(--cm-surface-2); border-color: #c4c2c0; }
+
+/* Smaller danger button used inline within fieldset legend */
+.cm-danger-sm {
+  margin-left: 10px;
+  padding: 2px 10px;
+  border-radius: 6px;
+  border: 1px solid #e8384f;
+  background: #fff;
+  color: #e8384f;
+  font: 500 11px inherit;
+  cursor: pointer;
+  vertical-align: middle;
+  transition: background 120ms ease;
+}
+.cm-danger-sm:hover { background: #fdecee; }
+
+/* Experience entry fieldset */
+.cm-experience-fieldset {
+  border: 1px solid var(--cm-border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  display: grid;
+  gap: 10px;
+}
+.cm-experience-fieldset legend {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cm-ink);
+  padding: 0 4px;
+}
+.cm-experience-fieldset label {
+  display: grid;
+  gap: 4px;
+  color: var(--cm-muted);
+  font-size: 12px;
+}
+.cm-experience-fieldset input {
+  border: 1px solid var(--cm-border);
+  border-radius: 6px;
+  padding: 9px 10px;
+  font: inherit;
+  color: var(--cm-ink);
+  background: #fff;
+}

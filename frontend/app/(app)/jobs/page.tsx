@@ -2,153 +2,8 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
-
-export interface Job {
-  id: number;
-  title: string;
-  company: string;
-  tagline: string;
-  logoText: string;
-  logoBg: string;
-  location: string;
-  address: string;
-  salary: string;
-  format: 'remote' | 'onsite' | 'hybrid';
-  match: number;
-  stage: 'saved' | 'applied' | 'interview' | 'none';
-  isSaved: boolean;
-  postedAgo: string;
-  deadlineDays: number;
-  tags: string[];
-  skills: string[];
-  matchedSkills: string[];
-  missingSkills: string[];
-  description: string;
-  aiSummary: string;
-}
-
-const INITIAL_JOBS: Job[] = [
-  {
-    id: 1,
-    title: 'AI Developer / LLM Engineer',
-    company: 'VNG Corporation',
-    tagline: 'Internet & Technology',
-    logoText: 'VNG',
-    logoBg: 'linear-gradient(135deg, #F06A6A, #E5544F)',
-    location: 'TP. Hồ Chí Minh',
-    address: '182 Lê Đại Hành, Quận 11, TP.HCM',
-    salary: '30M – 45M ₫',
-    format: 'hybrid',
-    match: 94,
-    stage: 'saved',
-    isSaved: true,
-    postedAgo: '1 giờ trước',
-    deadlineDays: 14,
-    tags: ['Python', 'LangChain', 'FastAPI', 'Agentic AI'],
-    skills: ['Python', 'LangChain', 'FastAPI', 'Docker', 'PostgreSQL', 'Vector DB'],
-    matchedSkills: ['Python', 'LangChain', 'FastAPI', 'Git', 'REST API'],
-    missingSkills: ['Docker', 'VectorDB (Qdrant)'],
-    description: `
-      <p>VNG đang tìm kiếm <strong>AI Developer / LLM Engineer</strong> nhiệt huyết để gia nhập đội ngũ R&D AI, trực tiếp xây dựng hệ thống AI Agent thế hệ mới.</p>
-      <br/>
-      <h4>Trách nhiệm công việc:</h4>
-      <ul>
-        <li>Nghiên cứu và triển khai các mô hình Large Language Models (LLMs), RAG &amp; Agentic Workflows.</li>
-        <li>Xây dựng Backend REST API hiệu năng cao với Python &amp; FastAPI.</li>
-        <li>Tối ưu hóa vector search và lưu trữ tri thức doanh nghiệp.</li>
-      </ul>
-      <br/>
-      <h4>Yêu cầu ứng viên:</h4>
-      <ul>
-        <li>Tốt nghiệp hoặc sinh viên năm cuối chuyên ngành Khoa học Máy tính / CNTT.</li>
-        <li>Thành thạo Python, kinh nghiệm với LangChain/LlamaIndex hoặc các AI Frameworks.</li>
-        <li>Tư duy thuật toán tốt, chủ động học hỏi công nghệ mới.</li>
-      </ul>
-    `,
-    aiSummary: 'Lập trình viên Computer Science có kinh nghiệm thiết kế AI Agentic Workflows và làm việc với Python, FastAPI, LangChain. Sẵn sàng đóng góp vào hệ thống AI Agent tại VNG Corporation.'
-  },
-  {
-    id: 2,
-    title: 'Backend Engineer (Python / FastAPI)',
-    company: 'MoMo (M-Service)',
-    tagline: 'Fintech & Digital Wallet',
-    logoText: 'MM',
-    logoBg: 'linear-gradient(135deg, #A50064, #D82D8B)',
-    location: 'TP. Hồ Chí Minh',
-    address: 'MoMo Tower, Cộng Hòa, Tân Bình, TP.HCM',
-    salary: '25M – 38M ₫',
-    format: 'onsite',
-    match: 89,
-    stage: 'applied',
-    isSaved: false,
-    postedAgo: '3 giờ trước',
-    deadlineDays: 10,
-    tags: ['Python', 'FastAPI', 'Microservices', 'PostgreSQL'],
-    skills: ['Python', 'FastAPI', 'PostgreSQL', 'Redis', 'Kafka', 'Docker'],
-    matchedSkills: ['Python', 'FastAPI', 'PostgreSQL', 'Git'],
-    missingSkills: ['Redis Cache', 'Kafka'],
-    description: `
-      <p>MoMo tuyển dụng <strong>Backend Engineer</strong> tham gia xây dựng hệ thống microservices có độ tin cậy và hiệu năng cao cho hàng triệu người dùng.</p>
-      <br/>
-      <h4>Trách nhiệm công việc:</h4>
-      <ul>
-        <li>Phát triển các tính năng thanh toán cốt lõi sử dụng Python &amp; FastAPI.</li>
-        <li>Thiết kế cơ sở dữ liệu PostgreSQL chuẩn hóa, xử lý giao dịch tải cao.</li>
-      </ul>
-    `,
-    aiSummary: 'Sinh viên Computer Science có nền tảng Python vững chắc, kinh nghiệm xây dựng REST API bằng FastAPI và làm việc với PostgreSQL.'
-  },
-  {
-    id: 3,
-    title: 'Data Analyst / Product Analyst',
-    company: 'Tiki Vietnam',
-    tagline: 'E-commerce',
-    logoText: 'TK',
-    logoBg: 'linear-gradient(135deg, #1A94FF, #0D5CB6)',
-    location: 'Remote',
-    address: 'Làm việc từ xa — toàn quốc',
-    salary: '20M – 30M ₫',
-    format: 'remote',
-    match: 82,
-    stage: 'none',
-    isSaved: true,
-    postedAgo: '5 giờ trước',
-    deadlineDays: 8,
-    tags: ['SQL', 'Python', 'Power BI', 'A/B Testing'],
-    skills: ['SQL', 'Python', 'Power BI', 'Tableau', 'BigQuery'],
-    matchedSkills: ['SQL', 'Python', 'Power BI'],
-    missingSkills: ['Tableau', 'BigQuery'],
-    description: `
-      <p>Tiki đang mở rộng đội ngũ Data &amp; Product Analytics. Bạn sẽ biến dữ liệu thô thành các quyết định kinh doanh đột phá.</p>
-    `,
-    aiSummary: 'Có kinh nghiệm truy vấn SQL và trực quan hóa dữ liệu bằng Power BI, cùng nền tảng Python cho phân tích.'
-  },
-  {
-    id: 4,
-    title: 'Machine Learning Intern / Fresher',
-    company: 'FPT Software',
-    tagline: 'AI & Software Outsourcing',
-    logoText: 'FPT',
-    logoBg: 'linear-gradient(135deg, #F36F21, #BA4A00)',
-    location: 'TP. Hồ Chí Minh',
-    address: 'Lô T2, Khu Công nghệ cao, TP. Thủ Đức, TP.HCM',
-    salary: '12M – 18M ₫',
-    format: 'hybrid',
-    match: 95,
-    stage: 'interview',
-    isSaved: false,
-    postedAgo: '1 ngày trước',
-    deadlineDays: 20,
-    tags: ['Python', 'C++', 'PyTorch', 'Computer Vision'],
-    skills: ['Python', 'C++', 'PyTorch', 'OpenCV', 'Linear Algebra'],
-    matchedSkills: ['Python', 'C++', 'AI / Algorithm', 'First-Order Logic'],
-    missingSkills: ['OpenCV'],
-    description: `
-      <p>FPT Software tuyển dụng <strong>ML Intern / Fresher</strong> xuất sắc, làm việc trực tiếp với các chuyên gia AI hàng đầu.</p>
-    `,
-    aiSummary: 'Sinh viên năm cuối ngành Khoa học Máy tính / Khoa học Dữ liệu có nền tảng Toán, Thuật toán và Lập trình C++/Python vững chắc. Thành thạo PyTorch.'
-  }
-];
+import type { Job } from '@/types/jobs';
+import { INITIAL_JOBS } from '@/lib/mock/jobs';
 
 export default function JobRadar() {
   const [jobs, setJobs] = useState<Job[]>(INITIAL_JOBS);
@@ -170,7 +25,7 @@ export default function JobRadar() {
     setIsScanning(true);
     setTimeout(() => {
       setIsScanning(false);
-      triggerToast('✓ Đã quét 24 nguồn việc làm mới. Tìm thấy 2 công việc có độ khớp > 85%!');
+      triggerToast('✓ Scanned 24 new job sources. Found 2 jobs with match > 85%!');
     }, 2200);
   };
 
@@ -180,7 +35,7 @@ export default function JobRadar() {
       prev.map(j => {
         if (j.id === id) {
           const nextSaved = !j.isSaved;
-          triggerToast(nextSaved ? '✓ Đã lưu vị trí mục tiêu' : 'Đã bỏ lưu mục tiêu');
+          triggerToast(nextSaved ? '✓ Target position saved' : 'Target removed from saved');
           return { ...j, isSaved: nextSaved };
         }
         return j;
@@ -202,16 +57,16 @@ export default function JobRadar() {
         return j;
       })
     );
-    triggerToast(`✓ Đã thêm "${skill}" vào Master Profile`);
+    triggerToast(`✓ Added "${skill}" to Master Profile`);
   };
 
   const tailorCV = (jobTitle: string) => {
-    triggerToast(`⚡ Đang kích hoạt AI Agent tạo CV Tailored cho "${jobTitle}"…`);
+    triggerToast(`⚡ Activating AI Agent to generate Tailored CV for "${jobTitle}"…`);
   };
 
   // Filter & Sort Logic
   const filteredJobs = useMemo(() => {
-    let result = jobs.filter(j => {
+    const result = jobs.filter(j => {
       const q = searchQuery.toLowerCase().trim();
       const matchSearch =
         !q ||
@@ -249,98 +104,17 @@ export default function JobRadar() {
   }, [jobs]);
 
   return (
-    <div className="app">
-      {/* SIDEBAR */}
-      <aside className="sidebar">
-        <div className="brand">
-          <div className="brand-mark">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-          <span className="brand-name">CareerNav</span>
-        </div>
-
-        <div className="nav-section-label">WORKSPACE</div>
-        <nav className="nav">
-          <Link href="/dashboard" className="nav-item">
-            <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="7" height="7"></rect>
-              <rect x="14" y="3" width="7" height="7"></rect>
-              <rect x="14" y="14" width="7" height="7"></rect>
-              <rect x="3" y="14" width="7" height="7"></rect>
-            </svg>
-            <span>Dashboard</span>
-          </Link>
-
-          <Link href="/profile-setup" className="nav-item">
-            <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-              <circle cx="12" cy="7" r="4"></circle>
-            </svg>
-            <span>Profile</span>
-          </Link>
-
-          <Link href="/jobs" className="nav-item active">
-            <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-              <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-            </svg>
-            <span>Jobs</span>
-          </Link>
-
-          <Link href="/jobs" className="nav-item">
-            <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-              <polyline points="14 2 14 8 20 8"></polyline>
-              <line x1="16" y1="13" x2="8" y2="13"></line>
-              <line x1="16" y1="17" x2="8" y2="17"></line>
-            </svg>
-            <span>CV Manager</span>
-          </Link>
-
-          <Link href="/jobs" className="nav-item">
-            <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="20" x2="18" y2="10"></line>
-              <line x1="12" y1="20" x2="12" y2="4"></line>
-              <line x1="6" y1="20" x2="6" y2="14"></line>
-            </svg>
-            <span>Reports</span>
-          </Link>
-        </nav>
-
-        <div className="nav-section-label">ACCOUNT</div>
-        <nav className="nav">
-          <Link href="/profile-preferences" className="nav-item">
-            <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3"></circle>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-            </svg>
-            <span>Settings</span>
-          </Link>
-        </nav>
-
-        <div className="sidebar-spacer"></div>
-
-        <div className="profile-card">
-          <div className="avatar">MT</div>
-          <div className="profile-meta">
-            <div className="profile-name">Minh Tran</div>
-            <div className="profile-id">ID 24127489</div>
-          </div>
-        </div>
-      </aside>
-
-      {/* MAIN CONTAINER */}
+    <>
       <div className="main-container">
+
         {/* Top Header */}
         <header className="top-header">
           <div className="top-header-info">
             <h1>
-              <span className="live-dot" title="Hệ thống đang hoạt động realtime"></span>
+              <span className="live-dot" title="System is running in realtime"></span>
               Job Radar
             </h1>
-            <p>Agent quét và ghép nối vị trí tuyển dụng với Master Profile của bạn theo thời gian thực.</p>
+            <p>Agent scans and matches job listings against your Master Profile in real time.</p>
           </div>
           <div className="top-actions">
             <Link href="/profile-preferences" className="btn-secondary">
@@ -348,7 +122,7 @@ export default function JobRadar() {
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
               </svg>
-              Thiết lập radar
+              Radar Settings
             </Link>
             <button
               className={`btn-primary ${isScanning ? 'scanning' : ''}`}
@@ -357,7 +131,7 @@ export default function JobRadar() {
               <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
               </svg>
-              {isScanning ? 'Đang quét...' : 'Quét Job Mới'}
+              {isScanning ? 'Scanning...' : 'Scan New Jobs'}
             </button>
           </div>
         </header>
@@ -378,8 +152,8 @@ export default function JobRadar() {
               </svg>
             </div>
             <div className="stat-info">
-              <div className="stat-val">{stats.total} Job</div>
-              <div className="stat-lbl">Phù hợp trên Radar</div>
+              <div className="stat-val">{stats.total} Jobs</div>
+              <div className="stat-lbl">Matched on Radar</div>
             </div>
           </div>
 
@@ -390,8 +164,8 @@ export default function JobRadar() {
               </svg>
             </div>
             <div className="stat-info">
-              <div className="stat-val">{stats.savedCount} Mục tiêu</div>
-              <div className="stat-lbl">Đã lưu theo dõi</div>
+              <div className="stat-val">{stats.savedCount} Saved</div>
+              <div className="stat-lbl">Tracked targets</div>
             </div>
           </div>
 
@@ -403,8 +177,8 @@ export default function JobRadar() {
               </svg>
             </div>
             <div className="stat-info">
-              <div className="stat-val">{stats.appliedCount} Đã nộp</div>
-              <div className="stat-lbl">CV đã tailored</div>
+              <div className="stat-val">{stats.appliedCount} Applied</div>
+              <div className="stat-lbl">Tailored CVs sent</div>
             </div>
           </div>
         </div>
@@ -421,7 +195,7 @@ export default function JobRadar() {
                 </svg>
                 <input
                   type="text"
-                  placeholder="Tìm theo vị trí, công ty, kỹ năng..."
+                  placeholder="Search by role, company, skill..."
                   value={searchQuery}
                   onChange={e => setSearchQuery(e.target.value)}
                 />
@@ -432,19 +206,19 @@ export default function JobRadar() {
                   className={`tab-chip ${activeFilter === 'all' ? 'active' : ''}`}
                   onClick={() => setActiveFilter('all')}
                 >
-                  Tất cả ({jobs.length})
+                  All ({jobs.length})
                 </button>
                 <button
                   className={`tab-chip ${activeFilter === 'saved' ? 'active' : ''}`}
                   onClick={() => setActiveFilter('saved')}
                 >
-                  Đã lưu ({jobs.filter(j => j.isSaved).length})
+                  Saved ({jobs.filter(j => j.isSaved).length})
                 </button>
                 <button
                   className={`tab-chip ${activeFilter === 'applied' ? 'active' : ''}`}
                   onClick={() => setActiveFilter('applied')}
                 >
-                  Đã nộp ({jobs.filter(j => j.stage === 'applied' || j.stage === 'interview').length})
+                  Applied ({jobs.filter(j => j.stage === 'applied' || j.stage === 'interview').length})
                 </button>
               </div>
             </div>
@@ -453,7 +227,7 @@ export default function JobRadar() {
             <div className="cards-scroll-container">
               {filteredJobs.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '40px 20px', color: 'var(--ink-subtle)', fontSize: '13px' }}>
-                  Không tìm thấy công việc phù hợp với tiêu chí của bạn.
+                  No jobs found matching your criteria.
                 </div>
               ) : (
                 filteredJobs.map(job => {
@@ -482,11 +256,11 @@ export default function JobRadar() {
                       </div>
 
                       <div className="card-footer">
-                        {job.stage === 'saved' && <span className="status-tag st-saved">Mục tiêu lưu</span>}
-                        {job.stage === 'applied' && <span className="status-tag st-applied">Đã ứng tuyển</span>}
-                        {job.stage === 'interview' && <span className="status-tag st-interview">Vào Phỏng vấn</span>}
+                        {job.stage === 'saved' && <span className="status-tag st-saved">Saved target</span>}
+                        {job.stage === 'applied' && <span className="status-tag st-applied">Applied</span>}
+                        {job.stage === 'interview' && <span className="status-tag st-interview">Interviewing</span>}
                         {job.stage === 'none' && <span className="time-ago">{job.postedAgo}</span>}
-                        <span className="time-ago">Hạn còn {job.deadlineDays} ngày</span>
+                        <span className="time-ago">{job.deadlineDays} days left</span>
                       </div>
                     </div>
                   );
@@ -537,7 +311,7 @@ export default function JobRadar() {
                       <line x1="12" y1="18" x2="12" y2="12"></line>
                       <line x1="9" y1="15" x2="15" y2="15"></line>
                     </svg>
-                    Tạo CV Tailored cho vị trí này
+                     Generate Tailored CV for this role
                   </button>
 
                   <button
@@ -547,7 +321,7 @@ export default function JobRadar() {
                     <svg viewBox="0 0 24 24" fill={selectedJob.isSaved ? 'currentColor' : 'none'} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"></path>
                     </svg>
-                    {selectedJob.isSaved ? 'Đã lưu mục tiêu' : 'Lưu mục tiêu'}
+                     {selectedJob.isSaved ? 'Saved' : 'Save target'}
                   </button>
                 </div>
               </div>
@@ -558,13 +332,13 @@ export default function JobRadar() {
                   className={`d-tab ${detailTab === 'desc' ? 'active' : ''}`}
                   onClick={() => setDetailTab('desc')}
                 >
-                  Mô tả công việc
+                  Job Description
                 </button>
                 <button
                   className={`d-tab ${detailTab === 'preview' ? 'active' : ''}`}
                   onClick={() => setDetailTab('preview')}
                 >
-                  Xem trước CV Tailored
+                  Tailored CV Preview
                 </button>
               </div>
 
@@ -577,16 +351,15 @@ export default function JobRadar() {
                         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
                         <polyline points="14 2 14 8 20 8"></polyline>
                       </svg>
-                      Chi tiết tuyển dụng từ nhà tuyển dụng
+                      Job details from the employer
                     </div>
                     <div
                       className="block-text"
+                      // eslint-disable-next-line react/no-danger
                       dangerouslySetInnerHTML={{ __html: selectedJob.description }}
                     />
                   </div>
                 )}
-
-
 
                 {detailTab === 'preview' && (
                   <div className="content-block">
@@ -595,7 +368,7 @@ export default function JobRadar() {
                         <svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                           <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
                         </svg>
-                        AI Executive Summary được tạo riêng cho {selectedJob.company}
+                        AI Executive Summary generated specifically for {selectedJob.company}
                       </div>
                       <div className="ai-summary-highlight">
                         &quot;{selectedJob.aiSummary}&quot;
@@ -607,7 +380,7 @@ export default function JobRadar() {
             </div>
           ) : (
             <div className="detail-pane" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--ink-subtle)' }}>
-              Chọn một công việc để xem chi tiết
+              Select a job to view details
             </div>
           )}
         </div>
@@ -620,6 +393,6 @@ export default function JobRadar() {
         </svg>
         <span>{toastMsg}</span>
       </div>
-    </div>
+    </>
   );
 }

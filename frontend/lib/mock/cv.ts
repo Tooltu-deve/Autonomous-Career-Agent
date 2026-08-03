@@ -1,5 +1,6 @@
 /* purpose of file is to define the structure for generated CV content and related types
 mockGeneratedCVs are a list of mock CVs used to initialize state before connecting to a real API. */
+import { isValidEmail } from '@/lib/validation';
 
 /* About export pdf
 simulating pdf export behavior: the requestCvExport function curretnly return
@@ -142,7 +143,7 @@ export function validateGeneratedCVContent(
     !content.summary.trim()
   )
     return "Name, headline, and summary are required.";
-  if (!content.email.includes("@")) return "Enter a valid email address.";
+  if (!isValidEmail(content.email)) return "Enter a valid email address.";
   if (
     !content.experience.length ||
     !content.experience.every(

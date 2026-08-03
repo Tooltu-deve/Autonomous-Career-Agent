@@ -29,7 +29,7 @@ function SignInContent() {
               onClick={() => setTab('login')}
               type="button"
             >
-              Đăng nhập
+              Log in
             </button>
             <button
               className={`${s.tab} ${tab === 'register' ? s.active : ''}`}
@@ -38,7 +38,7 @@ function SignInContent() {
               onClick={() => setTab('register')}
               type="button"
             >
-              Tạo tài khoản
+              Register
             </button>
           </div>
 

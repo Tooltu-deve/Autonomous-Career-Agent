@@ -245,7 +245,7 @@ export default function ProfileSetupPage() {
     // Save profile to localStorage
     localStorage.setItem('careernav_profile', JSON.stringify(data));
     localStorage.setItem('careernav_profile_completed', 'true');
-    showToast('Profile đã lưu! Chuyển sang thiết lập preferences…');
+    showToast('Profile saved! Proceeding to preferences setup...');
     setTimeout(() => router.push('/profile-preferences'), 1200);
   };
 
@@ -254,10 +254,10 @@ export default function ProfileSetupPage() {
 
   /* ── Step tab state ── */
   const STEPS = [
-    { num: 1, label: 'Thông tin cá nhân', icon: <UserIcon /> },
-    { num: 2, label: 'Học vấn', icon: <EduIcon /> },
-    { num: 3, label: 'Kỹ năng', icon: <TrendIcon /> },
-    { num: 4, label: 'Dự án', icon: <LayersIcon /> },
+    { num: 1, label: 'Personal Info', icon: <UserIcon /> },
+    { num: 2, label: 'Education', icon: <EduIcon /> },
+    { num: 3, label: 'Skills', icon: <TrendIcon /> },
+    { num: 4, label: 'Projects', icon: <LayersIcon /> },
   ];
 
   return (
@@ -271,7 +271,7 @@ export default function ProfileSetupPage() {
           <span className="ps-brand-text">CareerNav</span>
         </div>
         <button className="ps-skip-top" onClick={skipAndFinish} disabled={isFinishing}>
-          Bỏ qua, làm sau →
+          Skip for now →
         </button>
       </header>
 
@@ -279,8 +279,8 @@ export default function ProfileSetupPage() {
         {/* ── Hero Banner ── */}
         <div className="ps-hero">
           <div className="ps-hero-text">
-            <h1><span className="ps-sparkle">✨</span> Thiết lập hồ sơ của bạn</h1>
-            <p>Điền thông tin để AI có thể tìm việc phù hợp và tạo CV chuẩn ATS tự động cho bạn.</p>
+            <h1><span className="ps-sparkle">✨</span> Set up your profile</h1>
+            <p>Fill in your info so our AI can find suitable jobs and auto-generate ATS-friendly CVs for you.</p>
           </div>
           {/* Completeness gauge */}
           <div className="ps-meter-card">
@@ -292,15 +292,15 @@ export default function ProfileSetupPage() {
             </div>
             <div>
               <div className="ps-gauge-title">
-                {completeness >= 90 ? 'Hồ sơ hoàn chỉnh ✓' : completeness >= 60 ? 'Đang tiến triển tốt' : 'Đang thiết lập…'}
+                {completeness >= 90 ? 'Profile complete ✓' : completeness >= 60 ? 'Making good progress' : 'Setting up…'}
               </div>
-              <div className="ps-gauge-sub">Độ sẵn sàng ATS theo thời gian thực</div>
+              <div className="ps-gauge-sub">Real-time ATS readiness</div>
             </div>
           </div>
         </div>
 
         {/* ── Wizard Step Track ── */}
-        <nav className="ps-step-track" aria-label="Các bước thiết lập">
+        <nav className="ps-step-track" aria-label="Setup steps">
           {STEPS.map((s) => (
             <button
               key={s.num}
@@ -325,24 +325,24 @@ export default function ProfileSetupPage() {
             {step === 1 && (
               <div className="ps-card ps-animate-in">
                 <div className="ps-card-header">
-                  <div className="ps-card-title"><UserIcon />Thông tin cá nhân</div>
-                  <span className="ps-step-tag">BƯỚC 1/4</span>
+                  <div className="ps-card-title"><UserIcon />Personal Info</div>
+                  <span className="ps-step-tag">STEP 1/4</span>
                 </div>
 
                 {/* Avatar row */}
                 <div className="ps-avatar-row">
                   <div className="ps-avatar-lg">{initials}</div>
                   <div>
-                    <button className="ps-btn-upload" type="button" onClick={() => showToast('Tính năng upload ảnh sẽ sớm có!')}>
-                      Tải lên ảnh đại diện
+                    <button className="ps-btn-upload" type="button" onClick={() => showToast('Avatar upload feature coming soon!')}>
+                      Upload avatar
                     </button>
-                    <div className="ps-upload-hint">Định dạng JPG hoặc PNG, tối đa 5MB</div>
+                    <div className="ps-upload-hint">JPG or PNG format, max 5MB</div>
                   </div>
                 </div>
 
                 <div className="ps-grid2">
                   <div className="ps-form-group ps-span-full">
-                    <label htmlFor="ps-name">Họ và tên đầy đủ</label>
+                    <label htmlFor="ps-name">Full Name</label>
                     <div className="ps-input-wrap">
                       <input id="ps-name" type="text" value={data.name} placeholder="Nguyễn Văn A"
                         onChange={(e) => setData((d) => ({ ...d, name: e.target.value }))} />
@@ -351,9 +351,9 @@ export default function ProfileSetupPage() {
                   </div>
 
                   <div className="ps-form-group ps-span-full">
-                    <label htmlFor="ps-headline">Tiêu đề nghề nghiệp</label>
+                    <label htmlFor="ps-headline">Professional Headline</label>
                     <div className="ps-input-wrap">
-                      <input id="ps-headline" type="text" value={data.headline} placeholder="Sinh viên Khoa học Máy tính · HCMUS"
+                      <input id="ps-headline" type="text" value={data.headline} placeholder="Computer Science Student · MIT"
                         onChange={(e) => setData((d) => ({ ...d, headline: e.target.value }))} />
                       <FileIcon />
                     </div>
@@ -369,7 +369,7 @@ export default function ProfileSetupPage() {
                   </div>
 
                   <div className="ps-form-group">
-                    <label htmlFor="ps-phone">Số điện thoại</label>
+                    <label htmlFor="ps-phone">Phone Number</label>
                     <div className="ps-input-wrap">
                       <input id="ps-phone" type="tel" value={data.phone} placeholder="+84 901 234 567"
                         onChange={(e) => setData((d) => ({ ...d, phone: e.target.value }))} />
@@ -378,9 +378,9 @@ export default function ProfileSetupPage() {
                   </div>
 
                   <div className="ps-form-group">
-                    <label htmlFor="ps-location">Địa điểm</label>
+                    <label htmlFor="ps-location">Location</label>
                     <div className="ps-input-wrap">
-                      <input id="ps-location" type="text" value={data.location} placeholder="TP. Hồ Chí Minh, Việt Nam"
+                      <input id="ps-location" type="text" value={data.location} placeholder="Ho Chi Minh City, Vietnam"
                         onChange={(e) => setData((d) => ({ ...d, location: e.target.value }))} />
                       <MapPinIcon />
                     </div>
@@ -396,17 +396,17 @@ export default function ProfileSetupPage() {
                   </div>
 
                   <div className="ps-form-group ps-span-full">
-                    <label htmlFor="ps-summary">Tóm tắt nghề nghiệp</label>
+                    <label htmlFor="ps-summary">Professional Summary</label>
                     <textarea id="ps-summary" value={data.summary}
-                      placeholder="Giới thiệu ngắn gọn 2–3 câu mà AI sẽ dùng trong mỗi CV được tạo tự động…"
+                      placeholder="A short 2-3 sentence introduction that AI will use in every auto-generated CV..."
                       onChange={(e) => setData((d) => ({ ...d, summary: e.target.value }))} />
                   </div>
                 </div>
 
                 <div className="ps-footer-actions">
-                  <span className="ps-skip-link" onClick={skipAndFinish}>Bỏ qua tất cả</span>
+                  <span className="ps-skip-link" onClick={skipAndFinish}>Skip all</span>
                   <button className="ps-btn-next" onClick={() => goToStep(2)}>
-                    Tiếp: Học vấn →
+                    Tiếp: Education →
                   </button>
                 </div>
               </div>
@@ -416,15 +416,15 @@ export default function ProfileSetupPage() {
             {step === 2 && (
               <div className="ps-card ps-animate-in">
                 <div className="ps-card-header">
-                  <div className="ps-card-title"><EduIcon />Học vấn</div>
-                  <span className="ps-step-tag">BƯỚC 2/4</span>
+                  <div className="ps-card-title"><EduIcon />Education</div>
+                  <span className="ps-step-tag">STEP 2/4</span>
                 </div>
 
                 <div className="ps-dynamic-list">
                   {data.education.map((edu, idx) => (
                     <div key={edu.id} className="ps-dynamic-card">
                       <div className="ps-dynamic-header">
-                        <span className="ps-dynamic-label">Học vấn {idx + 1}</span>
+                        <span className="ps-dynamic-label">Education {idx + 1}</span>
                         <button className="ps-btn-trash" onClick={() => removeEducation(edu.id)}
                           title="Xóa">
                           <TrashIcon />
@@ -432,17 +432,17 @@ export default function ProfileSetupPage() {
                       </div>
                       <div className="ps-grid2">
                         <div className="ps-form-group">
-                          <label>Trường / Cơ sở đào tạo</label>
+                          <label>University / Institution</label>
                           <div className="ps-input-wrap">
-                            <input type="text" value={edu.university} placeholder="VD: HCMUS"
+                            <input type="text" value={edu.university} placeholder="e.g., MIT"
                               onChange={(e) => updateEducation(edu.id, 'university', e.target.value)} />
                             <EduIcon />
                           </div>
                         </div>
                         <div className="ps-form-group">
-                          <label>Ngành / Bằng cấp</label>
+                          <label>Degree / Major</label>
                           <div className="ps-input-wrap">
-                            <input type="text" value={edu.degree} placeholder="VD: Cử nhân Khoa học Máy tính"
+                            <input type="text" value={edu.degree} placeholder="e.g., B.S. in Computer Science"
                               onChange={(e) => updateEducation(edu.id, 'degree', e.target.value)} />
                             <CheckIcon />
                           </div>
@@ -453,15 +453,15 @@ export default function ProfileSetupPage() {
                 </div>
 
                 <button className="ps-btn-add-entry" onClick={addEducation}>
-                  <PlusIcon /> Thêm học vấn
+                  <PlusIcon /> Add Education
                 </button>
 
                 <div className="ps-footer-actions">
                   <button className="ps-btn-prev" onClick={() => goToStep(1)}>
-                    <ArrowLeftIcon /> Quay lại
+                    <ArrowLeftIcon /> Back
                   </button>
                   <button className="ps-btn-next" onClick={() => goToStep(3)}>
-                    Tiếp: Kỹ năng →
+                    Tiếp: Skills →
                   </button>
                 </div>
               </div>
@@ -471,14 +471,14 @@ export default function ProfileSetupPage() {
             {step === 3 && (
               <div className="ps-card ps-animate-in">
                 <div className="ps-card-header">
-                  <div className="ps-card-title"><TrendIcon />Bộ kỹ năng</div>
-                  <span className="ps-step-tag">BƯỚC 3/4</span>
+                  <div className="ps-card-title"><TrendIcon />Skill Set</div>
+                  <span className="ps-step-tag">STEP 3/4</span>
                 </div>
 
                 {/* Skills pill wall */}
                 <div className="ps-skills-wall">
                   {data.skills.length === 0 && (
-                    <span className="ps-skills-empty">Chưa có kỹ năng nào — thêm bên dưới!</span>
+                    <span className="ps-skills-empty">No skills yet — add below!</span>
                   )}
                   {data.skills.map((skill) => (
                     <span key={skill} className="ps-skill-chip">
@@ -493,18 +493,18 @@ export default function ProfileSetupPage() {
                 {/* Custom add row */}
                 <div className="ps-add-skill-row">
                   <div className="ps-input-wrap ps-input-noicon">
-                    <input type="text" value={customSkill} placeholder="Nhập kỹ năng và nhấn Enter…"
+                    <input type="text" value={customSkill} placeholder="Type a skill and press Enter..."
                       onChange={(e) => setCustomSkill(e.target.value)}
                       onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleCustomSkillAdd(); } }}
                     />
                   </div>
                   <button className="ps-btn-upload" type="button" onClick={handleCustomSkillAdd}>
-                    Thêm
+                    Add
                   </button>
                 </div>
 
                 {/* Suggested skills */}
-                <div className="ps-suggested-label">GỢI Ý KỸ NĂNG PHỔ BIẾN</div>
+                <div className="ps-suggested-label">POPULAR SKILL SUGGESTIONS</div>
                 <div className="ps-suggested-chips">
                   {SUGGESTED_SKILLS.map((s) => (
                     <button
@@ -520,10 +520,10 @@ export default function ProfileSetupPage() {
 
                 <div className="ps-footer-actions">
                   <button className="ps-btn-prev" onClick={() => goToStep(2)}>
-                    <ArrowLeftIcon /> Quay lại
+                    <ArrowLeftIcon /> Back
                   </button>
                   <button className="ps-btn-next" onClick={() => goToStep(4)}>
-                    Tiếp: Dự án →
+                    Tiếp: Projects →
                   </button>
                 </div>
               </div>
@@ -533,28 +533,28 @@ export default function ProfileSetupPage() {
             {step === 4 && (
               <div className="ps-card ps-animate-in">
                 <div className="ps-card-header">
-                  <div className="ps-card-title"><LayersIcon />Dự án nổi bật</div>
-                  <span className="ps-step-tag">BƯỚC 4/4</span>
+                  <div className="ps-card-title"><LayersIcon />Projects nổi bật</div>
+                  <span className="ps-step-tag">STEP 4/4</span>
                 </div>
 
                 <div className="ps-dynamic-list">
                   {data.projects.map((proj, idx) => (
                     <div key={proj.id} className="ps-dynamic-card">
                       <div className="ps-dynamic-header">
-                        <span className="ps-dynamic-label">Dự án {idx + 1}</span>
+                        <span className="ps-dynamic-label">Projects {idx + 1}</span>
                         <button className="ps-btn-trash" onClick={() => removeProject(proj.id)} title="Xóa">
                           <TrashIcon />
                         </button>
                       </div>
                       <div className="ps-form-group" style={{ marginBottom: '12px' }}>
-                        <label>Tên dự án</label>
-                        <input type="text" className="ps-input-bare" value={proj.name} placeholder="VD: Autonomous Career Agent"
+                        <label>Project Name</label>
+                        <input type="text" className="ps-input-bare" value={proj.name} placeholder="e.g., Autonomous Career Agent"
                           onChange={(e) => updateProject(proj.id, 'name', e.target.value)} />
                       </div>
                       <div className="ps-form-group">
-                        <label>Chi tiết & Công nghệ sử dụng</label>
+                        <label>Details & Technologies Used</label>
                         <textarea className="ps-ta-bare" value={proj.description}
-                          placeholder="Mô tả ngắn gọn về những gì bạn xây dựng, kết quả đạt được và công nghệ sử dụng…"
+                          placeholder="Brief description of what you built, achievements, and tech stack..."
                           onChange={(e) => updateProject(proj.id, 'description', e.target.value)} />
                       </div>
                     </div>
@@ -562,19 +562,19 @@ export default function ProfileSetupPage() {
                 </div>
 
                 <button className="ps-btn-add-entry" onClick={addProject}>
-                  <PlusIcon /> Thêm dự án
+                  <PlusIcon /> Add dự án
                 </button>
 
                 <div className="ps-footer-actions">
                   <button className="ps-btn-prev" onClick={() => goToStep(3)}>
-                    <ArrowLeftIcon /> Quay lại
+                    <ArrowLeftIcon /> Back
                   </button>
                   <button
                     className="ps-btn-next ps-btn-finish"
                     onClick={completeSetup}
                     disabled={isFinishing}
                   >
-                    {isFinishing ? 'Đang lưu…' : 'Lưu & Hoàn tất hồ sơ →'}
+                    {isFinishing ? 'Saving...' : 'Save & Complete Profile →'}
                   </button>
                 </div>
               </div>
@@ -592,8 +592,8 @@ export default function ProfileSetupPage() {
               <div className="ps-pv-user">
                 <div className="ps-pv-avatar">{initials}</div>
                 <div>
-                  <div className="ps-pv-name">{data.name || 'Tên của bạn'}</div>
-                  <div className="ps-pv-headline">{data.headline || 'Tiêu đề nghề nghiệp'}</div>
+                  <div className="ps-pv-name">{data.name || 'Your Name'}</div>
+                  <div className="ps-pv-headline">{data.headline || 'Professional Headline'}</div>
                 </div>
               </div>
 
@@ -606,14 +606,14 @@ export default function ProfileSetupPage() {
 
               {data.summary && (
                 <div className="ps-pv-block">
-                  <div className="ps-pv-block-title">TÓM TẮT NGHỀ NGHIỆP</div>
+                  <div className="ps-pv-block-title">PROFESSIONAL SUMMARY</div>
                   <div className="ps-pv-block-text">{data.summary}</div>
                 </div>
               )}
 
               {data.skills.length > 0 && (
                 <div className="ps-pv-block">
-                  <div className="ps-pv-block-title">KỸ NĂNG</div>
+                  <div className="ps-pv-block-title">SKILLS</div>
                   <div className="ps-pv-skills">
                     {data.skills.map((s) => (
                       <span key={s} className="ps-pv-skill-tag">{s}</span>
@@ -624,7 +624,7 @@ export default function ProfileSetupPage() {
 
               {data.education.some((e) => e.university) && (
                 <div className="ps-pv-block">
-                  <div className="ps-pv-block-title">HỌC VẤN</div>
+                  <div className="ps-pv-block-title">EDUCATION</div>
                   {data.education.filter((e) => e.university).map((e) => (
                     <div key={e.id} className="ps-pv-block-text" style={{ marginBottom: '6px' }}>
                       <strong>{e.university}</strong>
@@ -636,7 +636,7 @@ export default function ProfileSetupPage() {
 
               {data.projects.some((p) => p.name) && (
                 <div className="ps-pv-block">
-                  <div className="ps-pv-block-title">DỰ ÁN</div>
+                  <div className="ps-pv-block-title">PROJECTS</div>
                   {data.projects.filter((p) => p.name).map((p) => (
                     <div key={p.id} className="ps-pv-block-text" style={{ marginBottom: '8px' }}>
                       <strong>{p.name}</strong>
