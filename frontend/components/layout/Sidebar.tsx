@@ -16,7 +16,7 @@ const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
   { href: '/jobs', label: 'Smart Radar', icon: <RadarIcon /> },
   { href: '/cv-tailoring', label: 'CV Tailoring', icon: <CVIcon /> },
-  { href: '/profile-setup', label: 'Profile', icon: <UserIcon /> },
+  { href: '/profile', label: 'Profile', icon: <UserIcon /> },
 ];
 
 export function Sidebar() {

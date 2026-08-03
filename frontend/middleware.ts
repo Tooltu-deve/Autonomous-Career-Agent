@@ -5,6 +5,7 @@ const PROTECTED = [
   '/dashboard',
   '/jobs',
   '/cv-tailoring',
+  '/profile',
   '/profile-setup',
   '/profile-preferences',
 ];
@@ -35,6 +36,7 @@ export const config = {
     '/dashboard/:path*',
     '/jobs/:path*',
     '/cv-tailoring/:path*',
+    '/profile/:path*',
     '/profile-setup/:path*',
     '/profile-preferences/:path*',
   ],
