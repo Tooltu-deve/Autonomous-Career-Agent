@@ -6,10 +6,14 @@ Mỗi hàm trả về `(system, prompt)` để truyền thẳng vào `LLMClient.
 from typing import Optional
 
 # ---- CV generation (cv-agent, RAG) ----
+# ---- CV generation (cv-agent) ----
+# ---- CV generation (cv-agent) ----
 CV_SYSTEM = (
-    "Bạn là trợ lý viết CV chuyên nghiệp. Dựa trên hồ sơ ứng viên và mô tả "
-    "công việc, sinh nội dung CV ở dạng JSON đúng schema gồm các khóa: "
-    "summary, experience, education, skills. Chỉ trả về JSON, không giải thích."
+    "Bạn là chuyên gia viết CV. Nhiệm vụ: từ hồ sơ ứng viên và mô tả công việc "
+    "(JD), viết nội dung CV nhắm đúng JD đó. QUY TẮC BẤT DI BẤT DỊCH: chỉ dùng "
+    "thông tin có thật trong hồ sơ — không bịa kinh nghiệm, kỹ năng, bằng cấp "
+    "hay số liệu không có trong hồ sơ. Chỉ trả về MỘT JSON object phẳng, không "
+    "markdown, không giải thích."
 )
 
 
@@ -25,18 +29,43 @@ def cv_generation(
     ]
     if feedback:
         parts += [
-            "\n## Phản hồi từ lần chấm điểm trước (cần cải thiện)",
+            "\n## Phản hồi từ lần chấm điểm ATS trước — ƯU TIÊN khắc phục các điểm này",
             feedback,
         ]
-    parts.append("\nHãy sinh cv_json phù hợp nhất với JD.")
+    parts += [
+        "\n## Yêu cầu nội dung",
+        "- summary: 3-4 câu, nêu số năm kinh nghiệm + thế mạnh khớp nhất với JD.",
+        "- description của mỗi kinh nghiệm: 2-4 gạch đầu dòng (phân cách bằng "
+        "'\\n- '), mở đầu bằng động từ hành động, ưu tiên thành quả đo đếm được.",
+        "- Dùng từ khóa xuất hiện trong JD ở mọi chỗ hợp lệ (chỉ khi hồ sơ thật "
+        "sự có kinh nghiệm đó).",
+        "- skills: sắp kỹ năng khớp JD lên đầu.",
+        "- Viết cùng ngôn ngữ với JD.",
+        "- Ngày tháng định dạng ISO YYYY-MM-DD; end_date là null nếu đang làm.",
+        "\nTrả về JSON đúng theo mẫu sau (thay giá trị):",
+        "{\n"
+        '  "summary": "Backend engineer với 3 năm kinh nghiệm...",\n'
+        '  "experience": [{"title": "Backend Developer", "organization": "ACME",\n'
+        '    "start_date": "2023-01-01", "end_date": null,\n'
+        '    "description": "- Xây REST API phục vụ 10k người dùng'
+        '\\n- Giảm 40% thời gian phản hồi"}],\n'
+        '  "education": [{"school": "HCMUS", "degree": "BSc",\n'
+        '    "field_of_study": "Computer Science", "start_date": "2019-09-01",\n'
+        '    "end_date": "2023-06-01", "description": null}],\n'
+        '  "skills": ["python", "fastapi", "postgresql"]\n'
+        "}",
+    ]
     return CV_SYSTEM, "\n".join(parts)
 
 
 # ---- ATS scoring (ats-agent) ----
 ATS_SYSTEM = (
-    "Bạn là hệ thống ATS. Chấm CV so với JD trên thang 0-100, phân tích "
-    "score_breakdown (keywords/skills/experience/formatting), liệt kê "
-    "matched/missing keywords và recommendations. Trả về JSON."
+    "Bạn là hệ thống ATS. Chấm CV so với JD trên thang 0-100. "
+    "Chỉ trả về MỘT JSON object phẳng (không bọc trong key khác, không markdown, "
+    "không giải thích) với đúng các khóa: overall_score (int 0-100), "
+    "score_breakdown (object với các khóa keywords/skills/experience/formatting, "
+    "giá trị int 0-100), matched_keywords (mảng string), missing_keywords "
+    "(mảng string), recommendations (mảng object dạng {type, title, body})."
 )
 
 
@@ -47,15 +76,27 @@ def ats_scoring(cv_json: str, job_description: str) -> tuple[str, str]:
         f"{cv_json}\n\n"
         "## Mô tả công việc (JD)\n"
         f"{job_description}\n\n"
-        "Hãy chấm điểm và trả về JSON theo cấu trúc ATSReport."
+        "Hãy chấm điểm và trả về JSON đúng theo mẫu sau (thay giá trị):\n"
+        "{\n"
+        '  "overall_score": 82,\n'
+        '  "score_breakdown": {"keywords": 70, "skills": 80, '
+        '"experience": 90, "formatting": 85},\n'
+        '  "matched_keywords": ["python", "fastapi"],\n'
+        '  "missing_keywords": ["kubernetes"],\n'
+        '  "recommendations": [{"type": "add", "title": "CI/CD", '
+        '"body": "Thêm mục CI/CD vào kinh nghiệm"}]\n'
+        "}"
     )
     return ATS_SYSTEM, prompt
 
 
 # ---- Cover letter (ats-agent) ----
+# ---- Cover letter (ats-agent) ----
 COVER_LETTER_SYSTEM = (
-    "Bạn là chuyên gia viết cover letter. Viết thư xin việc ngắn gọn, "
-    "chuyên nghiệp, bám sát JD và điểm mạnh trong CV. Trả về văn bản thuần."
+    "Bạn là chuyên gia viết thư xin việc. Chỉ trả về VĂN BẢN THUẦN của lá thư "
+    "— không JSON, không markdown, không tiêu đề trang, không thông tin liên hệ "
+    "bịa, không placeholder kiểu [Tên công ty]. Chỉ dùng thông tin có thật "
+    "trong CV và JD."
 )
 
 
@@ -66,6 +107,13 @@ def cover_letter(cv_json: str, job_description: str) -> tuple[str, str]:
         f"{cv_json}\n\n"
         "## Mô tả công việc (JD)\n"
         f"{job_description}\n\n"
-        "Hãy viết cover letter phù hợp."
+        "Viết cover letter 250-350 từ, cùng ngôn ngữ với JD, cấu trúc 3 đoạn:\n"
+        "1. Mở: nêu vị trí ứng tuyển (đúng tên trong JD) + 1 câu hook về điểm "
+        "mạnh phù hợp nhất.\n"
+        "2. Thân: chọn 2-3 yêu cầu quan trọng nhất của JD, với mỗi yêu cầu dẫn "
+        "chứng cụ thể từ CV chứng minh đáp ứng được.\n"
+        "3. Kết: thể hiện mong muốn trao đổi thêm, giọng tự tin, không van nài.\n"
+        "Bắt đầu bằng 'Dear Hiring Manager,' (hoặc tương đương trong ngôn ngữ "
+        "của JD) và kết bằng tên ứng viên nếu có trong CV."
     )
     return COVER_LETTER_SYSTEM, prompt
