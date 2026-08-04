@@ -5,6 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import {
   DashboardIcon,
+  InboxIcon,
   RadarIcon,
   CVIcon,
   UserIcon,
@@ -14,6 +15,7 @@ import s from './Sidebar.module.css';
 
 const NAV_ITEMS = [
   { href: '/dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
+  { href: '/applications', label: 'Applications', icon: <InboxIcon /> },
   { href: '/jobs', label: 'Smart Radar', icon: <RadarIcon /> },
   { href: '/cv-tailoring', label: 'CV Tailoring', icon: <CVIcon /> },
   { href: '/profile', label: 'Profile', icon: <UserIcon /> },
@@ -42,7 +44,7 @@ export function Sidebar() {
   return (
     <aside className={s.sidebar}>
       {/* Brand */}
-      <Link href="/dashboard" className={s.brand}>
+      <Link href="/applications" className={s.brand}>
         <div className={s.brandMark}>
           <span />
           <span />

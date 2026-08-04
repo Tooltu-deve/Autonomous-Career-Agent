@@ -1526,3 +1526,357 @@ select {
 @media (prefers-reduced-motion: reduce) {
   * { transition: none !important; animation: none !important; }
 }
+
+/* ════════════════════════════════════════
+   APPLICATIONS KANBAN PAGE
+════════════════════════════════════════ */
+
+/* Page shell */
+.apppage {
+  padding: 30px 34px 60px;
+  min-width: 0;
+  overflow-x: auto;
+}
+
+.apppage-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+
+.apppage-h1 {
+  margin: 0 0 4px;
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.apppage-sub {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 13.5px;
+}
+
+.apppage-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 14px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--ink-muted);
+  font-size: 12.5px;
+  font-weight: 500;
+  border: 1px solid var(--border);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Summary strip ────────────────────── */
+.app-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px 28px;
+  padding: 15px 22px;
+  margin-bottom: 20px;
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.app-stile {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.app-stile-n {
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.app-stile-n--good {
+  color: var(--success);
+}
+
+.app-stile-l {
+  font-size: 11.5px;
+  color: var(--ink-muted);
+}
+
+/* Funnel */
+.app-funnel {
+  margin-left: auto;
+  display: flex;
+  align-items: flex-end;
+  gap: 7px;
+  flex: 1;
+  min-width: 240px;
+}
+
+.app-fseg {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.app-fbar {
+  height: 9px;
+  border-radius: var(--r-pill);
+  min-width: 12px;
+}
+
+.app-fbar--blue   { background: var(--accent-blue); }
+.app-fbar--purple { background: var(--accent-purple); }
+.app-fbar--green  { background: var(--success); }
+
+.app-fcap {
+  font-size: 11px;
+  color: var(--ink-muted);
+  white-space: nowrap;
+}
+
+.app-fcap b {
+  color: var(--ink);
+  font-weight: 700;
+}
+
+.app-farrow {
+  color: var(--ink-subtle);
+  font-size: 12px;
+  padding-bottom: 16px;
+}
+
+/* ── Kanban board ─────────────────────── */
+.kanboard {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(240px, 1fr);
+  gap: 14px;
+  align-items: start;
+  overflow-x: auto;
+  padding-bottom: 12px;
+}
+
+.kancol {
+  background: var(--surface-2);
+  border: 1.5px dashed transparent;
+  border-radius: var(--r-lg);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 220px);
+  transition: border-color 150ms var(--ease), background 150ms var(--ease);
+}
+
+.kancol--over {
+  border-color: var(--primary);
+  background: #FFF9F9;
+}
+
+.kancol-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 13px 14px 10px;
+  flex-shrink: 0;
+}
+
+.kancol-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.appdot-saved     { background: var(--ink-subtle); }
+.appdot-applied   { background: var(--accent-blue); }
+.appdot-interview { background: var(--accent-purple); }
+.appdot-offer     { background: var(--success); }
+.appdot-rejected  { background: var(--error); }
+
+.kancol-label {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.kancol-count {
+  margin-left: auto;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ink-muted);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  padding: 1px 9px;
+}
+
+.kancol-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 12px 14px;
+  overflow-y: auto;
+}
+
+.kancol-empty {
+  border: 1.5px dashed var(--border);
+  border-radius: var(--r-md);
+  padding: 16px;
+  text-align: center;
+  color: var(--ink-subtle);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+/* ── Application Cards ────────────────── */
+.appcard {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  box-shadow: var(--shadow-card);
+  padding: 12px;
+  cursor: grab;
+  user-select: none;
+  transition: transform 140ms var(--ease), box-shadow 140ms var(--ease), border-color 140ms var(--ease);
+}
+
+.appcard:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-elevated);
+  border-color: var(--border-strong);
+}
+
+.appcard:active { cursor: grabbing; }
+
+.appcard--rejected {
+  opacity: 0.72;
+}
+
+.appcard--overlay {
+  box-shadow: var(--shadow-elevated);
+  cursor: grabbing;
+  transform: rotate(1.5deg);
+}
+
+/* Card top row */
+.appcard-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 9px;
+}
+
+.appcard-logo {
+  width: 30px;
+  height: 30px;
+  border-radius: var(--r-md);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 12px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.appcard-info {
+  min-width: 0;
+}
+
+.appcard-role {
+  font-size: 13px;
+  font-weight: 600;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--ink);
+}
+
+.appcard-company {
+  color: var(--ink-muted);
+  font-size: 11.5px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Card mid row */
+.appcard-mid {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+/* ATS Score badge */
+.appbadge {
+  font-weight: 700;
+  font-size: 11.5px;
+  padding: 3px 8px;
+  border-radius: var(--r-pill);
+}
+
+.appbadge-good { background: #E6F7E9; color: var(--success); }
+.appbadge-mid  { background: #FDF3E2; color: #B4791E; }
+.appbadge-bad  { background: #FDECEA; color: var(--error); }
+
+.appcard-cvlink {
+  font-size: 11.5px;
+  color: var(--primary-hover);
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color 100ms;
+}
+
+.appcard-cvlink:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+/* Card footer */
+.appcard-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--border);
+  padding-top: 9px;
+}
+
+.appcard-date {
+  color: var(--ink-subtle);
+  font-size: 11px;
+}
+
+.appcard-grip-hint {
+  color: var(--ink-subtle);
+  font-size: 13px;
+  opacity: 0;
+  transition: opacity 120ms;
+  line-height: 1;
+}
+
+.appcard:hover .appcard-grip-hint {
+  opacity: 1;
+}
+
+/* ── Applications Responsive ──────────── */
+@media (max-width: 820px) {
+  .apppage { padding: 20px 16px 50px; }
+  .apppage-head { flex-direction: column; align-items: stretch; }
+  .kanboard { grid-auto-columns: minmax(200px, 260px); }
+}

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 // Pages that require a valid session (all pages inside app/(app)/ group + onboarding)
 const PROTECTED = [
+  '/applications',
   '/dashboard',
   '/jobs',
   '/cv-tailoring',
@@ -33,6 +34,7 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    '/applications/:path*',
     '/dashboard/:path*',
     '/jobs/:path*',
     '/cv-tailoring/:path*',
