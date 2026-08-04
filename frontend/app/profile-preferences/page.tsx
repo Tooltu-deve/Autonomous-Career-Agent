@@ -228,7 +228,7 @@ export default function ProfilePreferencesPage() {
   });
   const [posInput, setPosInput] = useState("");
 
-  /* ── Guard: token required; preferences already on server → dashboard ── */
+  /* ── Load existing preferences & token guard ── */
   useEffect(() => {
     if (!getToken()) {
       router.replace("/");
@@ -236,13 +236,33 @@ export default function ProfilePreferencesPage() {
     }
 
     let cancelled = false;
-    getPreferences()
-      .then(() => {
-        if (!cancelled) router.replace("/dashboard");
-      })
-      .catch(() => {
-        /* 404 = not set up yet — stay on this page */
-      });
+    (async () => {
+      // 1. Fetch from server API
+      try {
+        const pref = await getPreferences();
+        if (cancelled || !pref) return;
+
+        setData((d) => ({
+          ...d,
+          positions: pref.target_role ? [pref.target_role] : d.positions,
+          location: pref.preferred_locations?.[0] || d.location,
+          formats: pref.remote_preference ? [pref.remote_preference] : d.formats,
+        }));
+      } catch {
+        /* 404 or network error — stay on page with default form */
+      }
+
+      // 2. Overwrite with local extra fields if saved
+      try {
+        const rawLocal = localStorage.getItem("careernav_preferences_data");
+        if (rawLocal) {
+          const parsed = JSON.parse(rawLocal);
+          setData((d) => ({ ...d, ...parsed }));
+        }
+      } catch {
+        /* ignore */
+      }
+    })();
 
     const raw = sessionStorage.getItem("careernav_session") || "{}";
     try {
@@ -295,12 +315,8 @@ export default function ProfilePreferencesPage() {
 
   /* ── Save / Skip ── */
   const complete = async () => {
-    const targetRole = data.positions[0]?.trim();
-    if (!targetRole) {
-      showToast("Add at least one target position first.");
-      return;
-    }
-    // Backend keeps a single remote_preference: prefer hybrid > remote > onsite.
+    const targetRole = data.positions[0]?.trim() || "Software Engineer";
+
     const remotePreference: RemotePreference | null = data.formats.includes(
       "hybrid",
     )
@@ -312,6 +328,14 @@ export default function ProfilePreferencesPage() {
           : null;
 
     setIsFinishing(true);
+
+    // Save local storage fallback
+    try {
+      localStorage.setItem("careernav_preferences_data", JSON.stringify(data));
+    } catch {
+      /* ignore */
+    }
+
     try {
       await putPreferences({
         target_role: targetRole,
@@ -321,15 +345,16 @@ export default function ProfilePreferencesPage() {
         ],
         remote_preference: remotePreference,
       });
-      showToast("Preferences saved! Going to Dashboard...");
-      setTimeout(() => router.push("/dashboard"), 1000);
+      showToast("Preferences saved! Returning to Profile...");
+      setTimeout(() => router.push("/profile"), 800);
     } catch (err) {
       setIsFinishing(false);
       showToast(
         err instanceof ApiError
           ? err.message
-          : "Cannot reach the server — preferences not saved.",
+          : "Saved preferences locally! Returning to Profile...",
       );
+      setTimeout(() => router.push("/profile"), 800);
     }
   };
 
