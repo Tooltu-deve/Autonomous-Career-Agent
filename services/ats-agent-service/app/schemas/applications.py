@@ -78,3 +78,16 @@ class ApplicationDetail(BaseModel):
     cv_generation: CvGenerationOut | None = None
     ats_report: AtsReportOut | None = None
     created_at: datetime
+
+
+class ApplicationStageUpdate(BaseModel):
+    """Body PATCH /applications/{id} — user đổi trạng thái ứng tuyển (kanban)."""
+
+    pipeline_stage: PipelineStage
+
+
+class ApplicationStageResponse(BaseModel):
+    """Response PATCH /applications/{id} — chỉ trả phần vừa đổi."""
+
+    id: uuid.UUID
+    pipeline_stage: PipelineStage
