@@ -4,9 +4,15 @@
  * useProfileSetup — custom hook chứa toàn bộ state và logic của wizard.
  * Components chỉ cần destructure giá trị/handler cần thiết từ hook này.
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ApiError, getPreferences, getProfile, getToken, putProfile } from "@/lib/api";
+import {
+  ApiError,
+  getPreferences,
+  getProfile,
+  getToken,
+  putProfile,
+} from "@/lib/api";
 import type { ProfileUpdate } from "@/types/api";
 import type { ProfileData } from "../_types/types";
 
@@ -28,14 +34,12 @@ export function calcCompleteness(data: ProfileData): number {
   return Math.min(score, 100);
 }
 
-export function getInitials(name: string): string {
-  const parts = name.trim().split(" ").filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0][0].toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
+export { getInitials } from "@/lib/format";
 
-/* ── Map wizard state → backend PUT /profile body ── */
+/* ── Map wizard state → backend PUT /profile body ──
+ * PUT /profile thay TOÀN BỘ profile + bảng con, nên các field wizard không
+ * cho sửa (organization, ngày tháng, field_of_study, linkedin_url) phải được
+ * gửi lại nguyên vẹn từ `server` ride-along — nếu không sẽ bị xoá vĩnh viễn. */
 function toProfileUpdate(data: ProfileData): ProfileUpdate {
   return {
     headline: data.headline.trim() || null,
@@ -43,12 +47,15 @@ function toProfileUpdate(data: ProfileData): ProfileUpdate {
     location: data.location.trim() || null,
     phone: data.phone.trim() || null,
     github_url: data.github.trim() || null,
+    linkedin_url: data.linkedin.trim() || null,
     preferred_template: data.preferred_template,
     experiences: data.projects
       .filter((p) => p.name.trim())
       .map((p, i) => ({
         title: p.name.trim(),
-        organization: "Personal Project",
+        organization: p.server?.organization || "Personal Project",
+        start_date: p.server?.start_date ?? null,
+        end_date: p.server?.end_date ?? null,
         description: p.description.trim() || null,
         display_order: i,
       })),
@@ -57,6 +64,10 @@ function toProfileUpdate(data: ProfileData): ProfileUpdate {
       .map((e, i) => ({
         school: e.university.trim(),
         degree: e.degree.trim() || null,
+        field_of_study: e.server?.field_of_study ?? null,
+        start_date: e.server?.start_date ?? null,
+        end_date: e.server?.end_date ?? null,
+        description: e.server?.description ?? null,
         display_order: i,
       })),
     skills: data.skills,
@@ -78,6 +89,7 @@ export function useProfileSetup() {
     phone: "",
     location: "",
     github: "",
+    linkedin: "",
     summary: "",
     preferred_template: "classic",
     education: [{ id: uid(), university: "", degree: "" }],
@@ -105,6 +117,7 @@ export function useProfileSetup() {
           location: prof.location || "",
           phone: prof.phone || "",
           github: prof.github_url || "",
+          linkedin: prof.linkedin_url || "",
           preferred_template: prof.preferred_template || "classic",
           skills: prof.skills?.length
             ? prof.skills.map((s) => s.skill_name)
@@ -114,6 +127,13 @@ export function useProfileSetup() {
                 id: idx + 1,
                 university: e.school || "",
                 degree: e.degree || "",
+                // Giữ nguyên các field wizard không sửa để PUT không xoá mất
+                server: {
+                  field_of_study: e.field_of_study,
+                  start_date: e.start_date,
+                  end_date: e.end_date,
+                  description: e.description,
+                },
               }))
             : d.education,
           projects: prof.experiences?.length
@@ -121,6 +141,11 @@ export function useProfileSetup() {
                 id: idx + 1,
                 name: exp.title || "",
                 description: exp.description || "",
+                server: {
+                  organization: exp.organization,
+                  start_date: exp.start_date,
+                  end_date: exp.end_date,
+                },
               }))
             : d.projects,
         }));
@@ -148,9 +173,16 @@ export function useProfileSetup() {
   }, [router]);
 
   /* ── Toast ── */
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const showToast = useCallback((msg: string) => {
     setToast(msg);
-    setTimeout(() => setToast(null), 3000);
+    if (toastTimer.current) clearTimeout(toastTimer.current);
+    toastTimer.current = setTimeout(() => setToast(null), 3000);
+  }, []);
+  useEffect(() => {
+    return () => {
+      if (toastTimer.current) clearTimeout(toastTimer.current);
+    };
   }, []);
 
   /* ── Skills ── */
@@ -242,34 +274,34 @@ export function useProfileSetup() {
   /* ── API save ── */
   const saveProfile = async (afterSaveMsg: string) => {
     setIsFinishing(true);
-
-    // Local storage fallback
-    try {
-      localStorage.setItem("careernav_profile_data", JSON.stringify(data));
-    } catch {
-      /* ignore */
-    }
-
     try {
       await putProfile(toProfileUpdate(data));
       showToast(afterSaveMsg);
-      setTimeout(() => router.push("/profile"), 800);
+      // Onboarding: chưa có preferences → tiếp tục bước preferences;
+      // đã có (user quay lại sửa profile) → về trang profile.
+      let next = "/profile";
+      try {
+        await getPreferences();
+      } catch (err) {
+        if (err instanceof ApiError && err.status === 404) {
+          next = "/profile-preferences";
+        }
+      }
+      setTimeout(() => router.push(next), 800);
     } catch (err) {
+      // Lưu thất bại: ở lại wizard, báo lỗi thật — không giả vờ thành công.
       setIsFinishing(false);
       showToast(
         err instanceof ApiError
-          ? err.message
-          : "Profile saved locally! Returning to profile...",
+          ? `Save failed: ${err.message}`
+          : "Cannot reach the server — profile not saved.",
       );
-      setTimeout(() => router.push("/profile"), 800);
     }
   };
 
-  const skipAndFinish = () =>
-    void saveProfile("Proceeding to profile...");
+  const skipAndFinish = () => void saveProfile("Proceeding...");
 
-  const completeSetup = () =>
-    void saveProfile("Profile saved! Returning to profile...");
+  const completeSetup = () => void saveProfile("Profile saved!");
 
   return {
     data,

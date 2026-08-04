@@ -3,7 +3,13 @@
 /**
  * StepEducation — Step 2: Education form list.
  */
-import { ArrowLeftIcon, CheckIcon, EduIcon, PlusIcon, TrashIcon } from "./Icons";
+import {
+  ArrowLeftIcon,
+  CheckIcon,
+  EduIcon,
+  PlusIcon,
+  TrashIcon,
+} from "./Icons";
 import type { EducationEntry } from "../_types/types";
 
 interface Props {
@@ -37,13 +43,11 @@ export function StepEducation({
         {education.map((edu, idx) => (
           <div key={edu.id} className="ps-dynamic-card">
             <div className="ps-dynamic-header">
-              <span className="ps-dynamic-label">
-                Education {idx + 1}
-              </span>
+              <span className="ps-dynamic-label">Education {idx + 1}</span>
               <button
                 className="ps-btn-trash"
                 onClick={() => onRemove(edu.id)}
-                title="Xóa"
+                title="Remove"
                 type="button"
               >
                 <TrashIcon />
@@ -71,9 +75,7 @@ export function StepEducation({
                     type="text"
                     value={edu.degree}
                     placeholder="e.g., B.S. in Computer Science"
-                    onChange={(e) =>
-                      onUpdate(edu.id, "degree", e.target.value)
-                    }
+                    onChange={(e) => onUpdate(edu.id, "degree", e.target.value)}
                   />
                   <CheckIcon />
                 </div>
@@ -92,7 +94,7 @@ export function StepEducation({
           <ArrowLeftIcon /> Back
         </button>
         <button className="ps-btn-next" onClick={onNext} type="button">
-          Tiếp: Skills →
+          Next: Skills →
         </button>
       </div>
     </div>

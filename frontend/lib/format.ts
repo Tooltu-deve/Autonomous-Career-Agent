@@ -23,6 +23,13 @@ export function daysUntil(iso?: string | null): number | null {
   return Math.ceil((then - Date.now()) / 86_400_000);
 }
 
+export function getInitials(name: string): string {
+  const parts = name.trim().split(" ").filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
 export function formatDate(iso?: string | null): string {
   if (!iso) return "";
   const d = new Date(iso);

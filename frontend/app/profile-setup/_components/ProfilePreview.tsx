@@ -39,15 +39,9 @@ export function ProfilePreview({ data, initials }: Props) {
         {data.location && (
           <span className="ps-pv-chip">📍 {data.location}</span>
         )}
-        {data.email && (
-          <span className="ps-pv-chip">✉️ {data.email}</span>
-        )}
-        {data.phone && (
-          <span className="ps-pv-chip">📞 {data.phone}</span>
-        )}
-        {data.github && (
-          <span className="ps-pv-chip">🔗 {data.github}</span>
-        )}
+        {data.email && <span className="ps-pv-chip">✉️ {data.email}</span>}
+        {data.phone && <span className="ps-pv-chip">📞 {data.phone}</span>}
+        {data.github && <span className="ps-pv-chip">🔗 {data.github}</span>}
       </div>
 
       {data.summary && (

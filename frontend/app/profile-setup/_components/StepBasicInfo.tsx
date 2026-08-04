@@ -64,10 +64,8 @@ export function StepBasicInfo({
               id="ps-name"
               type="text"
               value={data.name}
-              placeholder="Nguyễn Văn A"
-              onChange={(e) =>
-                setData((d) => ({ ...d, name: e.target.value }))
-              }
+              placeholder="Nguyen Van A"
+              onChange={(e) => setData((d) => ({ ...d, name: e.target.value }))}
             />
             <UserIcon />
           </div>
@@ -121,7 +119,7 @@ export function StepBasicInfo({
           </div>
         </div>
 
-        <div className="ps-form-group">
+        <div className="ps-form-group ps-span-full">
           <label htmlFor="ps-location">Location</label>
           <div className="ps-input-wrap">
             <input
@@ -153,6 +151,22 @@ export function StepBasicInfo({
           </div>
         </div>
 
+        <div className="ps-form-group">
+          <label htmlFor="ps-linkedin">LinkedIn</label>
+          <div className="ps-input-wrap">
+            <input
+              id="ps-linkedin"
+              type="text"
+              value={data.linkedin}
+              placeholder="linkedin.com/in/username"
+              onChange={(e) =>
+                setData((d) => ({ ...d, linkedin: e.target.value }))
+              }
+            />
+            <LinkIcon />
+          </div>
+        </div>
+
         <div className="ps-form-group ps-span-full">
           <label htmlFor="ps-summary">Professional Summary</label>
           <textarea
@@ -171,7 +185,7 @@ export function StepBasicInfo({
           Skip all
         </span>
         <button className="ps-btn-next" onClick={onNext}>
-          Tiếp: Education →
+          Next: Education →
         </button>
       </div>
     </div>

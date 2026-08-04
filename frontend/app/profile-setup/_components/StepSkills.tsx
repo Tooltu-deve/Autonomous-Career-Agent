@@ -40,9 +40,7 @@ export function StepSkills({
       {/* Skills pill wall */}
       <div className="ps-skills-wall">
         {skills.length === 0 && (
-          <span className="ps-skills-empty">
-            No skills yet — add below!
-          </span>
+          <span className="ps-skills-empty">No skills yet — add below!</span>
         )}
         {skills.map((skill) => (
           <span key={skill} className="ps-skill-chip">
@@ -50,7 +48,7 @@ export function StepSkills({
             <button
               type="button"
               onClick={() => onRemoveSkill(skill)}
-              aria-label={`Xóa ${skill}`}
+              aria-label={`Remove ${skill}`}
             >
               <XSmallIcon />
             </button>
@@ -74,19 +72,13 @@ export function StepSkills({
             }}
           />
         </div>
-        <button
-          className="ps-btn-upload"
-          type="button"
-          onClick={onCustomAdd}
-        >
+        <button className="ps-btn-upload" type="button" onClick={onCustomAdd}>
           Add
         </button>
       </div>
 
       {/* Suggested skills */}
-      <div className="ps-suggested-label">
-        POPULAR SKILL SUGGESTIONS
-      </div>
+      <div className="ps-suggested-label">POPULAR SKILL SUGGESTIONS</div>
       <div className="ps-suggested-chips">
         {SUGGESTED_SKILLS.map((s) => (
           <button
@@ -106,7 +98,7 @@ export function StepSkills({
           <ArrowLeftIcon /> Back
         </button>
         <button className="ps-btn-next" onClick={onNext} type="button">
-          Tiếp: Projects →
+          Next: Projects →
         </button>
       </div>
     </div>

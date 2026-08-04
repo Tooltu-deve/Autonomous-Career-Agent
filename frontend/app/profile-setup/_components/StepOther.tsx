@@ -14,7 +14,11 @@ interface Props {
   projects: ProjectEntry[];
   onAddProject: () => void;
   onRemoveProject: (id: number) => void;
-  onUpdateProject: (id: number, field: "name" | "description", value: string) => void;
+  onUpdateProject: (
+    id: number,
+    field: "name" | "description",
+    value: string,
+  ) => void;
   onBack: () => void;
   onFinish: () => void;
   isFinishing: boolean;
@@ -49,32 +53,34 @@ export function StepOther({
 
       {/* Projects Section */}
       <div className="ps-projects-heading">
-        <span style={{ width: 16, height: 16, display: "inline-flex", flexShrink: 0 }}>
+        <span
+          style={{
+            width: 16,
+            height: 16,
+            display: "inline-flex",
+            flexShrink: 0,
+          }}
+        >
           <LayersIcon />
         </span>
-        Projects &amp; Sản phẩm nổi bật
+        Projects &amp; Highlights
       </div>
 
       <div className="ps-dynamic-list">
         {projects.map((proj, idx) => (
           <div key={proj.id} className="ps-dynamic-card">
             <div className="ps-dynamic-header">
-              <span className="ps-dynamic-label">
-                Project {idx + 1}
-              </span>
+              <span className="ps-dynamic-label">Project {idx + 1}</span>
               <button
                 className="ps-btn-trash"
                 onClick={() => onRemoveProject(proj.id)}
-                title="Xóa"
+                title="Remove"
                 type="button"
               >
                 <TrashIcon />
               </button>
             </div>
-            <div
-              className="ps-form-group"
-              style={{ marginBottom: "12px" }}
-            >
+            <div className="ps-form-group" style={{ marginBottom: "12px" }}>
               <label>Project Name</label>
               <input
                 type="text"
@@ -102,7 +108,7 @@ export function StepOther({
       </div>
 
       <button className="ps-btn-add-entry" onClick={onAddProject} type="button">
-        <PlusIcon /> Add dự án
+        <PlusIcon /> Add project
       </button>
 
       <div className="ps-footer-actions">
