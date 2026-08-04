@@ -36,12 +36,13 @@ router = APIRouter(prefix="/jobs", tags=["jobs"])
 def search_jobs(
     body: JobSearchRequest,
     db: Session = Depends(get_db),
-    _: str = Depends(get_current_user_id),
+    current_user_id: str = Depends(get_current_user_id),
 ) -> JobListResponse:
     """Cào LinkedIn/Indeed theo tiêu chí từ profile_preferences.
 
     FE lấy criteria từ GET /profile rồi truyền vào body;
     scraper không đọc thẳng DB profile-service.
+    Job tìm được gắn vào radar của user (bảng user_jobs).
     """
     jobs = scraper_service.search_and_save(
         target_role=body.target_role,
@@ -49,6 +50,7 @@ def search_jobs(
         remote_preference=body.remote_preference,
         limit=30,  # mặc định 30 jobs/source — contract không expose limit ra ngoài
         db=db,
+        user_id=current_user_id,
     )
     items = [JobOut.model_validate(j) for j in jobs]
     return JobListResponse(items=items, page=1, limit=30, total=len(items))
@@ -85,10 +87,12 @@ def list_jobs(
     page: int = Query(default=1, ge=1),
     limit: int = Query(default=30, ge=1, le=100),
     db: Session = Depends(get_db),
-    _: str = Depends(get_current_user_id),
+    current_user_id: str = Depends(get_current_user_id),
 ) -> JobListResponse:
-    """Danh sách jobs phân trang (chỉ status=active)."""
-    jobs, total = scraper_service.list_jobs(db=db, page=page, limit=limit)
+    """Danh sách jobs trên radar của user (chỉ status=active), phân trang."""
+    jobs, total = scraper_service.list_jobs(
+        db=db, user_id=current_user_id, page=page, limit=limit
+    )
     items = [JobOut.model_validate(j) for j in jobs]
     return JobListResponse(items=items, page=page, limit=limit, total=total)
 

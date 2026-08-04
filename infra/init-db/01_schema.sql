@@ -151,6 +151,17 @@ CREATE TABLE jobs (
 );
 CREATE INDEX idx_jobs_status ON jobs(status);
 
+-- user_jobs (Owned by scraper-service)
+-- Cá nhân hoá Job Radar: job nào do lần search của user nào tìm ra.
+-- `jobs` vẫn là kho chung (cào 1 lần, dedupe theo source+external_job_id);
+-- bảng này quyết định user thấy job nào trên radar của mình.
+CREATE TABLE user_jobs (
+    user_id       UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    job_id        UUID NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+    discovered_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    PRIMARY KEY (user_id, job_id)
+);
+
 -- applications (Anchor row per user-job pair)
 -- LƯU Ý KIẾN TRÚC: đây là bảng orchestration dùng chung — nhiều service cùng cập nhật
 -- `generation_status` khi CV đi qua pipeline (scraper→cv-agent→ats-agent). Đây là NGOẠI LỆ

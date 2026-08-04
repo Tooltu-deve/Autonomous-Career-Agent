@@ -1,27 +1,16 @@
 /**
- * Types for the Job Radar feature.
- * Previously inlined inside app/(app)/jobs/page.tsx.
+ * View model for the Job Radar page: a backend job (`GET /jobs`) merged with
+ * the user's application state for that job (`GET /applications`).
  */
-export interface Job {
-  id: number;
-  title: string;
-  company: string;
-  tagline: string;
-  logoText: string;
-  logoBg: string;
-  location: string;
-  address: string;
-  salary: string;
-  format: 'remote' | 'onsite' | 'hybrid';
-  match: number;
-  stage: 'saved' | 'applied' | 'interview' | 'none';
-  isSaved: boolean;
-  postedAgo: string;
-  deadlineDays: number;
-  tags: string[];
-  skills: string[];
-  matchedSkills: string[];
-  missingSkills: string[];
-  description: string;
-  aiSummary: string;
+import type { GenerationStatus, JobOut } from "@/types/api";
+
+export type JobStage = "saved" | "applied" | "interview" | "none";
+
+export interface JobView {
+  job: JobOut;
+  /** Derived from the matching application's pipeline_stage, if any. */
+  stage: JobStage;
+  /** CV pipeline status of the matching application, if any. */
+  generationStatus?: GenerationStatus;
+  applicationId?: string;
 }

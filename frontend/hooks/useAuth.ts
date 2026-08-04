@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from 'react';
-import { KEYS } from '@/lib/storage';
-import type { SessionUser } from '@/types/auth';
+import { useCallback, useEffect, useState } from "react";
+import { clearToken } from "@/lib/api";
+import { KEYS } from "@/lib/storage";
+import type { SessionUser } from "@/types/auth";
 
 function readSession(): SessionUser | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === "undefined") return null;
   try {
     const raw = window.sessionStorage.getItem(KEYS.session);
     return raw ? (JSON.parse(raw) as SessionUser) : null;
@@ -26,7 +27,7 @@ export function useAuth(): {
   }, []);
 
   const login = useCallback((user: SessionUser) => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       try {
         window.sessionStorage.setItem(KEYS.session, JSON.stringify(user));
       } catch {
@@ -37,12 +38,13 @@ export function useAuth(): {
   }, []);
 
   const logout = useCallback(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       try {
         window.sessionStorage.removeItem(KEYS.session);
       } catch {
         /* ignore storage-restricted contexts */
       }
+      clearToken();
     }
     setSession(null);
   }, []);

@@ -14,6 +14,8 @@ from app.schemas.applications import (
     ApplicationDetail,
     ApplicationListItem,
     ApplicationListResponse,
+    ApplicationStageResponse,
+    ApplicationStageUpdate,
 )
 from app.services import report_repository
 
@@ -90,4 +92,27 @@ def get_application(
         cv_generation=cv,
         ats_report=report,
         created_at=app_row.created_at,
+    )
+
+
+@router.patch("/{application_id}", response_model=ApplicationStageResponse)
+def update_pipeline_stage(
+    application_id: uuid.UUID,
+    body: ApplicationStageUpdate,
+    user_id: uuid.UUID = Depends(current_user_id),
+    db: Session = Depends(get_db),
+) -> ApplicationStageResponse:
+    """User đổi trạng thái ứng tuyển (kéo-thả kanban trên FE).
+
+    Chỉ đổi `pipeline_stage` (do user quản lý) — không đụng `generation_status`
+    (pipeline AI, single-writer là consumer).
+    """
+    app_row = db.get(ApplicationORM, application_id)
+    if app_row is None or app_row.user_id != user_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Application không tồn tại")
+
+    app_row.pipeline_stage = body.pipeline_stage
+    db.commit()
+    return ApplicationStageResponse(
+        id=app_row.id, pipeline_stage=app_row.pipeline_stage
     )
