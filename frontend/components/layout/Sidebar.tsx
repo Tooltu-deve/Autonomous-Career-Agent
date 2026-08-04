@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useAuth } from '@/hooks/useAuth';
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { useAuth } from "@/hooks/useAuth";
 import {
   DashboardIcon,
   InboxIcon,
@@ -10,15 +10,15 @@ import {
   CVIcon,
   UserIcon,
   LogoutIcon,
-} from '@/components/icons';
-import s from './Sidebar.module.css';
+} from "@/components/icons";
+import s from "./Sidebar.module.css";
 
 const NAV_ITEMS = [
-  { href: '/dashboard', label: 'Dashboard', icon: <DashboardIcon /> },
-  { href: '/applications', label: 'Applications', icon: <InboxIcon /> },
-  { href: '/jobs', label: 'Smart Radar', icon: <RadarIcon /> },
-  { href: '/cv-tailoring', label: 'CV Tailoring', icon: <CVIcon /> },
-  { href: '/profile', label: 'Profile', icon: <UserIcon /> },
+  { href: "/dashboard", label: "Dashboard", icon: <DashboardIcon /> },
+  { href: "/applications", label: "Applications", icon: <InboxIcon /> },
+  { href: "/jobs", label: "Smart Radar", icon: <RadarIcon /> },
+  { href: "/cv-tailoring", label: "CV Tailoring", icon: <CVIcon /> },
+  { href: "/profile-setup", label: "Profile", icon: <UserIcon /> },
 ];
 
 export function Sidebar() {
@@ -26,19 +26,15 @@ export function Sidebar() {
   const router = useRouter();
   const { session, logout } = useAuth();
 
+  const displayName = session?.fullName.trim() || "Guest";
+  const nameParts = displayName.split(" ").filter(Boolean);
   const initials = session
-    ? `${session.firstName?.[0] ?? ''}${session.lastName?.[0] ?? ''}`.toUpperCase()
-    : '?';
-
-  const displayName = session
-    ? `${session.firstName} ${session.lastName}`.trim()
-    : 'Guest';
+    ? `${nameParts[0]?.[0] ?? ""}${nameParts.length > 1 ? nameParts[nameParts.length - 1][0] : ""}`.toUpperCase()
+    : "?";
 
   const handleLogout = () => {
-    logout();
-    // Also clear the cookie used by middleware
-    document.cookie = 'careernav_session=; Max-Age=0; path=/';
-    router.push('/');
+    logout(); // also clears the token + middleware cookie
+    router.push("/");
   };
 
   return (
@@ -57,13 +53,13 @@ export function Sidebar() {
       <div className={s.sectionLabel}>Workspace</div>
       <nav className={s.nav} aria-label="Main navigation">
         {NAV_ITEMS.map(({ href, label, icon }) => {
-          const active = pathname === href || pathname.startsWith(href + '/');
+          const active = pathname === href || pathname.startsWith(href + "/");
           return (
             <Link
               key={href}
               href={href}
-              className={`${s.navItem} ${active ? s.active : ''}`}
-              aria-current={active ? 'page' : undefined}
+              className={`${s.navItem} ${active ? s.active : ""}`}
+              aria-current={active ? "page" : undefined}
             >
               {icon}
               <span>{label}</span>

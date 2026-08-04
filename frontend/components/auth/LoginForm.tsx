@@ -1,58 +1,90 @@
-'use client';
+"use client";
 
-import { useState, FormEvent } from 'react';
-import { useRouter } from 'next/navigation';
-import { TextField } from '@/components/ui/TextField';
-import { EmailIcon, LockIcon, GoogleIcon } from '@/components/icons';
-import { findUser } from '@/lib/auth';
-import { isValidEmail } from '@/lib/validation';
-import { useAuth } from '@/hooks/useAuth';
-import { KEYS } from '@/lib/storage';
-import s from './auth.module.css';
+import { useState, FormEvent } from "react";
+import { useRouter } from "next/navigation";
+import { TextField } from "@/components/ui/TextField";
+import { EmailIcon, LockIcon, GoogleIcon } from "@/components/icons";
+import {
+  ApiError,
+  getMe,
+  getPreferences,
+  getProfile,
+  login as apiLogin,
+  setToken,
+} from "@/lib/api";
+import { isValidEmail } from "@/lib/validation";
+import { useAuth } from "@/hooks/useAuth";
+import s from "./auth.module.css";
 
-export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => void }) {
+/** After login, decide where onboarding left off: no profile → setup,
+ *  no preferences → preferences, otherwise dashboard. */
+async function nextRouteAfterLogin(): Promise<string> {
+  try {
+    await getProfile();
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404) return "/profile-setup";
+    throw err;
+  }
+  try {
+    await getPreferences();
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 404)
+      return "/profile-preferences";
+    throw err;
+  }
+  return "/dashboard";
+}
+
+export function LoginForm({
+  onSwitchToRegister,
+}: {
+  onSwitchToRegister: () => void;
+}) {
   const router = useRouter();
   const { login } = useAuth();
-  const [form, setForm] = useState({ email: '', password: '' });
-  const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [errors, setErrors] = useState<{ email?: string; password?: string }>(
+    {},
+  );
   const [serverError, setServerError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setServerError(null);
-    const emailValid = isValidEmail(form.email.trim());
+    const email = form.email.trim().toLowerCase();
+    const emailValid = isValidEmail(email);
     const passwordValid = form.password.length > 0;
     setErrors({
-      email: emailValid ? undefined : 'Please enter a valid email.',
-      password: passwordValid ? undefined : 'Please enter a password.',
+      email: emailValid ? undefined : "Please enter a valid email.",
+      password: passwordValid ? undefined : "Please enter a password.",
     });
     if (!emailValid || !passwordValid) return;
 
     setSubmitting(true);
-    setTimeout(() => {
-      const user = findUser(form.email.trim().toLowerCase(), form.password);
-      setSubmitting(false);
-      if (!user) {
-        setServerError('Incorrect email or password. Please try again.');
-        return;
+    try {
+      const token = await apiLogin(email, form.password);
+      setToken(token.access_token);
+      const me = await getMe().catch(() => null);
+      login({ email, fullName: me?.full_name ?? email.split("@")[0] });
+      router.push(await nextRouteAfterLogin());
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        setServerError("Incorrect email or password. Please try again.");
+      } else {
+        setServerError(
+          err instanceof ApiError
+            ? err.message
+            : "Cannot reach the server. Is the backend running?",
+        );
       }
-      login({ email: user.email, firstName: user.firstName, lastName: user.lastName });
-      // Set cookie so middleware (middleware.ts) can detect auth on server side
-      document.cookie = 'careernav_session=1; path=/; SameSite=Lax';
-      const profileDone =
-        typeof window !== 'undefined' ? window.localStorage.getItem(KEYS.profileDone) : null;
-      const prefsDone =
-        typeof window !== 'undefined' ? window.localStorage.getItem(KEYS.prefsDone) : null;
-      if (profileDone !== 'true') router.push('/profile-setup');
-      else if (prefsDone !== 'true') router.push('/profile-preferences');
-      else router.push('/dashboard');
-    }, 900);
+      setSubmitting(false);
+    }
   };
 
   const handleForgot = () => {
     if (!isValidEmail(form.email.trim())) {
-      setErrors((p) => ({ ...p, email: 'Vui lòng nhập email hợp lệ.' }));
+      setErrors((p) => ({ ...p, email: "Vui lòng nhập email hợp lệ." }));
       return;
     }
     alert(
@@ -62,8 +94,8 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
 
   return (
     <div className={s.panel}>
-      <div className={s['form-title']}>Welcome back</div>
-      <div className={s['form-sub']}>Log in to continue your job search.</div>
+      <div className={s["form-title"]}>Welcome back</div>
+      <div className={s["form-sub"]}>Log in to continue your job search.</div>
 
       <form onSubmit={handleSubmit} noValidate>
         <TextField
@@ -96,15 +128,28 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
           error={errors.password}
           icon={<LockIcon />}
           hint={
-            <button type="button" className={s['field-hint']} onClick={handleForgot}>
+            <button
+              type="button"
+              className={s["field-hint"]}
+              onClick={handleForgot}
+            >
               Forgot password?
             </button>
           }
         />
 
         {serverError && (
-          <div className={s['server-error']}>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <div className={s["server-error"]}>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
               <circle cx="12" cy="12" r="10" />
               <line x1="12" y1="8" x2="12" y2="12" />
               <line x1="12" y1="16" x2="12.01" y2="16" />
@@ -113,13 +158,13 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
           </div>
         )}
 
-        <button className={s['btn-submit']} type="submit" disabled={submitting}>
-          {submitting ? 'Logging in…' : 'Log in to CareerNav'}
+        <button className={s["btn-submit"]} type="submit" disabled={submitting}>
+          {submitting ? "Logging in…" : "Log in to CareerNav"}
         </button>
       </form>
 
-      <div className={s['switch-row']}>
-        Don&apos;t have an account?{' '}
+      <div className={s["switch-row"]}>
+        Don&apos;t have an account?{" "}
         <a
           href="#"
           onClick={(e) => {
@@ -131,19 +176,21 @@ export function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => vo
         </a>
       </div>
 
-      <div className={s['divider']}>
-        <div className={s['divider-line']}></div>
+      <div className={s["divider"]}>
+        <div className={s["divider-line"]}></div>
         <span>or continue with</span>
-        <div className={s['divider-line']}></div>
+        <div className={s["divider-line"]}></div>
       </div>
 
-      <div className={`${s['oauth-row']} ${s.single ?? ''}`}>
+      <div className={`${s["oauth-row"]} ${s.single ?? ""}`}>
         <button
-          className={s['btn-oauth']}
+          className={s["btn-oauth"]}
           type="button"
-          onClick={() => alert('Sign in with Google — (demo, OAuth feature in development)')}
+          onClick={() =>
+            alert("Sign in with Google — (demo, OAuth feature in development)")
+          }
         >
-          <div className={s['oauth-icon']}>
+          <div className={s["oauth-icon"]}>
             <GoogleIcon />
           </div>
           Continue with Google

@@ -165,3 +165,40 @@ def test_get_job_not_found(monkeypatch):
     )
     r = client.get(f"/jobs/{uuid.uuid4()}", headers=_AUTH_HEADER)
     assert r.status_code == 404
+
+
+# ---------------------------------------------------------------------------
+# Radar cá nhân hoá (user_jobs)
+# ---------------------------------------------------------------------------
+
+
+def test_search_jobs_passes_user_id(monkeypatch):
+    """POST /jobs/search phải truyền user_id để gắn jobs vào radar của user."""
+    captured = {}
+
+    def fake_search(**kwargs):
+        captured.update(kwargs)
+        return []
+
+    monkeypatch.setattr(
+        "app.api.jobs.scraper_service.search_and_save",
+        fake_search,
+    )
+    body = {"target_role": "Backend", "preferred_locations": ["HCM"]}
+    r = client.post("/jobs/search", json=body, headers=_AUTH_HEADER)
+    assert r.status_code == 200
+    assert captured["user_id"] == _FAKE_USER_ID
+
+
+def test_list_jobs_scoped_to_user(monkeypatch):
+    """GET /jobs phải lọc theo radar của user hiện tại."""
+    captured = {}
+
+    def fake_list(**kwargs):
+        captured.update(kwargs)
+        return [], 0
+
+    monkeypatch.setattr("app.api.jobs.scraper_service.list_jobs", fake_list)
+    r = client.get("/jobs", headers=_AUTH_HEADER)
+    assert r.status_code == 200
+    assert captured["user_id"] == _FAKE_USER_ID

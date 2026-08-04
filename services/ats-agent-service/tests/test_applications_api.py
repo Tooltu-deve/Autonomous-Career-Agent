@@ -95,3 +95,37 @@ def test_get_application_of_other_user_is_404(client, db):
 
 def test_missing_user_header_is_422(client, db):
     assert client.get("/applications").status_code == 422
+
+
+def test_patch_pipeline_stage(client, db):
+    seed_pipeline(db)
+    r = client.patch(
+        f"/applications/{APP_ID}",
+        headers=_headers(),
+        json={"pipeline_stage": "interview"},
+    )
+    assert r.status_code == 200
+    assert r.json() == {"id": str(APP_ID), "pipeline_stage": "interview"}
+    # đổi trạng thái phải được ghi xuống DB
+    r2 = client.get(f"/applications/{APP_ID}", headers=_headers())
+    assert r2.json()["pipeline_stage"] == "interview"
+
+
+def test_patch_pipeline_stage_other_user_404(client, db):
+    seed_pipeline(db)
+    r = client.patch(
+        f"/applications/{APP_ID}",
+        headers=_headers(uuid.uuid4()),
+        json={"pipeline_stage": "applied"},
+    )
+    assert r.status_code == 404
+
+
+def test_patch_pipeline_stage_invalid_value_422(client, db):
+    seed_pipeline(db)
+    r = client.patch(
+        f"/applications/{APP_ID}",
+        headers=_headers(),
+        json={"pipeline_stage": "ghosted"},
+    )
+    assert r.status_code == 422

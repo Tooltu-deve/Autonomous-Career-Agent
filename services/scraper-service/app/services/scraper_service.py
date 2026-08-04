@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from app.models.application import ApplicationDB
 from app.models.job import JobDB
+from app.models.user_job import UserJobDB
 from app.services import apify_client
 from app.services.job_normalizer import normalize_linkedin
 from libs.common.logging import get_logger
@@ -29,17 +30,31 @@ logger = get_logger(__name__)
 # ---------------------------------------------------------------------------
 
 
+def link_jobs_to_user(db: Session, user_uuid: uuid.UUID, job_ids: list[UUID]) -> None:
+    """Gắn jobs vào radar của user (upsert user_jobs, idempotent)."""
+    if not job_ids:
+        return
+    stmt = pg_insert(UserJobDB).values(
+        [{"user_id": user_uuid, "job_id": job_id} for job_id in job_ids]
+    )
+    stmt = stmt.on_conflict_do_nothing(index_elements=["user_id", "job_id"])
+    db.execute(stmt)
+    db.commit()
+
+
 def search_and_save(
     target_role: str,
     locations: list[str],
     limit: int,
     db: Session,
     remote_preference: str | None = None,
+    user_id: str | None = None,
 ) -> list[JobDB]:
     """Cào LinkedIn theo tiêu chí, upsert vào DB, trả list JobDB.
 
     Cào tuần tự để tránh timeout đồng thời. Dùng upsert (ON CONFLICT DO NOTHING)
-    theo (source, external_job_id) để tránh trùng lặp.
+    theo (source, external_job_id) để tránh trùng lặp. Nếu có `user_id`,
+    gắn các job tìm được vào radar của user đó (bảng user_jobs).
     """
     all_jobs: list[Job] = []
 
@@ -108,6 +123,9 @@ def search_and_save(
             JobDB.status == "active",
         )
     ).all()
+
+    if user_id is not None:
+        link_jobs_to_user(db, uuid.UUID(user_id), [j.id for j in saved])
 
     return list(saved)
 
@@ -221,20 +239,19 @@ def select_jobs(
 # ---------------------------------------------------------------------------
 
 
-def list_jobs(db: Session, page: int = 1, limit: int = 20) -> tuple[list[JobDB], int]:
-    """Trả (jobs, total) phân trang, chỉ job có status=active."""
-    total: int = (
-        db.scalar(
-            select(func.count()).select_from(JobDB).where(JobDB.status == "active")
-        )
-        or 0
-    )
-    jobs = db.scalars(
+def list_jobs(
+    db: Session, user_id: str, page: int = 1, limit: int = 20
+) -> tuple[list[JobDB], int]:
+    """Trả (jobs, total) phân trang — chỉ job active trên radar của user."""
+    user_uuid = uuid.UUID(user_id)
+    base = (
         select(JobDB)
-        .where(JobDB.status == "active")
-        .order_by(JobDB.scraped_at.desc())
-        .offset((page - 1) * limit)
-        .limit(limit)
+        .join(UserJobDB, UserJobDB.job_id == JobDB.id)
+        .where(UserJobDB.user_id == user_uuid, JobDB.status == "active")
+    )
+    total: int = db.scalar(select(func.count()).select_from(base.subquery())) or 0
+    jobs = db.scalars(
+        base.order_by(JobDB.scraped_at.desc()).offset((page - 1) * limit).limit(limit)
     ).all()
     return list(jobs), total
 

@@ -88,6 +88,12 @@ Response `200`:
 ```
 Lỗi: `401` sai thông tin đăng nhập.
 
+### `GET /auth/me` → `200`  🔒
+Thông tin user hiện tại (`user_id` lấy từ token — gateway verify rồi truyền `X-User-Id`).
+FE dùng để hiển thị tên sau khi login (login chỉ trả token).
+Response `200`: cùng dạng response của `POST /auth/register`.
+Lỗi: `401` thiếu/sai token, `404` user không tồn tại.
+
 ---
 
 ## A2. Profile Service  `/profile`  🔒
@@ -177,6 +183,11 @@ Do **scraper-service** sở hữu. Flow: user bấm **"Tìm job"** → FE lấy 
 `POST /jobs/select` (publish từng job vào queue `cv.requested`). scraper là **producer** của
 `cv.requested` — đây là điểm khởi động pipeline sinh CV.
 
+> **Radar cá nhân hoá:** bảng `jobs` là kho chung (cào 1 lần, dedupe theo
+> `source+external_job_id`), nhưng mỗi job tìm được sẽ gắn vào **`user_jobs`**
+> `(user_id, job_id)` — radar của ai chỉ hiện job do lần search của người đó tìm ra.
+> `GET /jobs` vì vậy lọc theo user hiện tại; user mới chưa search thì radar rỗng.
+
 ### `POST /jobs/search` → `200`
 User bấm "Tìm job". scraper cào LinkedIn/Indeed theo tiêu chí, lưu `jobs`, trả danh sách.
 FE đọc tiêu chí từ `profile_preferences` (qua `GET /profile`) rồi truyền vào body — scraper
@@ -212,7 +223,7 @@ Response `202`:
 - Lỗi: `404` nếu `job_id` không tồn tại; `422` nếu `job_ids` rỗng.
 
 ### `GET /jobs?page=1&limit=20` → `200`
-Danh sách job phân trang.
+Danh sách job phân trang — **chỉ job trên radar của user hiện tại** (join `user_jobs`).
 ```json
 {
   "items": [
@@ -254,7 +265,8 @@ Chi tiết một job. `404` nếu không tồn tại.
 Mỗi `application` = user ứng tuyển một job. Là **gốc của pipeline**: CV và ATS report gắn theo
 `applications → cv_generations → ats_reports`. Đây là nơi user theo dõi tiến trình.
 
-> Application được tạo khi user chọn job (xem A4 `POST /jobs/select`). Endpoint dưới đây chỉ đọc.
+> Application được tạo khi user chọn job (xem A4 `POST /jobs/select`). Endpoint đọc là chính;
+> ngoại lệ duy nhất: `PATCH /applications/{id}` cho user đổi `pipeline_stage` (kanban).
 
 ### `GET /applications?page=1&limit=20` → `200`
 Danh sách application của user (rút gọn), kèm trạng thái pipeline.
@@ -306,7 +318,9 @@ Chi tiết đầy đủ — gộp `applications` + `cv_generations` + `ats_repor
     "score_breakdown": { "keywords": 70, "experience": 90 },
     "matched_keywords": ["python", "fastapi"],
     "missing_keywords": ["kubernetes"],
-    "recommendations": ["Thêm mục CI/CD"],
+    "recommendations": [
+      { "type": "add", "title": "CI/CD", "body": "Thêm mục CI/CD vào phần Skills" }
+    ],
     "cover_letter_text": "Dear Hiring Manager, ...",
     "model_used": "claude-opus-4-8",
     "generated_at": "2026-07-16T09:07:00Z"
@@ -316,6 +330,19 @@ Chi tiết đầy đủ — gộp `applications` + `cv_generations` + `ats_repor
 ```
 `404` nếu application không tồn tại / không thuộc user. `cv_generation`/`ats_report` có thể `null`
 nếu pipeline chưa chạy xong (xem `pipeline_stage`).
+
+### `PATCH /applications/{application_id}` → `200`
+User đổi trạng thái ứng tuyển (kéo-thả kanban trên FE). Chỉ đổi được `pipeline_stage`
+(trạng thái do user quản lý) — **không** đổi được `generation_status` (single-writer là pipeline AI).
+Request:
+```json
+{ "pipeline_stage": "interview" }
+```
+Response `200`:
+```json
+{ "id": "app-uuid", "pipeline_stage": "interview" }
+```
+Lỗi: `404` không tồn tại / không thuộc user; `422` giá trị ngoài enum `pipeline_stage`.
 > `cv_generation.edit_status` (`cv_edit_status` enum): `"draft"` (AI vừa sinh, chưa sửa) | `"edited"` (user đã chỉnh). Mặc định `draft`.
 
 ---

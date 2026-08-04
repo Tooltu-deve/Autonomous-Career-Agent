@@ -97,3 +97,25 @@ def test_login_unknown_email_returns_401(client):
         "/auth/login", json={"email": "nobody@example.com", "password": PASSWORD}
     )
     assert r.status_code == 401
+
+
+def test_me_returns_current_user(client):
+    user_id = _register(client).json()["id"]
+    r = client.get("/auth/me", headers={"X-User-Id": user_id})
+    assert r.status_code == 200
+    body = r.json()
+    assert body["id"] == user_id
+    assert body["email"] == EMAIL
+    assert body["full_name"] == FULL_NAME
+
+
+def test_me_unknown_user_returns_404(client):
+    import uuid
+
+    r = client.get("/auth/me", headers={"X-User-Id": str(uuid.uuid4())})
+    assert r.status_code == 404
+
+
+def test_me_invalid_user_id_returns_400(client):
+    r = client.get("/auth/me", headers={"X-User-Id": "not-a-uuid"})
+    assert r.status_code == 400

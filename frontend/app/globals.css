@@ -315,6 +315,14 @@ select {
   transform: translateY(-1px);
 }
 
+.btn-primary:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none;
+  box-shadow: var(--shadow-card);
+}
+
 .btn-secondary {
   background: var(--surface-1);
   color: var(--ink);
