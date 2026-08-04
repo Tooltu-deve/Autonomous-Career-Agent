@@ -3,49 +3,20 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { ApiError, getPreferences, getToken, putPreferences } from "@/lib/api";
+import { getInitials } from "@/lib/format";
+import { KEYS } from "@/lib/storage";
 import type { RemotePreference } from "@/types/api";
 import "./profile-preferences.css";
 
 /* ── Types ── */
 type WorkFormat = "onsite" | "remote" | "hybrid";
-type Currency = "VND" | "USD";
 
-interface PreferencesData {
+/* Chỉ gồm các field backend nhận (PUT /profile/preferences) —
+ * salary/experience/jobType đã bỏ vì scraper không dùng chúng. */
+export interface PreferencesData {
   positions: string[];
-  salaryMin: number;
-  salaryMax: number;
-  currency: Currency;
   formats: WorkFormat[];
   location: string;
-  experience: string;
-  jobType: string;
-}
-
-/* ── Salary steps ── */
-const SALARY_STEPS_VND = [
-  0, 1_000_000, 2_000_000, 3_000_000, 4_000_000, 5_000_000, 6_000_000,
-  7_000_000, 8_000_000, 9_000_000, 10_000_000, 12_000_000, 14_000_000,
-  15_000_000, 16_000_000, 18_000_000, 20_000_000, 22_000_000, 25_000_000,
-  28_000_000, 30_000_000, 32_000_000, 35_000_000, 37_000_000, 40_000_000,
-  42_000_000, 45_000_000, 47_000_000, 50_000_000, 55_000_000, 60_000_000,
-  65_000_000, 70_000_000, 75_000_000, 80_000_000, 85_000_000, 90_000_000,
-  95_000_000, 100_000_000, 110_000_000, 120_000_000, 130_000_000, 140_000_000,
-  150_000_000, 160_000_000, 170_000_000, 180_000_000, 190_000_000, 200_000_000,
-  220_000_000, 250_000_000,
-];
-const SALARY_STEPS_USD: number[] = [];
-for (let i = 0; i <= 50; i++) SALARY_STEPS_USD.push(i * 200);
-
-function formatSalary(
-  idx: number,
-  currency: Currency,
-  steps: number[],
-): string {
-  const val = steps[Math.min(idx, steps.length - 1)] ?? 0;
-  if (currency === "USD") return "$" + val.toLocaleString("en-US");
-  if (val >= 1_000_000)
-    return (val / 1_000_000).toLocaleString("vi-VN") + "M ₫";
-  return val.toLocaleString("vi-VN") + " ₫";
 }
 
 const SUGGESTED_POSITIONS = [
@@ -123,12 +94,9 @@ const WORK_FORMATS: {
 /* ── Completeness ── */
 function calcCompleteness(data: PreferencesData): number {
   let pct = 0;
-  pct += Math.min(data.positions.length * 10, 30);
-  pct += 25; // salary always set
-  pct += Math.min(data.formats.length * 10, 20);
-  if (data.location) pct += 10;
-  if (data.experience) pct += 10;
-  if (data.jobType) pct += 5;
+  pct += Math.min(data.positions.length * 20, 40);
+  pct += Math.min(data.formats.length * 15, 30);
+  if (data.location) pct += 30;
   return Math.min(100, pct);
 }
 
@@ -173,41 +141,6 @@ const MapPinSvg = () => (
     <circle cx="12" cy="9" r="2.5" />
   </svg>
 );
-const ClockSvg = () => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <circle cx="12" cy="12" r="10" />
-    <path d="M12 6v6l4 2" />
-  </svg>
-);
-const BriefcaseSvg = () => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
-    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
-  </svg>
-);
-const CoinSvg = () => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    strokeWidth="2"
-    strokeLinecap="round"
-    strokeLinejoin="round"
-  >
-    <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" />
-  </svg>
-);
 
 export default function ProfilePreferencesPage() {
   const router = useRouter();
@@ -218,13 +151,8 @@ export default function ProfilePreferencesPage() {
 
   const [data, setData] = useState<PreferencesData>({
     positions: [],
-    salaryMin: 10, // index into steps array
-    salaryMax: 35,
-    currency: "VND",
     formats: [],
     location: "",
-    experience: "",
-    jobType: "",
   });
   const [posInput, setPosInput] = useState("");
 
@@ -235,9 +163,18 @@ export default function ProfilePreferencesPage() {
       return;
     }
 
+    try {
+      const session = JSON.parse(sessionStorage.getItem(KEYS.session) || "{}");
+      const name = (session.fullName || "").trim() || session.email || "You";
+      setUserName(name);
+      setUserInitials(getInitials(name));
+    } catch {
+      /* ignore */
+    }
+
     let cancelled = false;
     (async () => {
-      // 1. Fetch from server API
+      // Server là nguồn sự thật duy nhất cho preferences
       try {
         const pref = await getPreferences();
         if (cancelled || !pref) return;
@@ -246,38 +183,14 @@ export default function ProfilePreferencesPage() {
           ...d,
           positions: pref.target_role ? [pref.target_role] : d.positions,
           location: pref.preferred_locations?.[0] || d.location,
-          formats: pref.remote_preference ? [pref.remote_preference] : d.formats,
+          formats: pref.remote_preference
+            ? [pref.remote_preference]
+            : d.formats,
         }));
       } catch {
         /* 404 or network error — stay on page with default form */
       }
-
-      // 2. Overwrite with local extra fields if saved
-      try {
-        const rawLocal = localStorage.getItem("careernav_preferences_data");
-        if (rawLocal) {
-          const parsed = JSON.parse(rawLocal);
-          setData((d) => ({ ...d, ...parsed }));
-        }
-      } catch {
-        /* ignore */
-      }
     })();
-
-    const raw = sessionStorage.getItem("careernav_session") || "{}";
-    try {
-      const session = JSON.parse(raw);
-      const name = (session.fullName || "").trim() || session.email || "You";
-      setUserName(name);
-      const parts = name.split(" ").filter(Boolean);
-      setUserInitials(
-        parts.length > 1
-          ? (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
-          : (parts[0]?.[0] ?? "?").toUpperCase(),
-      );
-    } catch {
-      /* ignore */
-    }
 
     return () => {
       cancelled = true;
@@ -310,12 +223,13 @@ export default function ProfilePreferencesPage() {
     }));
   };
 
-  /* ── Salary ── */
-  const steps = data.currency === "USD" ? SALARY_STEPS_USD : SALARY_STEPS_VND;
-
   /* ── Save / Skip ── */
   const complete = async () => {
-    const targetRole = data.positions[0]?.trim() || "Software Engineer";
+    const targetRole = data.positions[0]?.trim();
+    if (!targetRole) {
+      showToast("Add at least one target position first.");
+      return;
+    }
 
     const remotePreference: RemotePreference | null = data.formats.includes(
       "hybrid",
@@ -329,13 +243,6 @@ export default function ProfilePreferencesPage() {
 
     setIsFinishing(true);
 
-    // Save local storage fallback
-    try {
-      localStorage.setItem("careernav_preferences_data", JSON.stringify(data));
-    } catch {
-      /* ignore */
-    }
-
     try {
       await putPreferences({
         target_role: targetRole,
@@ -345,16 +252,17 @@ export default function ProfilePreferencesPage() {
         ],
         remote_preference: remotePreference,
       });
+
       showToast("Preferences saved! Returning to Profile...");
       setTimeout(() => router.push("/profile"), 800);
     } catch (err) {
+      // Lưu thất bại: ở lại trang, báo lỗi thật — không giả vờ thành công.
       setIsFinishing(false);
       showToast(
         err instanceof ApiError
-          ? err.message
-          : "Saved preferences locally! Returning to Profile...",
+          ? `Save failed: ${err.message}`
+          : "Cannot reach the server — preferences not saved.",
       );
-      setTimeout(() => router.push("/profile"), 800);
     }
   };
 
@@ -486,42 +394,7 @@ export default function ProfilePreferencesPage() {
               </div>
             </div>
 
-            {/* Section 2: Job Type */}
-            <div className="pp-card pp-section">
-              <div className="pp-section-head">
-                <h2>Job Type</h2>
-                <p>Select the job type you are looking for.</p>
-              </div>
-              <div
-                className="pp-pref-row pp-pref-row-last"
-                style={{ borderBottom: "none", padding: 0 }}
-              >
-                <div className="pp-pref-icon">
-                  <BriefcaseSvg />
-                </div>
-                <div className="pp-pref-text">
-                  <div className="pp-pref-label">Employment Type</div>
-                  <div className="pp-pref-hint">
-                    Full-time, Part-time, Internship, or Freelance
-                  </div>
-                </div>
-                <select
-                  className="pp-select pp-select-sm"
-                  value={data.jobType}
-                  onChange={(e) =>
-                    setData((d) => ({ ...d, jobType: e.target.value }))
-                  }
-                >
-                  <option value="">Select Type</option>
-                  <option value="Full-time">Full-time</option>
-                  <option value="Part-time">Part-time</option>
-                  <option value="Internship">Internship</option>
-                  <option value="Freelance">Freelance</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Section 3: Work Format */}
+            {/* Section 2: Work Format */}
             <div className="pp-card pp-section">
               <div className="pp-section-head">
                 <h2>Work Format</h2>
@@ -563,12 +436,13 @@ export default function ProfilePreferencesPage() {
             <div className="pp-card pp-section">
               <div className="pp-section-head">
                 <h2>Additional Options</h2>
-                <p>
-                  Preferred locations and experience levels suitable for you.
-                </p>
+                <p>Preferred location suitable for you.</p>
               </div>
               {/* Location */}
-              <div className="pp-pref-row">
+              <div
+                className="pp-pref-row pp-pref-row-last"
+                style={{ borderBottom: "none" }}
+              >
                 <div className="pp-pref-icon">
                   <MapPinSvg />
                 </div>
@@ -589,35 +463,6 @@ export default function ProfilePreferencesPage() {
                   <option value="Da Nang">Da Nang</option>
                   <option value="Can Tho">Can Tho</option>
                   <option value="Anywhere">Anywhere</option>
-                </select>
-              </div>
-
-              {/* Experience */}
-              <div
-                className="pp-pref-row pp-pref-row-last"
-                style={{ borderBottom: "none" }}
-              >
-                <div className="pp-pref-icon">
-                  <ClockSvg />
-                </div>
-                <div className="pp-pref-text">
-                  <div className="pp-pref-label">Experience</div>
-                  <div className="pp-pref-hint">Suitable experience level</div>
-                </div>
-                <select
-                  className="pp-select pp-select-sm"
-                  value={data.experience}
-                  onChange={(e) =>
-                    setData((d) => ({ ...d, experience: e.target.value }))
-                  }
-                >
-                  <option value="">Select level</option>
-                  <option value="Fresher / Intern">Fresher / Intern</option>
-                  <option value="Junior (1-2 years)">Junior (1-2 years)</option>
-                  <option value="Mid-level (2-5 years)">
-                    Mid-level (2-5 years)
-                  </option>
-                  <option value="Senior (5+ years)">Senior (5+ years)</option>
                 </select>
               </div>
             </div>
@@ -665,7 +510,9 @@ export default function ProfilePreferencesPage() {
               <div className="pp-pv-block">
                 <div className="pp-pv-label">Desired Positions</div>
                 {data.positions.length === 0 ? (
-                  <p className="pp-pv-empty">Add vị trí để xem ở đây.</p>
+                  <p className="pp-pv-empty">
+                    Add positions to preview them here.
+                  </p>
                 ) : (
                   <div className="pp-pv-positions">
                     {data.positions.map((p) => (
@@ -675,24 +522,6 @@ export default function ProfilePreferencesPage() {
                     ))}
                   </div>
                 )}
-              </div>
-
-              {/* Job Type Preview */}
-              <div className="pp-pv-block">
-                <div className="pp-pv-label">Job Type</div>
-                <div className="pp-pv-salary-bar">
-                  <div className="pp-pv-salary-icon">
-                    <BriefcaseSvg />
-                  </div>
-                  <div>
-                    <div className="pp-pv-salary-text">
-                      {data.jobType || "No type selected"}
-                    </div>
-                    <div className="pp-pv-salary-sub">
-                      Work Format (Full-time / Part-time...)
-                    </div>
-                  </div>
-                </div>
               </div>
 
               {/* Formats */}
@@ -717,30 +546,19 @@ export default function ProfilePreferencesPage() {
               {/* Details */}
               <div className="pp-pv-block">
                 <div className="pp-pv-label">Other Details</div>
-                {!data.location && !data.experience ? (
+                {!data.location ? (
                   <p className="pp-pv-empty">
-                    Select additional options to view here.
+                    Select a preferred location to view here.
                   </p>
                 ) : (
                   <div className="pp-pv-details">
-                    {data.location && (
-                      <div className="pp-pv-detail">
-                        <MapPinSvg />
-                        <span className="pp-pv-detail-label">Location</span>
-                        <span className="pp-pv-detail-value">
-                          {data.location}
-                        </span>
-                      </div>
-                    )}
-                    {data.experience && (
-                      <div className="pp-pv-detail">
-                        <ClockSvg />
-                        <span className="pp-pv-detail-label">Experience</span>
-                        <span className="pp-pv-detail-value">
-                          {data.experience}
-                        </span>
-                      </div>
-                    )}
+                    <div className="pp-pv-detail">
+                      <MapPinSvg />
+                      <span className="pp-pv-detail-label">Location</span>
+                      <span className="pp-pv-detail-value">
+                        {data.location}
+                      </span>
+                    </div>
                   </div>
                 )}
               </div>

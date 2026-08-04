@@ -3,7 +3,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getPreferences, getProfile } from "@/lib/api";
-import type { PreferencesResponse, ProfileResponse, TemplateName } from "@/types/api";
+import { getInitials } from "@/lib/format";
+import { KEYS } from "@/lib/storage";
+import type {
+  PreferencesResponse,
+  ProfileResponse,
+  TemplateName,
+} from "@/types/api";
 import s from "./profile.module.css";
 
 interface DisplayProfile {
@@ -14,6 +20,7 @@ interface DisplayProfile {
   email: string;
   phone: string;
   github: string;
+  linkedin: string;
   preferredTemplate: TemplateName;
   summary: string;
   experiences: {
@@ -28,21 +35,12 @@ interface DisplayProfile {
     degree: string;
   }[];
   skills: string[];
+  // Chỉ các field backend thực sự lưu (GET /profile/preferences)
   preferences: {
     targetRole: string;
     workType: string;
     preferredLocations: string[];
-    salaryRange: string;
-    experienceLevel: string;
-    jobType: string;
   };
-}
-
-function getInitials(name: string): string {
-  const parts = name.trim().split(" ").filter(Boolean);
-  if (parts.length === 0) return "?";
-  if (parts.length === 1) return parts[0][0].toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
 }
 
 function calculateCompletion(p: DisplayProfile): number {
@@ -58,31 +56,31 @@ function calculateCompletion(p: DisplayProfile): number {
   if (p.education.length > 0) score += 15;
   if (p.experiences.length > 0) score += 10;
 
-  if (p.preferences.targetRole !== "Chưa cập nhật") score += 5;
+  if (p.preferences.targetRole) score += 5;
   return Math.min(score, 100);
 }
 
 export default function MasterProfilePage() {
+  // Giá trị rỗng = "chưa có dữ liệu thật" — KHÔNG điền dữ liệu bịa vào state,
+  // vì calculateCompletion và UI đều đọc từ đây; placeholder chỉ thêm lúc render.
   const [profile, setProfile] = useState<DisplayProfile>({
-    name: "User",
+    name: "",
     avatarInitials: "?",
-    headline: "Professional Headline",
-    location: "Chưa cập nhật",
+    headline: "",
+    location: "",
     email: "",
     phone: "",
     github: "",
+    linkedin: "",
     preferredTemplate: "classic",
-    summary: "Chưa có thông tin tóm tắt. Bấm 'Chỉnh sửa Hồ sơ' để bổ sung.",
+    summary: "",
     experiences: [],
     education: [],
     skills: [],
     preferences: {
-      targetRole: "Chưa cập nhật",
-      workType: "Full-time / Onsite",
+      targetRole: "",
+      workType: "",
       preferredLocations: [],
-      salaryRange: "Chưa thiết lập",
-      experienceLevel: "Chưa thiết lập",
-      jobType: "Toàn thời gian",
     },
   });
 
@@ -98,124 +96,65 @@ export default function MasterProfilePage() {
         let sessionName = "";
         let sessionEmail = "";
         try {
-          const raw = sessionStorage.getItem("careernav_session") || "{}";
-          const session = JSON.parse(raw);
+          const session = JSON.parse(
+            sessionStorage.getItem(KEYS.session) || "{}",
+          );
           sessionName = session.fullName || "";
           sessionEmail = session.email || "";
         } catch {
           /* ignore */
         }
 
-        // 2. Fetch Profile from backend API
-        let prof: ProfileResponse | null = null;
-        try {
-          prof = await getProfile();
-        } catch {
-          /* 404 or offline */
-        }
-
-        // 3. Fetch Preferences from backend API
-        let pref: PreferencesResponse | null = null;
-        try {
-          pref = await getPreferences();
-        } catch {
-          /* 404 or offline */
-        }
-
-        // 4. Local storage extra preferences if present
-        let localPref: {
-          salaryMin?: number;
-          salaryMax?: number;
-          currency?: string;
-          experience?: string;
-          jobType?: string;
-          positions?: string[];
-          location?: string;
-          formats?: string[];
-        } = {};
-        try {
-          const rawLocal = localStorage.getItem("careernav_preferences_data");
-          if (rawLocal) localPref = JSON.parse(rawLocal);
-        } catch {
-          /* ignore */
-        }
+        // 2. Profile + preferences song song — hai request độc lập
+        const [profRes, prefRes] = await Promise.allSettled([
+          getProfile(),
+          getPreferences(),
+        ]);
+        const prof: ProfileResponse | null =
+          profRes.status === "fulfilled" ? profRes.value : null;
+        const pref: PreferencesResponse | null =
+          prefRes.status === "fulfilled" ? prefRes.value : null;
 
         if (cancelled) return;
 
-        const fullName = sessionName || "Nguyễn Văn A";
-        const email = sessionEmail || (prof?.phone ? "" : "user@email.com");
+        // Preferences chỉ từ server — không còn bản sao localStorage
+        const workTypeStr = pref?.remote_preference
+          ? pref.remote_preference.toUpperCase()
+          : "";
+        const targetRoleStr = pref?.target_role || "";
+        const locationsList = pref?.preferred_locations ?? [];
 
-        // Format salary string if present
-        let salaryText = "Chưa thiết lập";
-        if (localPref.salaryMin !== undefined && localPref.salaryMax !== undefined) {
-          const curr = localPref.currency || "VND";
-          if (curr === "VND") {
-            const minM = localPref.salaryMin / 1_000_000;
-            const maxM = localPref.salaryMax / 1_000_000;
-            salaryText = `${minM}M - ${maxM}M ₫`;
-          } else {
-            salaryText = `$${localPref.salaryMin} - $${localPref.salaryMax}`;
-          }
-        }
-
-        // Format work formats
-        let workTypeStr = "Onsite / Remote / Hybrid";
-        if (pref?.remote_preference) {
-          workTypeStr = pref.remote_preference.toUpperCase();
-        } else if (localPref.formats && localPref.formats.length > 0) {
-          workTypeStr = localPref.formats.map((f) => f.toUpperCase()).join(", ");
-        }
-
-        // Target roles
-        const targetRoleStr =
-          pref?.target_role ||
-          (localPref.positions && localPref.positions.length > 0
-            ? localPref.positions.join(", ")
-            : "Chưa cập nhật");
-
-        // Preferred locations
-        const locationsList =
-          pref?.preferred_locations && pref.preferred_locations.length > 0
-            ? pref.preferred_locations
-            : localPref.location
-              ? [localPref.location]
-              : [];
-
+        // Chỉ dữ liệu thật — field trống giữ nguyên trống để completion %
+        // trung thực; placeholder "Chưa cập nhật" thêm ở tầng render.
         setProfile({
-          name: fullName,
-          avatarInitials: getInitials(fullName),
-          headline: prof?.headline || "Software Engineer",
-          location: prof?.location || "Ho Chi Minh City",
-          email: email,
+          name: sessionName,
+          avatarInitials: getInitials(sessionName),
+          headline: prof?.headline || "",
+          location: prof?.location || "",
+          email: sessionEmail,
           phone: prof?.phone || "",
           github: prof?.github_url || "",
+          linkedin: prof?.linkedin_url || "",
           preferredTemplate: prof?.preferred_template || "classic",
-          summary: prof?.summary || "Chưa có thông tin tóm tắt.",
-          experiences: prof?.experiences?.length
-            ? prof.experiences.map((exp) => ({
-                id: exp.id,
-                title: exp.title,
-                organization: exp.organization || "Personal Project",
-                description: exp.description || "",
-              }))
-            : [],
-          education: prof?.educations?.length
-            ? prof.educations.map((edu) => ({
-                id: edu.id,
-                school: edu.school,
-                degree: edu.degree || "Bachelor's Degree",
-              }))
-            : [],
-          skills: prof?.skills?.length
-            ? prof.skills.map((s) => s.skill_name)
-            : ["React", "TypeScript", "Python", "Docker"],
+          summary: prof?.summary || "",
+          experiences:
+            prof?.experiences?.map((exp) => ({
+              id: exp.id,
+              title: exp.title,
+              organization: exp.organization || "",
+              description: exp.description || "",
+            })) ?? [],
+          education:
+            prof?.educations?.map((edu) => ({
+              id: edu.id,
+              school: edu.school,
+              degree: edu.degree || "",
+            })) ?? [],
+          skills: prof?.skills?.map((s) => s.skill_name) ?? [],
           preferences: {
             targetRole: targetRoleStr,
             workType: workTypeStr,
             preferredLocations: locationsList,
-            salaryRange: salaryText,
-            experienceLevel: localPref.experience || "1 - 3 năm kinh nghiệm",
-            jobType: localPref.jobType || "Toàn thời gian (Full-time)",
           },
         });
       } finally {
@@ -275,8 +214,10 @@ export default function MasterProfilePage() {
               </div>
             </div>
             <div className={s.profileTitleDetails}>
-              <h1>{profile.name}</h1>
-              <div className={s.profileHeadline}>{profile.headline}</div>
+              <h1>{profile.name || "Chưa cập nhật tên"}</h1>
+              <div className={s.profileHeadline}>
+                {profile.headline || "Chưa cập nhật headline"}
+              </div>
               <div className={s.profileBadgesRow}>
                 {profile.location && (
                   <span className={s.pBadge}>
@@ -337,7 +278,26 @@ export default function MasterProfilePage() {
                     {profile.github}
                   </span>
                 )}
-                <span className={s.pBadge} style={{ color: "#E5544F", fontWeight: 600 }}>
+                {profile.linkedin && (
+                  <span className={s.pBadge}>
+                    <svg
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z" />
+                      <rect x="2" y="9" width="4" height="12" />
+                      <circle cx="4" cy="4" r="2" />
+                    </svg>
+                    {profile.linkedin}
+                  </span>
+                )}
+                <span
+                  className={s.pBadge}
+                  style={{ color: "#E5544F", fontWeight: 600 }}
+                >
                   📄 Mẫu CV: {profile.preferredTemplate.toUpperCase()}
                 </span>
               </div>
@@ -384,7 +344,8 @@ export default function MasterProfilePage() {
           <div className={s.completionInfo}>
             <span className={s.compTag}>Hoàn thiện {completionPercent}%</span>
             <span className={s.compText}>
-              Hồ sơ Master Profile của bạn đã được kết nối trực tiếp với hệ thống AI Agent!
+              Hồ sơ Master Profile của bạn đã được kết nối trực tiếp với hệ
+              thống AI Agent!
             </span>
           </div>
           <div className={s.compBarContainer}>
@@ -419,8 +380,15 @@ export default function MasterProfilePage() {
                 Tóm tắt bản thân (Executive Summary)
               </div>
             </div>
-            <p style={{ fontSize: "14px", lineHeight: 1.7, color: "var(--ink-muted)" }}>
-              {profile.summary}
+            <p
+              style={{
+                fontSize: "14px",
+                lineHeight: 1.7,
+                color: "var(--ink-muted)",
+              }}
+            >
+              {profile.summary ||
+                "Chưa có thông tin tóm tắt — bấm 'Chỉnh sửa Profile Setup' để bổ sung."}
             </p>
           </div>
 
@@ -499,7 +467,10 @@ export default function MasterProfilePage() {
               {profile.education.length > 0 ? (
                 profile.education.map((edu) => (
                   <div key={edu.id} className={s.timelineItem}>
-                    <div className={s.itemLogo} style={{ background: "var(--surface-2)" }}>
+                    <div
+                      className={s.itemLogo}
+                      style={{ background: "var(--surface-2)" }}
+                    >
                       🎓
                     </div>
                     <div className={s.itemBody}>
@@ -534,12 +505,22 @@ export default function MasterProfilePage() {
                 </svg>
                 Kỹ năng (Master Skills)
               </div>
-              <Link href="/profile-setup" style={{ fontSize: "12px", fontWeight: 600, color: "var(--primary-hover)" }}>
+              <Link
+                href="/profile-setup"
+                style={{
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  color: "var(--primary-hover)",
+                }}
+              >
                 Sửa
               </Link>
             </div>
 
             <div className={s.skillChipsWrap}>
+              {profile.skills.length === 0 && (
+                <span className={s.prefVal}>Chưa thêm kỹ năng nào.</span>
+              )}
               {profile.skills.map((skill) => (
                 <span key={skill} className={s.masterSkillPill}>
                   {skill}
@@ -567,7 +548,11 @@ export default function MasterProfilePage() {
               </div>
               <Link
                 href="/profile-preferences"
-                style={{ fontSize: "12px", fontWeight: 600, color: "var(--primary-hover)" }}
+                style={{
+                  fontSize: "12px",
+                  fontWeight: 600,
+                  color: "var(--primary-hover)",
+                }}
               >
                 Sửa
               </Link>
@@ -575,11 +560,15 @@ export default function MasterProfilePage() {
 
             <div className={s.prefItemRow}>
               <span className={s.prefLbl}>Vị trí mong muốn:</span>
-              <span className={s.prefVal}>{profile.preferences.targetRole}</span>
+              <span className={s.prefVal}>
+                {profile.preferences.targetRole || "Chưa cập nhật"}
+              </span>
             </div>
             <div className={s.prefItemRow}>
               <span className={s.prefLbl}>Hình thức làm việc:</span>
-              <span className={s.prefVal}>{profile.preferences.workType}</span>
+              <span className={s.prefVal}>
+                {profile.preferences.workType || "Chưa chọn"}
+              </span>
             </div>
             <div className={s.prefItemRow}>
               <span className={s.prefLbl}>Địa điểm ưu tiên:</span>
@@ -588,18 +577,6 @@ export default function MasterProfilePage() {
                   ? profile.preferences.preferredLocations.join(", ")
                   : "Chưa chọn"}
               </span>
-            </div>
-            <div className={s.prefItemRow}>
-              <span className={s.prefLbl}>Mức lương kỳ vọng:</span>
-              <span className={s.prefVal}>{profile.preferences.salaryRange}</span>
-            </div>
-            <div className={s.prefItemRow}>
-              <span className={s.prefLbl}>Kinh nghiệm:</span>
-              <span className={s.prefVal}>{profile.preferences.experienceLevel}</span>
-            </div>
-            <div className={s.prefItemRow}>
-              <span className={s.prefLbl}>Loại hình công việc:</span>
-              <span className={s.prefVal}>{profile.preferences.jobType}</span>
             </div>
           </div>
 
@@ -611,7 +588,10 @@ export default function MasterProfilePage() {
               borderColor: "#F5C7C5",
             }}
           >
-            <div className={s.cardTitle} style={{ color: "var(--primary-hover)" }}>
+            <div
+              className={s.cardTitle}
+              style={{ color: "var(--primary-hover)" }}
+            >
               <svg
                 viewBox="0 0 24 24"
                 fill="none"
@@ -624,8 +604,17 @@ export default function MasterProfilePage() {
               </svg>
               ATS Profile Readiness
             </div>
-            <p style={{ fontSize: "13px", color: "var(--ink-muted)", marginTop: "8px", lineHeight: 1.5 }}>
-              Hồ sơ của bạn đạt <strong>{completionPercent}% tiêu chuẩn quét ATS</strong>. Thông tin đã kết nối đầy đủ giữa Profile Setup và Career Preferences.
+            <p
+              style={{
+                fontSize: "13px",
+                color: "var(--ink-muted)",
+                marginTop: "8px",
+                lineHeight: 1.5,
+              }}
+            >
+              Hồ sơ của bạn đạt{" "}
+              <strong>{completionPercent}% tiêu chuẩn quét ATS</strong>. Thông
+              tin đã kết nối đầy đủ giữa Profile Setup và Career Preferences.
             </p>
           </div>
         </div>

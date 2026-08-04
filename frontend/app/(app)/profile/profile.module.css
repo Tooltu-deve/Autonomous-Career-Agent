@@ -18,20 +18,24 @@
 
 .coverBanner {
   height: 160px;
-  background: linear-gradient(135deg, #1E1F21 0%, #2D2F33 100%);
+  background: linear-gradient(135deg, #1e1f21 0%, #2d2f33 100%);
   position: relative;
   overflow: hidden;
 }
 
 .coverBanner::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -50px;
   right: -50px;
   width: 250px;
   height: 250px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(240, 106, 106, 0.3) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(240, 106, 106, 0.3) 0%,
+    transparent 70%
+  );
 }
 
 .headerContent {
@@ -211,7 +215,7 @@
   font-weight: 700;
   padding: 3px 10px;
   border-radius: var(--r-pill);
-  background: #E6F7E9;
+  background: #e6f7e9;
   color: var(--success);
   text-transform: uppercase;
 }
@@ -232,7 +236,7 @@
 
 .compBarFill {
   height: 100%;
-  background: linear-gradient(90deg, var(--success), #62D26F);
+  background: linear-gradient(90deg, var(--success), #62d26f);
   border-radius: var(--r-pill);
   transition: width 300ms ease;
 }
@@ -303,7 +307,7 @@
 }
 
 .btnAddItem:hover {
-  background: #F5C7C5;
+  background: #f5c7c5;
 }
 
 /* Timeline Items */
@@ -475,13 +479,13 @@
 .masterSkillPill.expert {
   background: var(--primary-soft);
   color: var(--primary-hover);
-  border-color: #F5C7C5;
+  border-color: #f5c7c5;
 }
 
 .masterSkillPill.advanced {
-  background: #EAF0FC;
+  background: #eaf0fc;
   color: var(--accent-blue);
-  border-color: #D2E0FB;
+  border-color: #d2e0fb;
 }
 
 /* Preferences summary card */
