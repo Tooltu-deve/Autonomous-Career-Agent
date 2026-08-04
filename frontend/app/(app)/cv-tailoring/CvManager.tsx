@@ -1,18 +1,17 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styles from "./cv-manager.module.css";
-import {
-  deleteMockGeneratedCV,
-  getMockGeneratedCVs,
-  requestCvExport,
-  updateMockGeneratedCV,
-  validateGeneratedCVContent,
-  type GeneratedCV,
-  type GeneratedCVContent,
-} from "@/lib/mock/cv";
+import { ApiError, exportPdf, getProfile, putCv } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
+import { loadCvViews, validateCvContent, type CvView } from "@/lib/cv";
+import type {
+  CvContent,
+  PdfHeader,
+  ProfileResponse,
+  TemplateName,
+} from "@/types/api";
 import { CvEditor } from "./CvEditor";
-
 
 function scoreClass(score: number) {
   return score >= 80 ? "high" : score >= 70 ? "mid" : "low";
@@ -36,16 +35,19 @@ function Modal({
     </div>
   );
 }
+
 function Resume({
   cv,
+  header,
   close,
   onSave,
   error,
   notice,
 }: {
-  cv: GeneratedCV;
+  cv: CvView;
+  header: PdfHeader;
   close: () => void;
-  onSave: (content: GeneratedCVContent, exportAfterSave: boolean, title: string) => void;
+  onSave: (content: CvContent, exportAfterSave: boolean) => void;
   error: string | null;
   notice: string | null;
 }) {
@@ -53,6 +55,7 @@ function Resume({
     <Modal close={close}>
       <CvEditor
         cv={cv}
+        header={header}
         onClose={close}
         onSave={onSave}
         error={error}
@@ -61,50 +64,11 @@ function Resume({
     </Modal>
   );
 }
-function ResumeSection({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className={styles["cm-resume-section"]}>
-      <h3>{title}</h3>
-      {children}
-    </section>
-  );
-}
-function DeleteConfirmModal({
-  cv,
-  onCancel,
-  onConfirm,
-}: {
-  cv: GeneratedCV;
-  onCancel: () => void;
-  onConfirm: () => void;
-}) {
-  return (
-    <Modal close={onCancel}>
-      <section className={styles["cm-confirm"]}>
-        <h2>Delete &ldquo;{cv.title}&rdquo;?</h2>
-        <p>This removes the CV from the local mock session. This action cannot be undone.</p>
-        <div>
-          <button className={styles["cm-secondary"]} onClick={onCancel}>
-            Cancel
-          </button>
-          <button className={styles["cm-danger"]} onClick={onConfirm}>
-            Delete CV
-          </button>
-        </div>
-      </section>
-    </Modal>
-  );
-}
-function AtsReport({ cv, close }: { cv: GeneratedCV; close: () => void }) {
-  const color =
-    cv.ats_score >= 75 ? "#37a66b" : cv.ats_score >= 60 ? "#c98a2c" : "#e8384f";
-  const offset = 389.6 * (1 - cv.ats_score / 100);
+
+function AtsReport({ cv, close }: { cv: CvView; close: () => void }) {
+  const score = cv.atsScore ?? 0;
+  const color = score >= 75 ? "#37a66b" : score >= 60 ? "#c98a2c" : "#e8384f";
+  const offset = 389.6 * (1 - score / 100);
   return (
     <Modal close={close}>
       <header className={styles["cm-modal-header"]}>
@@ -131,12 +95,12 @@ function AtsReport({ cv, close }: { cv: GeneratedCV; close: () => void }) {
                 strokeDashoffset={offset}
               />
             </svg>
-            <b>{cv.ats_score}%</b>
+            <b>{score}%</b>
             <small>ATS score</small>
           </div>
           <div>
             <h3>
-              {cv.ats_score >= 75
+              {score >= 75
                 ? "Good match — a few tweaks would push this into the top tier"
                 : "Needs work — several core keywords are missing"}
             </h3>
@@ -157,25 +121,24 @@ function AtsReport({ cv, close }: { cv: GeneratedCV; close: () => void }) {
         <section>
           <h3 className={styles["cm-section-title"]}>Recommendations</h3>
           <div className={styles["cm-recommendations"]}>
-            <p>
-              <b>△ Add missing tools to your Skills section</b>Most listings
-              you’re tracking mention several missing terms.
-            </p>
-            <p>
-              <b>✦ Quantify your experience bullets</b>Bullets with numbers
-              score higher on parsing confidence.
-            </p>
-            <p>
-              <b>✓ Mirror the job title in your headline</b>Using the target
-              role title improves matching on most ATS parsers.
-            </p>
+            {cv.recommendations.length === 0 ? (
+              <p>No recommendations — the ATS agent had nothing to flag.</p>
+            ) : (
+              cv.recommendations.map((rec, i) => (
+                <p key={i}>
+                  <b>
+                    {rec.type === "improve" ? "✦" : "△"} {rec.title}
+                  </b>
+                  {rec.body}
+                </p>
+              ))
+            )}
           </div>
         </section>
       </div>
       <footer className={styles["cm-modal-footer"]}>
         <span>Formatted for ATS scanning</span>
         <div>
-          <button className={styles["cm-secondary"]}>View Full Report</button>
           <button className={styles["cm-primary"]} onClick={close}>
             Close
           </button>
@@ -184,6 +147,7 @@ function AtsReport({ cv, close }: { cv: GeneratedCV; close: () => void }) {
     </Modal>
   );
 }
+
 function KeywordCard({
   title,
   words,
@@ -215,141 +179,260 @@ function KeywordCard({
   );
 }
 
+function headerFromProfile(profile: ProfileResponse | null): PdfHeader {
+  if (!profile) return {};
+  return {
+    headline: profile.headline ?? undefined,
+    location: profile.location ?? undefined,
+    phone: profile.phone ?? undefined,
+    github_url: profile.github_url ?? undefined,
+    linkedin_url: profile.linkedin_url ?? undefined,
+  };
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** CV còn đang chạy pipeline (chưa completed / needs_review) → khoá tương tác.
+ *  needs_review vẫn mở được vì user PHẢI vào editor sửa CV đó. */
+function isPending(cv: CvView): boolean {
+  return (
+    cv.generationStatus !== "completed" && cv.generationStatus !== "needs_review"
+  );
+}
+
+const PENDING_LABEL: Record<string, string> = {
+  cv_queued: "Queued…",
+  cv_generating: "Generating CV…",
+  cv_generated: "Waiting for ATS…",
+  ats_scoring: "Scoring ATS…",
+};
+
 export function CvManager() {
+  const { session } = useAuth();
   const [query, setQuery] = useState("");
   const [sortBy, setSortBy] = useState<"recent" | "ats">("recent");
-  const [cvs, setCvs] = useState(getMockGeneratedCVs);
-  const [preview, setPreview] = useState<GeneratedCV | null>(null);
-  const [report, setReport] = useState<GeneratedCV | null>(null);
+  const [cvs, setCvs] = useState<CvView[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [profile, setProfile] = useState<ProfileResponse | null>(null);
+  const [preview, setPreview] = useState<CvView | null>(null);
+  const [report, setReport] = useState<CvView | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const [pendingDelete, setPendingDelete] = useState<GeneratedCV | null>(null);
-  const save = async (
-    content: GeneratedCVContent,
-    exportAfterSave: boolean,
-    title: string,
-  ) => {
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([loadCvViews(), getProfile().catch(() => null)])
+      .then(([views, prof]) => {
+        if (cancelled) return;
+        setCvs(views);
+        setProfile(prof);
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setLoadError(
+            err instanceof ApiError ? err.message : "Cannot reach the server.",
+          );
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Còn card đang chạy pipeline → poll lại danh sách để card tự mở khoá
+  // khi ats-agent chấm xong.
+  const hasPending = cvs.some(isPending);
+  useEffect(() => {
+    if (!hasPending) return;
+    const timer = setInterval(() => {
+      loadCvViews()
+        .then(setCvs)
+        .catch(() => {
+          /* giữ danh sách hiện tại, thử lại ở tick sau */
+        });
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [hasPending]);
+
+  const pdfHeader: PdfHeader = {
+    full_name: session?.fullName,
+    email: session?.email,
+    ...headerFromProfile(profile),
+  };
+
+  const save = async (content: CvContent, exportAfterSave: boolean) => {
     if (!preview) return;
-    const message = validateGeneratedCVContent(content);
+    const message = validateCvContent(content);
     if (message) {
       setError(message);
       setNotice(null);
       return;
     }
-    const updated = updateMockGeneratedCV(preview.id, content, title);
-    setCvs(getMockGeneratedCVs());
-    setPreview(updated);
-    setError(null);
-    if (exportAfterSave) {
-      await requestCvExport(updated);
-      setNotice("Saved. PDF export is pending the pdf-service backend.");
-    } else setNotice("Saved in this session.");
+    try {
+      const saved = await putCv(preview.cvId, content);
+      const updated: CvView = {
+        ...preview,
+        content: saved.cv_json,
+        editStatus: saved.edit_status,
+        updatedAt: "Just now",
+      };
+      setCvs((prev) =>
+        prev.map((cv) => (cv.cvId === updated.cvId ? updated : cv)),
+      );
+      setPreview(updated);
+      setError(null);
+
+      if (exportAfterSave) {
+        const template: TemplateName = profile?.preferred_template ?? "classic";
+        const blob = await exportPdf({
+          template,
+          cv_data: saved.cv_json,
+          header: pdfHeader,
+        });
+        downloadBlob(blob, "cv.pdf");
+        setNotice("Saved and exported to PDF.");
+      } else {
+        setNotice("Saved.");
+      }
+    } catch (err) {
+      setNotice(null);
+      setError(
+        err instanceof ApiError
+          ? err.message
+          : "Cannot reach the server — not saved.",
+      );
+    }
   };
+
   const visible = useMemo(() => {
     const filtered = cvs.filter((cv) =>
-      `${cv.title} ${cv.source_job}`
-        .toLowerCase()
-        .includes(query.toLowerCase()),
+      `${cv.title} ${cv.sourceJob}`.toLowerCase().includes(query.toLowerCase()),
     );
     if (sortBy === "ats") {
-      return [...filtered].sort((a, b) => b.ats_score - a.ats_score);
+      return [...filtered].sort(
+        (a, b) => (b.atsScore ?? 0) - (a.atsScore ?? 0),
+      );
     }
     return filtered;
   }, [cvs, query, sortBy]);
+
   return (
     <div className={styles["cv-manager"]}>
-        <main className={styles["cm-main"]}>
-          <header className={styles["cm-page-header"]}>
-            <div>
-              <h1>CV Manager</h1>
-              <p>
-                Every tailored CV your agent has generated, in one place —
-                preview, edit, or export any version.
-              </p>
-            </div>
-          </header>
-          <div className={styles["cm-toolbar"]}>
-            <label>
-              ⌕
-              <input
-                value={query}
-                onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search CVs..."
-              />
-            </label>
-            <select
-              className={styles["cm-filter"]}
-              value={sortBy}
-              onChange={(event) =>
-                setSortBy(event.target.value as "recent" | "ats")
-              }
-              aria-label="Sort CVs"
-            >
-              <option value="recent">Sort: Recently updated</option>
-              <option value="ats">Sort: ATS score</option>
-            </select>
+      <main className={styles["cm-main"]}>
+        <header className={styles["cm-page-header"]}>
+          <div>
+            <h1>CV Manager</h1>
+            <p>
+              Every tailored CV your agent has generated, in one place —
+              preview, edit, or export any version.
+            </p>
           </div>
-          <section className={styles["cm-cv-list"]}>
-            {visible.map((cv) => (
+        </header>
+        <div className={styles["cm-toolbar"]}>
+          <label>
+            ⌕
+            <input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder="Search CVs..."
+            />
+          </label>
+          <select
+            className={styles["cm-filter"]}
+            value={sortBy}
+            onChange={(event) =>
+              setSortBy(event.target.value as "recent" | "ats")
+            }
+            aria-label="Sort CVs"
+          >
+            <option value="recent">Sort: Recently updated</option>
+            <option value="ats">Sort: ATS score</option>
+          </select>
+        </div>
+        <section className={styles["cm-cv-list"]}>
+          {loading && <p>Loading CVs…</p>}
+          {loadError && <p>{loadError}</p>}
+          {!loading && !loadError && visible.length === 0 && (
+            <p>
+              No tailored CVs yet — select jobs on the Job Radar and press
+              &ldquo;Generate Tailored CV&rdquo; to let the agent create one.
+            </p>
+          )}
+          {visible.map((cv) => {
+            const pending = isPending(cv);
+            const open = () => {
+              if (pending) return;
+              setError(null);
+              setNotice(null);
+              setPreview(cv);
+            };
+            return (
               <article
-                className={styles["cm-cv-card"]}
-                key={cv.id}
+                className={`${styles["cm-cv-card"]}${pending ? ` ${styles["cm-cv-card--pending"]}` : ""}`}
+                key={cv.cvId}
                 role="button"
-                tabIndex={0}
-                onClick={() => {
-                  setError(null);
-                  setNotice(null);
-                  setPreview(cv);
-                }}
+                tabIndex={pending ? -1 : 0}
+                aria-disabled={pending}
+                onClick={open}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" || event.key === " ") {
                     event.preventDefault();
-                    setError(null);
-                    setNotice(null);
-                    setPreview(cv);
+                    open();
                   }
                 }}
               >
                 <span className={styles["cm-document"]}>▤</span>
                 <div className={styles["cm-cv-title"]}>
                   <h2>{cv.title}</h2>
-                  <p>{cv.source_job}</p>
+                  <p>{cv.sourceJob}</p>
                   <small>
-                    Last updated {cv.updated_at} · {cv.edit_status}
+                    Last updated {cv.updatedAt} · {cv.editStatus}
                   </small>
                 </div>
-                <strong
-                  className={`${styles["cm-score"]} ${styles[scoreClass(cv.ats_score)]}`}
-                >
-                  {cv.ats_score}%
-                </strong>
+                {pending ? (
+                  <span className={styles["cm-pending-label"]}>
+                    <i className={styles["cm-spinner"]} aria-hidden="true" />
+                    {PENDING_LABEL[cv.generationStatus] ?? "Processing…"}
+                  </span>
+                ) : (
+                  <strong
+                    className={`${styles["cm-score"]} ${styles[scoreClass(cv.atsScore ?? 0)]}`}
+                  >
+                    {cv.atsScore !== null ? `${cv.atsScore}%` : "…"}
+                  </strong>
+                )}
                 <div className={styles["cm-actions"]}>
                   <button
                     className={styles["cm-ats"]}
+                    disabled={pending || cv.atsScore === null}
                     onClick={(event) => {
                       event.stopPropagation();
-                      setReport(cv);
+                      if (!pending && cv.atsScore !== null) setReport(cv);
                     }}
                   >
                     ✓ &nbsp; ATS Report
                   </button>
-                  <button
-                    className={styles["cm-danger"]}
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      setPendingDelete(cv);
-                    }}
-                  >
-                    Delete
-                  </button>
                 </div>
               </article>
-            ))}
-          </section>
-        </main>
+            );
+          })}
+        </section>
+      </main>
       {preview && (
         <Resume
           cv={preview}
+          header={pdfHeader}
           close={() => setPreview(null)}
           onSave={save}
           error={error}
@@ -357,17 +440,6 @@ export function CvManager() {
         />
       )}
       {report && <AtsReport cv={report} close={() => setReport(null)} />}
-      {pendingDelete && (
-        <DeleteConfirmModal
-          cv={pendingDelete}
-          onCancel={() => setPendingDelete(null)}
-          onConfirm={() => {
-            deleteMockGeneratedCV(pendingDelete.id);
-            setCvs(getMockGeneratedCVs());
-            setPendingDelete(null);
-          }}
-        />
-      )}
     </div>
   );
 }

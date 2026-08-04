@@ -3,33 +3,33 @@
 import { useEffect, useState } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import type { GeneratedCV, GeneratedCVContent } from "@/lib/mock/cv";
+import { cloneCvContent, type CvView } from "@/lib/cv";
+import type { CvContent, PdfHeader } from "@/types/api";
 import styles from "./cv-manager.module.css";
 
-type ExperienceEntry = GeneratedCVContent["experience"][number];
+type ExperienceEntry = CvContent["experience"][number];
+type EducationEntry = CvContent["education"][number];
 
 type Props = {
-  cv: GeneratedCV;
-  onSave: (content: GeneratedCVContent, exportAfterSave: boolean, title: string) => void;
+  cv: CvView;
+  header: PdfHeader;
+  onSave: (content: CvContent, exportAfterSave: boolean) => void;
   onClose: () => void;
   error: string | null;
   notice: string | null;
 };
 
-const clone = (content: GeneratedCVContent): GeneratedCVContent => ({
-  ...content,
-  skills: [...content.skills],
-  experience: content.experience.map((item) => ({
-    ...item,
-    bullets: [...item.bullets],
-  })),
+const emptyExperience = (): ExperienceEntry => ({
+  title: "",
+  organization: "",
+  start_date: null,
+  end_date: null,
+  description: "",
 });
 
-const emptyExperience = (): ExperienceEntry => ({
-  company: "",
-  role: "",
-  dates: "",
-  bullets: [""],
+const emptyEducation = (): EducationEntry => ({
+  school: "",
+  degree: "",
 });
 
 function TextEditor({
@@ -64,17 +64,33 @@ function updateExp(
   return experience.map((e, i) => (i === index ? { ...e, ...patch } : e));
 }
 
-export function CvEditor({ cv, onSave, onClose, error, notice }: Props) {
-  const [draft, setDraft] = useState(() => clone(cv.cv_json.content));
-  const [title, setTitle] = useState(cv.title);
+function updateEdu(
+  education: EducationEntry[],
+  index: number,
+  patch: Partial<EducationEntry>,
+): EducationEntry[] {
+  return education.map((e, i) => (i === index ? { ...e, ...patch } : e));
+}
 
-  useEffect(() => setDraft(clone(cv.cv_json.content)), [cv]);
-  useEffect(() => setTitle(cv.title), [cv]);
+function dateRange(start?: string | null, end?: string | null): string {
+  if (!start && !end) return "";
+  return `${start ?? ""} — ${end ?? "Present"}`;
+}
 
-  const set = <K extends keyof GeneratedCVContent>(
-    key: K,
-    value: GeneratedCVContent[K],
-  ) => setDraft((current) => ({ ...current, [key]: value }));
+export function CvEditor({
+  cv,
+  header,
+  onSave,
+  onClose,
+  error,
+  notice,
+}: Props) {
+  const [draft, setDraft] = useState(() => cloneCvContent(cv.content));
+
+  useEffect(() => setDraft(cloneCvContent(cv.content)), [cv]);
+
+  const set = <K extends keyof CvContent>(key: K, value: CvContent[K]) =>
+    setDraft((current) => ({ ...current, [key]: value }));
 
   const addExperience = () =>
     setDraft((current) => ({
@@ -88,12 +104,24 @@ export function CvEditor({ cv, onSave, onClose, error, notice }: Props) {
       experience: current.experience.filter((_, i) => i !== index),
     }));
 
+  const addEducation = () =>
+    setDraft((current) => ({
+      ...current,
+      education: [...current.education, emptyEducation()],
+    }));
+
+  const removeEducation = (index: number) =>
+    setDraft((current) => ({
+      ...current,
+      education: current.education.filter((_, i) => i !== index),
+    }));
+
   return (
     <>
       <header className={styles["cm-modal-header"]}>
         <div>
           <h2>Edit — {cv.title}</h2>
-          <p>Source job: {cv.source_job}</p>
+          <p>Source job: {cv.sourceJob}</p>
         </div>
         <button onClick={onClose} aria-label="Close">
           ×
@@ -104,48 +132,10 @@ export function CvEditor({ cv, onSave, onClose, error, notice }: Props) {
           className={styles["cm-editor"]}
           onSubmit={(event) => {
             event.preventDefault();
-            onSave(draft, false, title);
+            onSave(draft, false);
           }}
         >
-          {/* CV Title */}
-          <label>
-            CV title
-            <input
-              value={title}
-              onChange={(event) => setTitle(event.target.value)}
-              placeholder="e.g. Backend Engineer — MoMo"
-            />
-          </label>
-
-          {/* Basic Info */}
-          <label>
-            Name
-            <input
-              value={draft.name}
-              onChange={(event) => set("name", event.target.value)}
-            />
-          </label>
-          <label>
-            Headline
-            <input
-              value={draft.headline}
-              onChange={(event) => set("headline", event.target.value)}
-            />
-          </label>
-          <label>
-            Email
-            <input
-              value={draft.email}
-              onChange={(event) => set("email", event.target.value)}
-            />
-          </label>
-          <label>
-            Location
-            <input
-              value={draft.location}
-              onChange={(event) => set("location", event.target.value)}
-            />
-          </label>
+          {/* Summary */}
           <label>
             Summary{" "}
             <TextEditor
@@ -172,52 +162,72 @@ export function CvEditor({ cv, onSave, onClose, error, notice }: Props) {
                 )}
               </legend>
               <label>
-                Company
+                Title / Role
                 <input
-                  value={exp.company}
+                  value={exp.title}
                   onChange={(event) =>
-                    set(
-                      "experience",
-                      updateExp(draft.experience, index, { company: event.target.value }),
-                    )
-                  }
-                />
-              </label>
-              <label>
-                Role
-                <input
-                  value={exp.role}
-                  onChange={(event) =>
-                    set(
-                      "experience",
-                      updateExp(draft.experience, index, { role: event.target.value }),
-                    )
-                  }
-                />
-              </label>
-              <label>
-                Dates
-                <input
-                  value={exp.dates}
-                  onChange={(event) =>
-                    set(
-                      "experience",
-                      updateExp(draft.experience, index, { dates: event.target.value }),
-                    )
-                  }
-                />
-              </label>
-              <label>
-                Bullet{" "}
-                <TextEditor
-                  label={`Experience #${index + 1} bullet`}
-                  value={exp.bullets[0] ?? ""}
-                  onChange={(bullet) =>
                     set(
                       "experience",
                       updateExp(draft.experience, index, {
-                        bullets: [bullet, ...exp.bullets.slice(1)],
+                        title: event.target.value,
                       }),
+                    )
+                  }
+                />
+              </label>
+              <label>
+                Organization
+                <input
+                  value={exp.organization}
+                  onChange={(event) =>
+                    set(
+                      "experience",
+                      updateExp(draft.experience, index, {
+                        organization: event.target.value,
+                      }),
+                    )
+                  }
+                />
+              </label>
+              <label>
+                Start date (YYYY-MM-DD)
+                <input
+                  value={exp.start_date ?? ""}
+                  placeholder="2024-01-01"
+                  onChange={(event) =>
+                    set(
+                      "experience",
+                      updateExp(draft.experience, index, {
+                        start_date: event.target.value || null,
+                      }),
+                    )
+                  }
+                />
+              </label>
+              <label>
+                End date (YYYY-MM-DD, blank = present)
+                <input
+                  value={exp.end_date ?? ""}
+                  placeholder="2025-01-01"
+                  onChange={(event) =>
+                    set(
+                      "experience",
+                      updateExp(draft.experience, index, {
+                        end_date: event.target.value || null,
+                      }),
+                    )
+                  }
+                />
+              </label>
+              <label>
+                Description{" "}
+                <TextEditor
+                  label={`Experience #${index + 1} description`}
+                  value={exp.description ?? ""}
+                  onChange={(description) =>
+                    set(
+                      "experience",
+                      updateExp(draft.experience, index, { description }),
                     )
                   }
                 />
@@ -231,6 +241,61 @@ export function CvEditor({ cv, onSave, onClose, error, notice }: Props) {
             onClick={addExperience}
           >
             + Add Experience
+          </button>
+
+          {/* Education */}
+          {draft.education.map((edu, index) => (
+            <fieldset key={index} className={styles["cm-experience-fieldset"]}>
+              <legend>
+                Education {draft.education.length > 1 ? `#${index + 1}` : ""}
+                {draft.education.length > 1 && (
+                  <button
+                    type="button"
+                    className={styles["cm-danger-sm"]}
+                    onClick={() => removeEducation(index)}
+                    aria-label={`Remove education #${index + 1}`}
+                  >
+                    Remove
+                  </button>
+                )}
+              </legend>
+              <label>
+                School
+                <input
+                  value={edu.school}
+                  onChange={(event) =>
+                    set(
+                      "education",
+                      updateEdu(draft.education, index, {
+                        school: event.target.value,
+                      }),
+                    )
+                  }
+                />
+              </label>
+              <label>
+                Degree
+                <input
+                  value={edu.degree ?? ""}
+                  onChange={(event) =>
+                    set(
+                      "education",
+                      updateEdu(draft.education, index, {
+                        degree: event.target.value,
+                      }),
+                    )
+                  }
+                />
+              </label>
+            </fieldset>
+          ))}
+
+          <button
+            type="button"
+            className={styles["cm-secondary"]}
+            onClick={addEducation}
+          >
+            + Add Education
           </button>
 
           {/* Skills */}
@@ -255,10 +320,10 @@ export function CvEditor({ cv, onSave, onClose, error, notice }: Props) {
         <article
           className={`${styles["cm-resume"]} ${styles["cm-live-preview"]}`}
         >
-          <h1>{draft.name}</h1>
-          <h2>{draft.headline}</h2>
+          <h1>{header.full_name ?? ""}</h1>
+          <h2>{header.headline ?? ""}</h2>
           <p className={styles["cm-contact"]}>
-            {draft.email} · {draft.location}
+            {[header.email, header.location].filter(Boolean).join(" · ")}
           </p>
           <section className={styles["cm-resume-section"]}>
             <h3>Summary</h3>
@@ -268,12 +333,20 @@ export function CvEditor({ cv, onSave, onClose, error, notice }: Props) {
             <section key={index} className={styles["cm-resume-section"]}>
               <h3>{index === 0 ? "Experience" : ""}</h3>
               <b>
-                {exp.role} — {exp.company}
+                {exp.title} — {exp.organization}
               </b>
-              <small>{exp.dates}</small>
-              {exp.bullets.map((bullet, bIdx) => (
-                <p key={bIdx}>• {bullet}</p>
-              ))}
+              <small>{dateRange(exp.start_date, exp.end_date)}</small>
+              {exp.description && <p>• {exp.description}</p>}
+            </section>
+          ))}
+          {draft.education.map((edu, index) => (
+            <section key={index} className={styles["cm-resume-section"]}>
+              <h3>{index === 0 ? "Education" : ""}</h3>
+              <b>
+                {edu.school}
+                {edu.degree ? ` — ${edu.degree}` : ""}
+              </b>
+              <small>{dateRange(edu.start_date, edu.end_date)}</small>
             </section>
           ))}
           <section className={styles["cm-resume-section"]}>
@@ -290,20 +363,20 @@ export function CvEditor({ cv, onSave, onClose, error, notice }: Props) {
         <span>
           {error ??
             notice ??
-            "Generic HTML preview — PDF export will be added with pdf-service."}
+            "Header (name/contact) comes from your Master Profile."}
         </span>
         <div>
           <button
             className={styles["cm-secondary"]}
-            onClick={() => onSave(draft, false, title)}
+            onClick={() => onSave(draft, false)}
           >
             Save
           </button>
           <button
             className={styles["cm-primary"]}
-            onClick={() => onSave(draft, true, title)}
+            onClick={() => onSave(draft, true)}
           >
-            Save &amp; Export
+            Save &amp; Export PDF
           </button>
         </div>
       </footer>
