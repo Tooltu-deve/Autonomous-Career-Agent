@@ -4,8 +4,10 @@ from contextlib import asynccontextmanager
 
 import httpx
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.proxy import router as proxy_router
+from libs.common.config import settings
 
 
 @asynccontextmanager
@@ -16,6 +18,15 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="api-gateway", lifespan=lifespan)
+
+# Frontend (Next.js) gọi gateway từ browser ở origin khác → cần CORS.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.frontend_origin_list,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 @app.get("/health")

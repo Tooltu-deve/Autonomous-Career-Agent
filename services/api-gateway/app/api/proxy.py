@@ -7,6 +7,8 @@ from app.services.forwarder import forward
 from libs.common.config import settings
 
 ROUTES = [
+    # /auth/me cần user_id từ token → đặt TRƯỚC /auth (match theo thứ tự).
+    {"prefix": "/auth/me", "url": settings.auth_service_url, "auth": True},
     {"prefix": "/auth", "url": settings.auth_service_url, "auth": False},
     {"prefix": "/profile", "url": settings.profile_service_url, "auth": True},
     {"prefix": "/jobs", "url": settings.scraper_service_url, "auth": True},

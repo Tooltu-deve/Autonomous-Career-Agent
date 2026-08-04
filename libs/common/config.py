@@ -38,6 +38,14 @@ class Settings(BaseSettings):
     rabbitmq_user: str = "guest"
     rabbitmq_password: str = "guest"
 
+    # API Gateway — các origin của frontend cho CORS (phân tách bằng dấu phẩy).
+    # Cần cả localhost lẫn 127.0.0.1 vì browser coi đây là hai origin khác nhau.
+    frontend_origins: str = "http://localhost:3000,http://127.0.0.1:3000"
+
+    @property
+    def frontend_origin_list(self) -> list[str]:
+        return [o.strip() for o in self.frontend_origins.split(",") if o.strip()]
+
     # API Gateway — URL downstream service (mặc định = tên service trong docker-compose)
     auth_service_url: str = "http://auth-service:8000"
     profile_service_url: str = "http://profile-service:8000"

@@ -47,3 +47,29 @@ def test_bad_token_401(client):
 
 def test_unknown_path_404(client):
     assert client.get("/nope").status_code == 404
+
+
+def test_auth_me_requires_token(client):
+    assert client.get("/auth/me").status_code == 401
+
+
+def test_auth_me_with_token_injects_uid(client):
+    token = create_access_token(subject="user-123")
+    r = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+    assert r.status_code == 200
+    assert r.json() == {"path": "/auth/me", "uid": "user-123"}
+
+
+@pytest.mark.parametrize("origin", ["http://localhost:3000", "http://127.0.0.1:3000"])
+def test_cors_preflight_allows_frontend_origins(client, origin):
+    # Browser coi localhost và 127.0.0.1 là hai origin khác nhau — cả hai phải pass.
+    r = client.options(
+        "/auth/register",
+        headers={
+            "Origin": origin,
+            "Access-Control-Request-Method": "POST",
+            "Access-Control-Request-Headers": "content-type",
+        },
+    )
+    assert r.status_code == 200
+    assert r.headers["access-control-allow-origin"] == origin
