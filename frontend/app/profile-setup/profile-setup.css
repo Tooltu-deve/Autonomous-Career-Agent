@@ -43,9 +43,22 @@
   background: #F06A6A;
 }
 
-.ps-brand-mark span:nth-child(1) { top: 0; left: 11px; }
-.ps-brand-mark span:nth-child(2) { bottom: 0; left: 0; background: #4573D2; }
-.ps-brand-mark span:nth-child(3) { bottom: 0; right: 0; background: #9D7AD9; }
+.ps-brand-mark span:nth-child(1) {
+  top: 0;
+  left: 11px;
+}
+
+.ps-brand-mark span:nth-child(2) {
+  bottom: 0;
+  left: 0;
+  background: #4573D2;
+}
+
+.ps-brand-mark span:nth-child(3) {
+  bottom: 0;
+  right: 0;
+  background: #9D7AD9;
+}
 
 .ps-brand-text {
   font-weight: 800;
@@ -293,8 +306,15 @@
 }
 
 @keyframes psSlideIn {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .ps-card-header {
@@ -410,7 +430,7 @@
   width: 100%;
 }
 
-.ps-input-wrap > svg {
+.ps-input-wrap>svg {
   position: absolute;
   left: 12px;
   top: 50%;
@@ -438,7 +458,10 @@
   padding-left: 14px;
 }
 
-.ps-input-wrap input:focus, .ps-input-bare:focus, .ps-ta-bare:focus, .ps-card textarea:focus {
+.ps-input-wrap input:focus,
+.ps-input-bare:focus,
+.ps-ta-bare:focus,
+.ps-card textarea:focus {
   border-color: #F06A6A;
   box-shadow: 0 0 0 3px #FCE8E6;
 }
@@ -447,7 +470,8 @@
   color: #9CA1A8;
 }
 
-.ps-card textarea, .ps-ta-bare {
+.ps-card textarea,
+.ps-ta-bare {
   width: 100%;
   background: #ffffff;
   border: 1px solid #E4E4E4;
@@ -863,6 +887,359 @@
   font-weight: 600;
 }
 
+/* Template Selector Grid */
+.ps-template-section {
+  margin-bottom: 28px;
+}
+
+.ps-template-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1E1F21;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ps-template-title svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  flex-shrink: 0;
+}
+
+.ps-template-sub {
+  font-size: 12.5px;
+  color: #6D6E6F;
+  margin-bottom: 14px;
+}
+
+/* Picker: 3 cols, cards grow independently on hover */
+.ps-template-picker {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  align-items: start;
+}
+
+.ps-template-card {
+  position: relative;
+  background: #ffffff;
+  border: 2px solid #E4E4E4;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: border-color 240ms ease, box-shadow 240ms ease, background 240ms ease;
+  overflow: hidden;
+  height: 260px;
+  /* fixed height — both layers fill it */
+}
+
+.ps-template-card:hover {
+  border-color: #F5A3A1;
+  box-shadow: 0 8px 28px rgba(229, 84, 79, 0.16);
+}
+
+.ps-template-card.active {
+  border-color: #E5544F;
+  background: #FFF9F8;
+  box-shadow: 0 4px 14px rgba(229, 84, 79, 0.14);
+}
+
+/* ── Front face (info text) ── */
+.ps-template-front {
+  position: absolute;
+  inset: 0;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  opacity: 1;
+  transition: opacity 280ms ease;
+  pointer-events: none;
+}
+
+.ps-template-card:hover .ps-template-front {
+  opacity: 0;
+}
+
+/* ── Back face (CV preview) ── */
+.ps-template-back {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  transition: opacity 280ms ease 60ms;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.ps-template-card:hover .ps-template-back {
+  opacity: 1;
+}
+
+.ps-template-hint {
+  margin-top: auto;
+  padding-top: 10px;
+  font-size: 10.5px;
+  color: #C7C5C2;
+  font-weight: 500;
+}
+
+/* ── Badge / name / desc / check on front face ── */
+.ps-template-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: #FCE8E6;
+  color: #E5544F;
+  margin-bottom: 8px;
+}
+
+.ps-template-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: #1E1F21;
+  margin-bottom: 4px;
+}
+
+.ps-template-desc {
+  font-size: 11.5px;
+  color: #6D6E6F;
+  line-height: 1.45;
+}
+
+.ps-template-check {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #E5544F;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}
+
+.ps-template-check svg {
+  width: 11px;
+  height: 11px;
+  stroke: #ffffff;
+}
+
+/* ── Mini CV preview: fills the back face completely ── */
+.ps-tpl-preview {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-size: 7.5px;
+  line-height: 1.45;
+}
+
+.ps-tpl-section {
+  margin-bottom: 6px;
+}
+
+.ps-tpl-entry {
+  font-size: 7.5px;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.ps-tpl-bullet {
+  font-size: 7px;
+  color: #555;
+  padding-left: 2px;
+}
+
+.ps-tpl-italic {
+  font-size: 7.5px;
+  font-style: italic;
+  color: #444;
+  margin-bottom: 2px;
+}
+
+/* ── Classic preview ── */
+.ps-tpl-classic {
+  background: #ffffff;
+  padding: 14px 14px 10px;
+  font-family: Georgia, 'Times New Roman', serif;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.ps-tpl-header-classic {
+  text-align: center;
+  border-bottom: 1.5px solid #1a1a1a;
+  padding-bottom: 6px;
+  margin-bottom: 7px;
+}
+
+.ps-tpl-name {
+  font-size: 11.5px;
+  font-weight: bold;
+  letter-spacing: 1.5px;
+  color: #1a1a1a;
+}
+
+.ps-tpl-sub {
+  font-size: 7px;
+  color: #555;
+  margin-top: 2px;
+}
+
+.ps-tpl-stitle-classic {
+  font-size: 7.5px;
+  font-weight: bold;
+  letter-spacing: 1.2px;
+  border-bottom: 1px solid #1a1a1a;
+  margin-bottom: 3px;
+  padding-bottom: 1.5px;
+  color: #1a1a1a;
+}
+
+/* ── Modern preview ── */
+.ps-tpl-modern {
+  background: #ffffff;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.ps-tpl-header-modern {
+  background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+  padding: 9px 11px;
+}
+
+.ps-tpl-name-modern {
+  font-size: 12px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0;
+  font-family: 'Inter', sans-serif;
+}
+
+.ps-tpl-sub-modern {
+  font-size: 7.5px;
+  color: rgba(255, 255, 255, 0.85);
+  margin-top: 1px;
+}
+
+.ps-tpl-meta-modern {
+  font-size: 6.5px;
+  color: rgba(255, 255, 255, 0.70);
+  margin-top: 2px;
+}
+
+.ps-tpl-modern-body {
+  padding: 10px 12px;
+  flex: 1;
+}
+
+.ps-tpl-stitle-modern {
+  font-size: 7.5px;
+  font-weight: 700;
+  color: #2563eb;
+  border-left: 2.5px solid #2563eb;
+  padding-left: 5px;
+  margin-bottom: 3px;
+  letter-spacing: 0.8px;
+}
+
+.ps-tpl-entry-modern {
+  font-size: 7.5px;
+  color: #333;
+  margin-bottom: 2px;
+}
+
+.ps-tpl-bullet-modern {
+  font-size: 7px;
+  color: #555;
+  padding-left: 3px;
+}
+
+.ps-tpl-tags-modern {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  margin-top: 2px;
+}
+
+.ps-tpl-tags-modern span {
+  font-size: 6.5px;
+  background: #EFF6FF;
+  color: #2563eb;
+  border-radius: 4px;
+  padding: 1.5px 5px;
+  font-weight: 600;
+}
+
+/* ── Academic preview ── */
+.ps-tpl-academic {
+  background: #fafaf8;
+  padding: 14px 14px 10px;
+  font-family: 'Times New Roman', Times, serif;
+  height: 100%;
+  box-sizing: border-box;
+}
+
+.ps-tpl-header-academic {
+  text-align: center;
+  border-bottom: 2px double #666;
+  padding-bottom: 6px;
+  margin-bottom: 7px;
+}
+
+.ps-tpl-name-academic {
+  font-size: 12px;
+  font-weight: bold;
+  letter-spacing: 2px;
+  color: #1a1a1a;
+  font-family: 'Times New Roman', Times, serif;
+}
+
+.ps-tpl-sub-academic {
+  font-size: 7px;
+  color: #555;
+  margin-top: 1.5px;
+  font-family: 'Times New Roman', Times, serif;
+}
+
+.ps-tpl-stitle-academic {
+  font-size: 7.5px;
+  font-weight: bold;
+  color: #333;
+  border-bottom: 1px solid #999;
+  margin-bottom: 3px;
+  padding-bottom: 1.5px;
+  letter-spacing: 1.2px;
+  font-family: 'Times New Roman', Times, serif;
+}
+
+.ps-tpl-entry-academic {
+  font-size: 7.5px;
+  color: #333;
+  margin-bottom: 2px;
+  font-family: 'Times New Roman', Times, serif;
+}
+
+/* ── Projects heading ── */
+.ps-projects-heading {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1E1F21;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  margin-top: 4px;
+}
+
 .ps-toast {
   position: fixed;
   bottom: 24px;
@@ -896,15 +1273,43 @@
 }
 
 @media (max-width: 1020px) {
-  .ps-workspace { grid-template-columns: 1fr; }
-  .ps-preview-col { position: static; }
+  .ps-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .ps-preview-col {
+    position: static;
+  }
 }
 
 @media (max-width: 640px) {
-  .ps-shell { padding: 20px 16px; }
-  .ps-grid2 { grid-template-columns: 1fr; }
-  .ps-hero { flex-direction: column; align-items: flex-start; }
-  .ps-step-track { flex-wrap: wrap; border-radius: 14px; }
-  .ps-step-label { display: none; }
-  .ps-navbar { padding: 14px 18px; }
+  .ps-shell {
+    padding: 20px 16px;
+  }
+
+  .ps-grid2 {
+    grid-template-columns: 1fr;
+  }
+
+  .ps-hero {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ps-step-track {
+    flex-wrap: wrap;
+    border-radius: 14px;
+  }
+
+  .ps-step-label {
+    display: none;
+  }
+
+  .ps-navbar {
+    padding: 14px 18px;
+  }
+
+  .ps-template-picker {
+    grid-template-columns: 1fr;
+  }
 }
