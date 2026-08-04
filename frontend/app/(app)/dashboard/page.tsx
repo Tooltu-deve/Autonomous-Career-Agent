@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import s from "./dashboard.module.css";
 import {
   WarningIcon,
@@ -11,7 +12,7 @@ import {
   TargetIcon,
   FileTextIcon,
 } from "@/components/icons";
-import { ApiError, listApplications, listJobs } from "@/lib/api";
+import { ApiError, clearToken, listApplications, listJobs } from "@/lib/api";
 import { timeAgo } from "@/lib/format";
 import { useAuth } from "@/hooks/useAuth";
 import type {
@@ -58,6 +59,7 @@ const PIPELINE_ROWS: {
 ];
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { session } = useAuth();
   const [apps, setApps] = useState<ApplicationListItem[]>([]);
   const [jobs, setJobs] = useState<JobOut[]>([]);
@@ -74,16 +76,22 @@ export default function DashboardPage() {
         setJobsTotal(jobsRes.total);
       })
       .catch((err) => {
-        if (!cancelled) {
-          setLoadError(
-            err instanceof ApiError ? err.message : "Cannot reach the server.",
-          );
+        if (cancelled) return;
+        // Token thiếu/hết hạn: dọn phiên và về trang đăng nhập thay vì
+        // hiện raw error ("Thiếu bearer token") trong lời chào.
+        if (err instanceof ApiError && err.status === 401) {
+          clearToken();
+          router.replace("/signin");
+          return;
         }
+        setLoadError(
+          err instanceof ApiError ? err.message : "Cannot reach the server.",
+        );
       });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [router]);
 
   const stats = useMemo(() => {
     const cvCount = apps.filter((a) =>

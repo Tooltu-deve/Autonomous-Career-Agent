@@ -1,7 +1,8 @@
-/* ── Main Layout ── */
+/* ── Main Layout ──
+   Full-width như các trang Applications/Job Radar — không giới hạn max-width
+   để header và nội dung thẳng hàng với các trang khác. */
 .main {
   padding: 30px 34px 56px;
-  max-width: 1180px;
 }
 
 .pageHead {
@@ -358,7 +359,9 @@
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: border-color 0.15s, color 0.15s;
+  transition:
+    border-color 0.15s,
+    color 0.15s;
 }
 
 .btnMini:hover {
@@ -378,7 +381,8 @@
   .stats {
     grid-template-columns: repeat(2, 1fr);
   }
-  .gPipe, .gLists {
+  .gPipe,
+  .gLists {
     grid-template-columns: 1fr;
   }
 }
