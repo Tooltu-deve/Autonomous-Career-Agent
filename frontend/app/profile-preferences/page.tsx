@@ -253,8 +253,8 @@ export default function ProfilePreferencesPage() {
         remote_preference: remotePreference,
       });
 
-      showToast("Preferences saved! Returning to Profile...");
-      setTimeout(() => router.push("/profile"), 800);
+      showToast("Preferences saved! Redirecting to Dashboard...");
+      setTimeout(() => router.push("/dashboard"), 800);
     } catch (err) {
       // Lưu thất bại: ở lại trang, báo lỗi thật — không giả vờ thành công.
       setIsFinishing(false);

@@ -1,15 +1,7 @@
 "use client";
 
-/**
- * StepEducation — Step 2: Education form list.
- */
-import {
-  ArrowLeftIcon,
-  CheckIcon,
-  EduIcon,
-  PlusIcon,
-  TrashIcon,
-} from "./Icons";
+import { ArrowLeftIcon, EduIcon } from "./Icons";
+import { EducationForm } from "./EducationForm";
 import type { EducationEntry } from "../_types/types";
 
 interface Props {
@@ -39,55 +31,12 @@ export function StepEducation({
         <span className="ps-step-tag">STEP 2/4</span>
       </div>
 
-      <div className="ps-dynamic-list">
-        {education.map((edu, idx) => (
-          <div key={edu.id} className="ps-dynamic-card">
-            <div className="ps-dynamic-header">
-              <span className="ps-dynamic-label">Education {idx + 1}</span>
-              <button
-                className="ps-btn-trash"
-                onClick={() => onRemove(edu.id)}
-                title="Remove"
-                type="button"
-              >
-                <TrashIcon />
-              </button>
-            </div>
-            <div className="ps-grid2">
-              <div className="ps-form-group">
-                <label>University / Institution</label>
-                <div className="ps-input-wrap">
-                  <input
-                    type="text"
-                    value={edu.university}
-                    placeholder="e.g., MIT"
-                    onChange={(e) =>
-                      onUpdate(edu.id, "university", e.target.value)
-                    }
-                  />
-                  <EduIcon />
-                </div>
-              </div>
-              <div className="ps-form-group">
-                <label>Degree / Major</label>
-                <div className="ps-input-wrap">
-                  <input
-                    type="text"
-                    value={edu.degree}
-                    placeholder="e.g., B.S. in Computer Science"
-                    onChange={(e) => onUpdate(edu.id, "degree", e.target.value)}
-                  />
-                  <CheckIcon />
-                </div>
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      <button className="ps-btn-add-entry" onClick={onAdd} type="button">
-        <PlusIcon /> Add Education
-      </button>
+      <EducationForm
+        education={education}
+        onAdd={onAdd}
+        onRemove={onRemove}
+        onUpdate={onUpdate}
+      />
 
       <div className="ps-footer-actions">
         <button className="ps-btn-prev" onClick={onBack} type="button">

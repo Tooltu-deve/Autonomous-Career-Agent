@@ -533,3 +533,499 @@
     margin-top: -36px;
   }
 }
+
+/* ════════════════════════════════════════
+   MODAL OVERLAY & DIALOG
+════════════════════════════════════════ */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(3px);
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: modalFadeIn 150ms ease;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.modalDialog {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow:
+    0 24px 64px rgba(0, 0, 0, 0.18),
+    0 4px 16px rgba(0, 0, 0, 0.08);
+  width: 100%;
+  max-width: 580px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  animation: modalSlideUp 200ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+@keyframes modalSlideUp {
+  from { transform: translateY(24px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  flex-shrink: 0;
+}
+
+.modalTitle {
+  font-size: 16px;
+  font-weight: 800;
+  color: #1e1f21;
+  letter-spacing: -0.01em;
+}
+
+.modalClose {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1px solid #e4e4e4;
+  background: #f6f5f3;
+  color: #6d6e6f;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 120ms;
+  font-family: inherit;
+}
+
+.modalClose:hover {
+  background: #edece9;
+  color: #1e1f21;
+}
+
+.modalBody {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+.modalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 14px 24px 20px;
+  border-top: 1px solid #f0f0f0;
+  flex-shrink: 0;
+}
+
+.modalBtnCancel {
+  height: 40px;
+  padding: 0 18px;
+  border: 1px solid #e4e4e4;
+  background: #ffffff;
+  color: #6d6e6f;
+  border-radius: 9999px;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 120ms;
+}
+
+.modalBtnCancel:hover:not(:disabled) {
+  background: #f6f5f3;
+  color: #1e1f21;
+}
+
+.modalBtnSave {
+  height: 40px;
+  padding: 0 22px;
+  background: var(--primary);
+  color: #fff;
+  border: none;
+  border-radius: 9999px;
+  font-size: 13.5px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 140ms;
+  box-shadow: var(--shadow-glow);
+}
+
+.modalBtnSave:hover:not(:disabled) {
+  background: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.modalBtnSave:disabled,
+.modalBtnCancel:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ════════════════════════════════════════
+   FORM CONTROLS (shared inside modals)
+════════════════════════════════════════ */
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.formGroup:last-child {
+  margin-bottom: 0;
+}
+
+.formLabel {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #6d6e6f;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.formInput {
+  width: 100%;
+  height: 42px;
+  padding: 0 14px;
+  border: 1.5px solid #e4e4e4;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #1e1f21;
+  background: #faf9f8;
+  transition: border-color 150ms;
+  box-sizing: border-box;
+}
+
+.formInput:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: #ffffff;
+}
+
+.formTextarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid #e4e4e4;
+  border-radius: 10px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #1e1f21;
+  background: #faf9f8;
+  resize: vertical;
+  line-height: 1.6;
+  transition: border-color 150ms;
+  box-sizing: border-box;
+}
+
+.formTextarea:focus {
+  outline: none;
+  border-color: var(--primary);
+  background: #ffffff;
+}
+
+.formHint {
+  font-size: 11.5px;
+  color: #9d9e9f;
+  text-align: right;
+}
+
+.formGrid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+/* ════════════════════════════════════════
+   DYNAMIC LIST (projects / education)
+════════════════════════════════════════ */
+.dynamicList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+
+.dynamicCard {
+  border: 1.5px solid #e4e4e4;
+  border-radius: 14px;
+  padding: 16px 18px;
+  background: #faf9f8;
+  transition: border-color 150ms;
+}
+
+.dynamicCard:focus-within {
+  border-color: var(--primary);
+  background: #ffffff;
+}
+
+.dynamicHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.dynamicLabel {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary-hover);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.btnTrash {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid #e4e4e4;
+  background: #ffffff;
+  color: #999;
+  font-size: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 120ms;
+  font-family: inherit;
+}
+
+.btnTrash:hover {
+  background: #fff0f0;
+  border-color: #f5a5a3;
+  color: #e5544f;
+}
+
+.btnAddEntry {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 16px;
+  border: 1.5px dashed #e4e4e4;
+  border-radius: 9999px;
+  background: transparent;
+  color: #6d6e6f;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 150ms;
+  width: 100%;
+  justify-content: center;
+  margin-top: 4px;
+}
+
+.btnAddEntry:hover {
+  border-color: var(--primary);
+  color: var(--primary-hover);
+  background: var(--primary-soft);
+}
+
+/* ════════════════════════════════════════
+   SKILLS MODAL
+════════════════════════════════════════ */
+.skillWall {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 48px;
+  padding: 12px;
+  border: 1.5px solid #e4e4e4;
+  border-radius: 12px;
+  background: #faf9f8;
+  margin-bottom: 12px;
+}
+
+.skillChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px 5px 12px;
+  background: #ffffff;
+  border: 1.5px solid #e4e4e4;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1e1f21;
+}
+
+.skillChip button {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  border: none;
+  background: #edece9;
+  color: #6d6e6f;
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 100ms;
+  font-family: inherit;
+}
+
+.skillChip button:hover {
+  background: #f5c7c5;
+  color: #e5544f;
+}
+
+.addSkillRow {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.addSkillRow .formInput {
+  flex: 1;
+  margin: 0;
+}
+
+.btnAddSkill {
+  height: 42px;
+  padding: 0 16px;
+  background: var(--primary-soft);
+  color: var(--primary-hover);
+  border: 1.5px solid #f5c7c5;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 120ms;
+}
+
+.btnAddSkill:hover {
+  background: #f5c7c5;
+}
+
+.suggestedLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #9d9e9f;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.suggestedChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.chipSuggest {
+  height: 30px;
+  padding: 0 12px;
+  border: 1.5px solid #e4e4e4;
+  border-radius: 9999px;
+  background: #ffffff;
+  color: #6d6e6f;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 120ms;
+}
+
+.chipSuggest:hover:not(:disabled) {
+  border-color: var(--primary);
+  color: var(--primary-hover);
+  background: var(--primary-soft);
+}
+
+.chipSuggest:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ════════════════════════════════════════
+   TOAST NOTIFICATION
+════════════════════════════════════════ */
+.toastBar {
+  position: fixed;
+  bottom: 28px;
+  left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: #1e1f21;
+  color: #ffffff;
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 12px 24px;
+  border-radius: 9999px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  z-index: 300;
+  pointer-events: none;
+  transition: transform 300ms cubic-bezier(0.25, 0.1, 0.25, 1), opacity 300ms;
+  opacity: 0;
+  white-space: nowrap;
+}
+
+.toastShow {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+/* ════════════════════════════════════════
+   TEMPLATE RADIO CARDS (in BasicInfoModal)
+════════════════════════════════════════ */
+.templateRadioGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.templateRadioCard {
+  border: 1.5px solid #e4e4e4;
+  border-radius: 12px;
+  padding: 12px 10px;
+  background: #faf9f8;
+  cursor: pointer;
+  text-align: center;
+  transition: all 150ms ease;
+}
+
+.templateRadioCard:hover {
+  border-color: #f5a3a1;
+  background: #ffffff;
+}
+
+.templateRadioCard.activeRadio {
+  border-color: #e5544f;
+  background: #fff9f8;
+  box-shadow: 0 2px 10px rgba(229, 84, 79, 0.12);
+}
+
+.templateRadioName {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #1e1f21;
+}
+
+.templateRadioBadge {
+  font-size: 10.5px;
+  font-weight: 600;
+  color: #e5544f;
+  margin-top: 4px;
+}
+
+/* Template card height adjustment inside modal (-40px total) */
+.modalDialog :global(.ps-template-card) {
+  height: 230px;
+}
