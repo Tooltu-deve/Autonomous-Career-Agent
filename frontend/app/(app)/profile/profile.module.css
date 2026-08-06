@@ -31,11 +31,9 @@
   width: 250px;
   height: 250px;
   border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    rgba(240, 106, 106, 0.3) 0%,
-    transparent 70%
-  );
+  background: radial-gradient(circle,
+      rgba(240, 106, 106, 0.3) 0%,
+      transparent 70%);
 }
 
 .headerContent {
@@ -104,7 +102,7 @@
   font-size: 24px;
   font-weight: 800;
   letter-spacing: -0.01em;
-  color: var(--ink);
+  color: #ffffff;
   line-height: 1.2;
 }
 
@@ -551,8 +549,13 @@
 }
 
 @keyframes modalFadeIn {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .modalDialog {
@@ -570,8 +573,15 @@
 }
 
 @keyframes modalSlideUp {
-  from { transform: translateY(24px); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
+  from {
+    transform: translateY(24px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 .modalHeader {
