@@ -11,9 +11,9 @@ export interface ProjectItem {
 interface Props {
   projects: ProjectItem[];
   onAddProject: () => void;
-  onRemoveProject: (id: any) => void;
+  onRemoveProject: (id: string | number) => void;
   onUpdateProject: (
-    id: any,
+    id: string | number,
     field: "name" | "description",
     value: string,
   ) => void;
@@ -32,16 +32,14 @@ export function ProjectsForm({
           <div key={proj.id} className="ps-dynamic-card">
             <div className="ps-dynamic-header">
               <span className="ps-dynamic-label">Project {idx + 1}</span>
-              {projects.length > 1 && (
-                <button
-                  className="ps-btn-trash"
-                  onClick={() => onRemoveProject(proj.id)}
-                  title="Remove"
-                  type="button"
-                >
-                  <TrashIcon />
-                </button>
-              )}
+              <button
+                className="ps-btn-trash"
+                onClick={() => onRemoveProject(proj.id)}
+                title="Remove"
+                type="button"
+              >
+                <TrashIcon />
+              </button>
             </div>
             <div className="ps-form-group" style={{ marginBottom: "12px" }}>
               <label>Project Name / Role</label>

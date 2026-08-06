@@ -11,9 +11,9 @@ interface Props {
   onSelectTemplate: (t: TemplateName) => void;
   projects: ProjectEntry[];
   onAddProject: () => void;
-  onRemoveProject: (id: number) => void;
+  onRemoveProject: (id: number | string) => void;
   onUpdateProject: (
-    id: number,
+    id: number | string,
     field: "name" | "description",
     value: string,
   ) => void;

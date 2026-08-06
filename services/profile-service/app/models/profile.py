@@ -7,7 +7,17 @@ Profile là root; experiences/educations/skills/preferences là bảng con
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, Text, Uuid, func
+from sqlalchemy import (
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    Uuid,
+    func,
+)
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON
@@ -97,6 +107,7 @@ class ProfileEducation(Base):
 
 class ProfileSkill(Base):
     __tablename__ = "profile_skills"
+    __table_args__ = (UniqueConstraint("profile_id", "skill_name"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4

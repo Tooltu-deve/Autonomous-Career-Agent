@@ -11,8 +11,8 @@ export interface EducationItem {
 interface Props {
   education: EducationItem[];
   onAdd: () => void;
-  onRemove: (id: any) => void;
-  onUpdate: (id: any, field: "university" | "degree", value: string) => void;
+  onRemove: (id: string | number) => void;
+  onUpdate: (id: string | number, field: "university" | "degree", value: string) => void;
 }
 
 export function EducationForm({ education, onAdd, onRemove, onUpdate }: Props) {
@@ -23,16 +23,14 @@ export function EducationForm({ education, onAdd, onRemove, onUpdate }: Props) {
           <div key={edu.id} className="ps-dynamic-card">
             <div className="ps-dynamic-header">
               <span className="ps-dynamic-label">Education {idx + 1}</span>
-              {education.length > 1 && (
-                <button
-                  className="ps-btn-trash"
-                  onClick={() => onRemove(edu.id)}
-                  title="Remove"
-                  type="button"
-                >
-                  <TrashIcon />
-                </button>
-              )}
+              <button
+                className="ps-btn-trash"
+                onClick={() => onRemove(edu.id)}
+                title="Remove"
+                type="button"
+              >
+                <TrashIcon />
+              </button>
             </div>
             <div className="ps-grid2">
               <div className="ps-form-group">
