@@ -27,7 +27,9 @@ class ProfileORM(Base):
     educations: Mapped[list["ProfileEducationORM"]] = relationship(
         order_by="ProfileEducationORM.display_order"
     )
-    skills: Mapped[list["ProfileSkillORM"]] = relationship()
+    skills: Mapped[list["ProfileSkillORM"]] = relationship(
+        order_by="ProfileSkillORM.display_order"
+    )
 
 
 class ProfileExperienceORM(Base):
@@ -63,3 +65,4 @@ class ProfileSkillORM(Base):
     id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
     profile_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("profiles.id"))
     skill_name: Mapped[str] = mapped_column(String)
+    display_order: Mapped[int] = mapped_column(Integer, default=0)

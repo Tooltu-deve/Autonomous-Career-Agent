@@ -12,7 +12,11 @@ interface Props {
   education: EducationItem[];
   onAdd: () => void;
   onRemove: (id: string | number) => void;
-  onUpdate: (id: string | number, field: "university" | "degree", value: string) => void;
+  onUpdate: (
+    id: string | number,
+    field: "university" | "degree",
+    value: string,
+  ) => void;
 }
 
 export function EducationForm({ education, onAdd, onRemove, onUpdate }: Props) {

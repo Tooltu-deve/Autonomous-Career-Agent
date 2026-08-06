@@ -64,7 +64,10 @@ class Profile(Base):
         cascade="all, delete-orphan",
         order_by="ProfileEducation.display_order",
     )
-    skills: Mapped[list["ProfileSkill"]] = relationship(cascade="all, delete-orphan")
+    skills: Mapped[list["ProfileSkill"]] = relationship(
+        cascade="all, delete-orphan",
+        order_by="ProfileSkill.display_order",
+    )
     preference: Mapped["ProfilePreference | None"] = relationship(
         cascade="all, delete-orphan", uselist=False
     )
@@ -116,6 +119,7 @@ class ProfileSkill(Base):
         Uuid(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE")
     )
     skill_name: Mapped[str] = mapped_column(String, nullable=False)
+    display_order: Mapped[int] = mapped_column(Integer, default=0)
 
 
 class ProfilePreference(Base):

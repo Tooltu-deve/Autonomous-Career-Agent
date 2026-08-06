@@ -8,7 +8,11 @@ interface Props {
   education: EducationEntry[];
   onAdd: () => void;
   onRemove: (id: number | string) => void;
-  onUpdate: (id: number | string, field: "university" | "degree", value: string) => void;
+  onUpdate: (
+    id: number | string,
+    field: "university" | "degree",
+    value: string,
+  ) => void;
   onBack: () => void;
   onNext: () => void;
 }

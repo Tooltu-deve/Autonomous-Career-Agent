@@ -111,9 +111,10 @@ CREATE TABLE profile_educations (
 
 -- profile_skills
 CREATE TABLE profile_skills (
-    id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    profile_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-    skill_name VARCHAR NOT NULL,
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    profile_id    UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    skill_name    VARCHAR NOT NULL,
+    display_order INT NOT NULL DEFAULT 0,
     UNIQUE (profile_id, skill_name)
 );
 
