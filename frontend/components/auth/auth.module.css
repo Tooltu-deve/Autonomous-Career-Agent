@@ -21,12 +21,25 @@
 }
 
 .left::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse 80% 60% at 20% 80%, rgba(240,106,106,0.18) 0%, transparent 60%),
-             radial-gradient(ellipse 60% 50% at 80% 20%, rgba(69,115,210,0.14) 0%, transparent 55%),
-             radial-gradient(ellipse 50% 40% at 60% 60%, rgba(157,122,217,0.10) 0%, transparent 50%);
+  background:
+    radial-gradient(
+      ellipse 80% 60% at 20% 80%,
+      rgba(240, 106, 106, 0.18) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 60% 50% at 80% 20%,
+      rgba(69, 115, 210, 0.14) 0%,
+      transparent 55%
+    ),
+    radial-gradient(
+      ellipse 50% 40% at 60% 60%,
+      rgba(157, 122, 217, 0.1) 0%,
+      transparent 50%
+    );
   pointer-events: none;
 }
 
@@ -52,9 +65,20 @@
   background: var(--primary);
 }
 
-.brand-mark span:nth-child(1) { top: 0; left: 10px; }
-.brand-mark span:nth-child(2) { bottom: 0; left: 0; background: var(--accent-blue); }
-.brand-mark span:nth-child(3) { bottom: 0; right: 0; background: var(--accent-purple); }
+.brand-mark span:nth-child(1) {
+  top: 0;
+  left: 10px;
+}
+.brand-mark span:nth-child(2) {
+  bottom: 0;
+  left: 0;
+  background: var(--accent-blue);
+}
+.brand-mark span:nth-child(3) {
+  bottom: 0;
+  right: 0;
+  background: var(--accent-purple);
+}
 
 .brand-name {
   color: #ffffff;
@@ -72,7 +96,7 @@
 }
 
 .left-body h2 {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: "Playfair Display", Georgia, serif;
   font-size: 44px;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -102,7 +126,7 @@
   transform: translateY(-50%);
   width: 220px;
   background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-right: none;
   border-radius: var(--r-lg) 0 0 var(--r-lg);
   padding: 20px 22px;
@@ -185,7 +209,7 @@
   align-items: center;
   gap: 10px;
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--r-lg);
   padding: 14px 18px;
   width: fit-content;
@@ -198,9 +222,15 @@
   flex-shrink: 0;
 }
 
-.sd-red { background: var(--primary); }
-.sd-blue { background: var(--accent-blue); }
-.sd-green { background: var(--accent-green); }
+.sd-red {
+  background: var(--primary);
+}
+.sd-blue {
+  background: var(--accent-blue);
+}
+.sd-green {
+  background: var(--accent-green);
+}
 
 .stat-text {
   font-size: 14px;
@@ -246,7 +276,10 @@
   color: var(--ink-muted);
   background: transparent;
   border: none;
-  transition: background var(--ease) 120ms, color var(--ease) 120ms, box-shadow var(--ease) 120ms;
+  transition:
+    background var(--ease) 120ms,
+    color var(--ease) 120ms,
+    box-shadow var(--ease) 120ms;
   cursor: pointer;
   text-align: center;
 }
@@ -262,7 +295,7 @@
 }
 
 .form-title {
-  font-family: 'Playfair Display', Georgia, serif;
+  font-family: "Playfair Display", Georgia, serif;
   font-size: 30px;
   font-weight: 700;
   letter-spacing: -0.005em;
@@ -308,7 +341,10 @@
   font-size: 15px;
   font-weight: 600;
   color: var(--ink);
-  transition: background var(--ease) 120ms, border-color var(--ease) 120ms, box-shadow var(--ease) 120ms;
+  transition:
+    background var(--ease) 120ms,
+    border-color var(--ease) 120ms,
+    box-shadow var(--ease) 120ms;
   box-shadow: var(--shadow-card);
   cursor: pointer;
 }
@@ -359,7 +395,7 @@
   margin-top: 4px;
 }
 
-.check-row input[type=checkbox] {
+.check-row input[type="checkbox"] {
   width: 18px;
   height: 18px;
   flex-shrink: 0;
@@ -391,7 +427,10 @@
   font-size: 16px;
   font-weight: 700;
   box-shadow: var(--shadow-card);
-  transition: background 120ms var(--ease), transform 120ms var(--ease), box-shadow 120ms var(--ease);
+  transition:
+    background 120ms var(--ease),
+    transform 120ms var(--ease),
+    box-shadow 120ms var(--ease);
   margin-top: 8px;
   margin-bottom: 24px;
   cursor: pointer;
@@ -441,8 +480,8 @@
   gap: 8px;
   padding: 12px 16px;
   border-radius: 10px;
-  background: rgba(232,56,79,0.12);
-  border: 1px solid rgba(232,56,79,0.3);
+  background: rgba(232, 56, 79, 0.12);
+  border: 1px solid rgba(232, 56, 79, 0.3);
   color: var(--error);
   font-size: 14px;
   font-weight: 500;
@@ -455,8 +494,8 @@
   gap: 8px;
   padding: 12px 16px;
   border-radius: 10px;
-  background: rgba(98,210,111,0.12);
-  border: 1px solid rgba(98,210,111,0.3);
+  background: rgba(98, 210, 111, 0.12);
+  border: 1px solid rgba(98, 210, 111, 0.3);
   color: var(--success);
   font-size: 14px;
   font-weight: 500;

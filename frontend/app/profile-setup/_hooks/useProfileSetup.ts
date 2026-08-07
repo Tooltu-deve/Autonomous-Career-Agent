@@ -214,7 +214,7 @@ export function useProfileSetup() {
     showToast("Added new education entry");
   };
 
-  const removeEducation = (id: number) => {
+  const removeEducation = (id: number | string) => {
     setData((d) => ({
       ...d,
       education: d.education.filter((e) => e.id !== id),
@@ -223,7 +223,7 @@ export function useProfileSetup() {
   };
 
   const updateEducation = (
-    id: number,
+    id: number | string,
     field: "university" | "degree",
     value: string,
   ) => {
@@ -244,7 +244,7 @@ export function useProfileSetup() {
     showToast("Added new project entry");
   };
 
-  const removeProject = (id: number) => {
+  const removeProject = (id: number | string) => {
     setData((d) => ({
       ...d,
       projects: d.projects.filter((p) => p.id !== id),
@@ -253,7 +253,7 @@ export function useProfileSetup() {
   };
 
   const updateProject = (
-    id: number,
+    id: number | string,
     field: "name" | "description",
     value: string,
   ) => {

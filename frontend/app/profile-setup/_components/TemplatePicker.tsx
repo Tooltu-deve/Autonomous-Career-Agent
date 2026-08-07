@@ -198,9 +198,6 @@ export function TemplatePicker({ selectedTemplate, onSelect }: Props) {
   return (
     <div className="ps-template-section">
       <div className="ps-template-title">Select Preferred CV Template</div>
-      <div className="ps-template-sub">
-        Hover a card to preview the layout &bull; Click to select
-      </div>
 
       <div className="ps-template-picker">
         {TEMPLATES.map((tpl) => (

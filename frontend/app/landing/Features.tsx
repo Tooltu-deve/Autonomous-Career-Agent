@@ -52,9 +52,7 @@ function BrowserVisual({ networking = false }: { networking?: boolean }) {
             {lines(["88%", "65%", "75%"])}
           </div>
           <div>
-            <b>
-              {networking ? "Outreach to Recruiters" : "My Cover Letter"}
-            </b>
+            <b>{networking ? "Outreach to Recruiters" : "My Cover Letter"}</b>
             {networking ? (
               <>
                 <p className={styles["avatar-line"]}>● {lines(["60%"])}</p>
@@ -76,7 +74,9 @@ function JournalVisual() {
     <div className={styles["tool-visual"]}>
       <div className={styles["journal-mock"]}>
         <b>💪 &nbsp; Building Momentum</b>
-        <div className={styles["journal-tools"]}>B <i>I</i> ≔ 🔗</div>
+        <div className={styles["journal-tools"]}>
+          B <i>I</i> ≔ 🔗
+        </div>
         {lines(["45%"])}
         <p>
           <strong>💡 AI Assistant</strong>
@@ -147,7 +147,10 @@ const featureCards = [
 
 export function Features() {
   return (
-    <section className={`${styles.tools} ${styles["section-bordered"]}`} id="features">
+    <section
+      className={`${styles.tools} ${styles["section-bordered"]}`}
+      id="features"
+    >
       <div className={styles.wrap}>
         <div className={styles["tools-head"]} data-aos="zoom-in">
           <h2>
@@ -162,15 +165,26 @@ export function Features() {
         </div>
         <div className={styles["tools-grid"]}>
           {featureCards.map(({ title, description, visual }, index) => {
-            const animation = ["fade-right", "fade-left", "fade-right", "fade-up", "fade-left"][index];
+            const animation = [
+              "fade-right",
+              "fade-left",
+              "fade-right",
+              "fade-up",
+              "fade-left",
+            ][index];
             const delay = [0, 150, 100, 250, 400][index];
 
             return (
-            <article className={styles["tool-card"]} data-aos={animation} style={{ "--aos-delay": `${delay}ms` } as CSSProperties} key={title}>
-              {visual}
-              <h3>{title}</h3>
-              <p>{description}</p>
-            </article>
+              <article
+                className={styles["tool-card"]}
+                data-aos={animation}
+                style={{ "--aos-delay": `${delay}ms` } as CSSProperties}
+                key={title}
+              >
+                {visual}
+                <h3>{title}</h3>
+                <p>{description}</p>
+              </article>
             );
           })}
         </div>

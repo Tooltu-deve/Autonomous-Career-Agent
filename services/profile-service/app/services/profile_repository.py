@@ -44,12 +44,22 @@ def upsert_profile(db: Session, user_id: uuid.UUID, data: ProfileUpdate) -> Prof
     profile.linkedin_url = data.linkedin_url
     profile.preferred_template = data.preferred_template
 
-    # replace bảng con (cascade delete-orphan xoá bản cũ khi gán list mới)
+    # Replace bảng con: xoá cũ khỏi DB (flush) TRƯỚC khi gán list mới, nếu không
+    # unit-of-work chạy INSERT trước DELETE → vỡ UNIQUE (profile_id, skill_name).
+    profile.experiences.clear()
+    profile.educations.clear()
+    profile.skills.clear()
+    db.flush()
+
     profile.experiences = [
         ProfileExperience(**e.model_dump()) for e in data.experiences
     ]
     profile.educations = [ProfileEducation(**e.model_dump()) for e in data.educations]
-    profile.skills = [ProfileSkill(skill_name=s) for s in data.skills]
+    # Lọc bỏ skill trùng trong request; display_order giữ đúng thứ tự người dùng nhập
+    unique_skills = list(dict.fromkeys(data.skills))
+    profile.skills = [
+        ProfileSkill(skill_name=s, display_order=i) for i, s in enumerate(unique_skills)
+    ]
 
     db.commit()
     db.refresh(profile)

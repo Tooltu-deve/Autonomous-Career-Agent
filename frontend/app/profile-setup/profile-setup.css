@@ -911,7 +911,7 @@
   font-size: 14px;
   font-weight: 700;
   color: #1e1f21;
-  margin-bottom: 6px;
+  margin-bottom: 16px;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -949,7 +949,7 @@
     box-shadow 240ms ease,
     background 240ms ease;
   overflow: hidden;
-  height: 260px;
+  height: 270px;
   /* fixed height — both layers fill it */
 }
 

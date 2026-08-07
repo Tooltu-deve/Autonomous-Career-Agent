@@ -42,7 +42,9 @@
   font-family: inherit;
   font-size: 15px;
   color: var(--ink);
-  transition: border-color 120ms var(--ease), box-shadow 120ms var(--ease);
+  transition:
+    border-color 120ms var(--ease),
+    box-shadow 120ms var(--ease);
   outline: none;
 }
 
@@ -52,7 +54,7 @@
 
 .input-wrap input:focus {
   border-color: #000000;
-  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.10);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
 }
 
 .eye-btn {

@@ -7,7 +7,17 @@ Profile là root; experiences/educations/skills/preferences là bảng con
 import uuid
 from datetime import date, datetime
 
-from sqlalchemy import Date, DateTime, ForeignKey, Integer, String, Text, Uuid, func
+from sqlalchemy import (
+    Date,
+    DateTime,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+    UniqueConstraint,
+    Uuid,
+    func,
+)
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.types import JSON
@@ -54,7 +64,10 @@ class Profile(Base):
         cascade="all, delete-orphan",
         order_by="ProfileEducation.display_order",
     )
-    skills: Mapped[list["ProfileSkill"]] = relationship(cascade="all, delete-orphan")
+    skills: Mapped[list["ProfileSkill"]] = relationship(
+        cascade="all, delete-orphan",
+        order_by="ProfileSkill.display_order",
+    )
     preference: Mapped["ProfilePreference | None"] = relationship(
         cascade="all, delete-orphan", uselist=False
     )
@@ -97,6 +110,7 @@ class ProfileEducation(Base):
 
 class ProfileSkill(Base):
     __tablename__ = "profile_skills"
+    __table_args__ = (UniqueConstraint("profile_id", "skill_name"),)
 
     id: Mapped[uuid.UUID] = mapped_column(
         Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4
@@ -105,6 +119,7 @@ class ProfileSkill(Base):
         Uuid(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE")
     )
     skill_name: Mapped[str] = mapped_column(String, nullable=False)
+    display_order: Mapped[int] = mapped_column(Integer, default=0)
 
 
 class ProfilePreference(Base):

@@ -203,7 +203,8 @@ function downloadBlob(blob: Blob, filename: string) {
  *  needs_review vẫn mở được vì user PHẢI vào editor sửa CV đó. */
 function isPending(cv: CvView): boolean {
   return (
-    cv.generationStatus !== "completed" && cv.generationStatus !== "needs_review"
+    cv.generationStatus !== "completed" &&
+    cv.generationStatus !== "needs_review"
   );
 }
 

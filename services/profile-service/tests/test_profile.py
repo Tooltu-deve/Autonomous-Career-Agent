@@ -79,6 +79,14 @@ def test_put_profile_is_idempotent_replace(client):
     assert [s["skill_name"] for s in r.json()["skills"]] == ["go"]
 
 
+def test_put_profile_same_skills_update(client):
+    _put_profile(client, skills=["python", "fastapi"])
+    # PUT lại với cùng skills -> không bị xung đột unique constraint
+    r = _put_profile(client, skills=["python", "fastapi"])
+    assert r.status_code == 200
+    assert [s["skill_name"] for s in r.json()["skills"]] == ["python", "fastapi"]
+
+
 def test_put_profile_bad_template_422(client):
     r = _put_profile(client, preferred_template="fancy")
     assert r.status_code == 422

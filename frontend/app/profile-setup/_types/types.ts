@@ -23,14 +23,14 @@ export interface ExperienceServerFields {
 }
 
 export interface EducationEntry {
-  id: number;
+  id: number | string;
   university: string;
   degree: string;
   server?: EducationServerFields;
 }
 
 export interface ProjectEntry {
-  id: number;
+  id: number | string;
   name: string;
   description: string;
   server?: ExperienceServerFields;
