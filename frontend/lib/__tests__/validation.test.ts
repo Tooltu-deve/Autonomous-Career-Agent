@@ -14,7 +14,13 @@ describe("isValidEmail", () => {
 
 describe("isValidPassword", () => {
   it("requires at least 8 characters", () => {
-    expect(isValidPassword("1234567")).toBe(false);
-    expect(isValidPassword("12345678")).toBe(true);
+    expect(isValidPassword("123456a")).toBe(false);
+  });
+
+  it("requires at least one letter and one number", () => {
+    expect(isValidPassword("12345678")).toBe(false);
+    expect(isValidPassword("abcdefgh")).toBe(false);
+    expect(isValidPassword("1234567a")).toBe(true);
+    expect(isValidPassword("Pass1234")).toBe(true);
   });
 });

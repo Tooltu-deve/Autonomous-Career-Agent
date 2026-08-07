@@ -71,9 +71,17 @@ def test_register_duplicate_email_returns_409(client):
     assert r.status_code == 409
 
 
-def test_register_short_password_returns_422(client):
-    r = _register(client, pw="short")
-    assert r.status_code == 422
+def test_register_invalid_password_returns_422(client):
+    # Dưới 8 ký tự
+    assert _register(client, email="u1@example.com", pw="short").status_code == 422
+    # Chỉ có số (thiếu chữ)
+    assert _register(client, email="u2@example.com", pw="12345678").status_code == 422
+    # Chỉ có chữ (thiếu số)
+    assert _register(client, email="u3@example.com", pw="abcdefgh").status_code == 422
+    # Đạt chuẩn (>=8 ký tự, có chữ + số)
+    assert (
+        _register(client, email="u4@example.com", pw="testPass123").status_code == 201
+    )
 
 
 def test_login_returns_token(client):
