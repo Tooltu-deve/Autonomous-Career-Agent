@@ -29,6 +29,7 @@ export interface CvView {
   matched: string[];
   missing: string[];
   recommendations: AtsRecommendation[];
+  coverLetter: string;
 }
 
 /** Statuses in which a cv_generations row exists for the application. */
@@ -68,6 +69,7 @@ function placeholderView(item: ApplicationListItem): CvView {
     matched: [],
     missing: [],
     recommendations: [],
+    coverLetter: "",
   };
 }
 
@@ -112,6 +114,7 @@ export async function loadCvViews(): Promise<CvView[]> {
       matched: report?.matched_keywords ?? [],
       missing: report?.missing_keywords ?? [],
       recommendations: report?.recommendations ?? [],
+      coverLetter: report?.cover_letter_text ?? "",
     });
   }
   return views;

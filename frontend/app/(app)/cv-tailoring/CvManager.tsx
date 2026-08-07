@@ -12,6 +12,7 @@ import type {
   TemplateName,
 } from "@/types/api";
 import { CvEditor } from "./CvEditor";
+import { CoverLetterSection } from "./CoverLetterSection";
 
 function scoreClass(score: number) {
   return score >= 80 ? "high" : score >= 70 ? "mid" : "low";
@@ -135,6 +136,7 @@ function AtsReport({ cv, close }: { cv: CvView; close: () => void }) {
             )}
           </div>
         </section>
+        <CoverLetterSection text={cv.coverLetter} />
       </div>
       <footer className={styles["cm-modal-footer"]}>
         <span>Formatted for ATS scanning</span>
