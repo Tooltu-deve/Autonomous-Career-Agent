@@ -84,7 +84,7 @@ export function LoginForm({
 
   const handleForgot = () => {
     if (!isValidEmail(form.email.trim())) {
-      setErrors((p) => ({ ...p, email: "Vui lòng nhập email hợp lệ." }));
+      setErrors((p) => ({ ...p, email: "Please enter a valid email." }));
       return;
     }
     alert(

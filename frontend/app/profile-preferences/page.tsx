@@ -340,7 +340,7 @@ export default function ProfilePreferencesPage() {
                     <span>{pos}</span>
                     <button
                       onClick={() => removePosition(pos)}
-                      aria-label={`Xóa ${pos}`}
+                      aria-label={`Remove ${pos}`}
                     >
                       <XSvg />
                     </button>

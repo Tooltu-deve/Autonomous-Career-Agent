@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { EyeOpenIcon, EyeOffIcon } from '@/components/icons';
-import s from './TextField.module.css';
+import { useState } from "react";
+import { EyeOpenIcon, EyeOffIcon } from "@/components/icons";
+import s from "./TextField.module.css";
 
 export interface TextFieldProps {
   id: string;
   label: string;
-  type?: 'text' | 'email' | 'password';
+  type?: "text" | "email" | "password";
   value: string;
   onChange: (value: string) => void;
   error?: string;
@@ -20,7 +20,7 @@ export interface TextFieldProps {
 export function TextField({
   id,
   label,
-  type = 'text',
+  type = "text",
   value,
   onChange,
   error,
@@ -30,16 +30,16 @@ export function TextField({
   hint,
 }: TextFieldProps) {
   const [show, setShow] = useState(false);
-  const isPassword = type === 'password';
-  const inputType = isPassword ? (show ? 'text' : 'password') : type;
+  const isPassword = type === "password";
+  const inputType = isPassword ? (show ? "text" : "password") : type;
 
   return (
-    <div className={`${s.field} ${error ? s['has-error'] : ''}`}>
-      <div className={s['field-row']}>
+    <div className={`${s.field} ${error ? s["has-error"] : ""}`}>
+      <div className={s["field-row"]}>
         <label htmlFor={id}>{label}</label>
         {hint}
       </div>
-      <div className={s['input-wrap']}>
+      <div className={s["input-wrap"]}>
         <input
           type={inputType}
           id={id}
@@ -51,16 +51,16 @@ export function TextField({
         {icon}
         {isPassword && (
           <button
-            className={s['eye-btn']}
+            className={s["eye-btn"]}
             type="button"
             onClick={() => setShow(!show)}
-            aria-label={show ? 'Ẩn mật khẩu' : 'Hiện mật khẩu'}
+            aria-label={show ? "Hide password" : "Show password"}
           >
             {show ? <EyeOffIcon /> : <EyeOpenIcon />}
           </button>
         )}
       </div>
-      {error && <div className={s['field-error']}>{error}</div>}
+      {error && <div className={s["field-error"]}>{error}</div>}
     </div>
   );
 }
