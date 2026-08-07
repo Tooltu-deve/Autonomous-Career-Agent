@@ -44,8 +44,8 @@ Nhớ: **`app` dùng `components`; `components` dùng `hooks` + `lib`; `lib` kh�
 Mọi import dùng alias `@/…` (cấu hình trong `tsconfig.json`), không dùng `../../..`:
 
 ```ts
-import { TextField } from '@/components/ui/TextField';
-import { findUser } from '@/lib/auth';
+import { TextField } from "@/components/ui/TextField";
+import { findUser } from "@/lib/auth";
 ```
 
 ---
@@ -81,15 +81,15 @@ frontend/
 
 ### Vai trò từng tầng
 
-| Thư mục | Chứa gì | Ví dụ |
-|---|---|---|
-| `app/<route>/` | Route + component **riêng của trang đó** (colocate, kèm `.module.css`). Không viết logic nghiệp vụ. | `app/cv-manager/CvManager.tsx` |
-| `components/ui/` | UI generic, không dính nghiệp vụ | `TextField` |
-| `components/icons/` | Icon SVG dùng chung | `EmailIcon`, `LockIcon` |
-| `components/<feature>/` | UI **dùng lại ở nhiều trang** + `.module.css` | `components/auth/LoginForm` |
-| `lib/` | Hàm thuần, test độc lập, không React. Nơi đổi mock→API thật | `lib/auth.ts` |
-| `hooks/` | State React dùng lại nhiều nơi | `useAuth()` |
-| `types/` | Kiểu dữ liệu dùng chung | `StoredUser` |
+| Thư mục                 | Chứa gì                                                                                             | Ví dụ                          |
+| ----------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------ |
+| `app/<route>/`          | Route + component **riêng của trang đó** (colocate, kèm `.module.css`). Không viết logic nghiệp vụ. | `app/cv-manager/CvManager.tsx` |
+| `components/ui/`        | UI generic, không dính nghiệp vụ                                                                    | `TextField`                    |
+| `components/icons/`     | Icon SVG dùng chung                                                                                 | `EmailIcon`, `LockIcon`        |
+| `components/<feature>/` | UI **dùng lại ở nhiều trang** + `.module.css`                                                       | `components/auth/LoginForm`    |
+| `lib/`                  | Hàm thuần, test độc lập, không React. Nơi đổi mock→API thật                                         | `lib/auth.ts`                  |
+| `hooks/`                | State React dùng lại nhiều nơi                                                                      | `useAuth()`                    |
+| `types/`                | Kiểu dữ liệu dùng chung                                                                             | `StoredUser`                   |
 
 ### Đặt component ở đâu?
 
@@ -111,10 +111,10 @@ Quy tắc một câu: **tái dùng → `components/`; riêng một trang → c�
 
 ### ⚠️ Hai vùng lưu trữ — đừng nhầm
 
-| Vùng | Dùng cho | Cách đọc |
-|---|---|---|
-| `localStorage` | danh sách user (`careernav_users`), cờ onboarding (`careernav_profile_completed`, `careernav_preferences_completed`) | cờ được ghi **chuỗi thô** `'true'` → đọc bằng `getItem(...) === 'true'`, **KHÔNG** `JSON.parse` |
-| `sessionStorage` | phiên đăng nhập (`careernav_session`) — hết khi đóng tab | `useAuth` và các trang onboarding phải cùng dùng `sessionStorage` cho key này |
+| Vùng             | Dùng cho                                                                                                             | Cách đọc                                                                                        |
+| ---------------- | -------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `localStorage`   | danh sách user (`careernav_users`), cờ onboarding (`careernav_profile_completed`, `careernav_preferences_completed`) | cờ được ghi **chuỗi thô** `'true'` → đọc bằng `getItem(...) === 'true'`, **KHÔNG** `JSON.parse` |
+| `sessionStorage` | phiên đăng nhập (`careernav_session`) — hết khi đóng tab                                                             | `useAuth` và các trang onboarding phải cùng dùng `sessionStorage` cho key này                   |
 
 **Luôn dùng `KEYS.x` trong `lib/storage.ts`, không gõ chuỗi key bằng tay.**
 
@@ -131,7 +131,7 @@ Conflict xảy ra khi hai người sửa cùng một file. Kiến trúc này gi�
 
 ### Ba file "dùng chung" cần kỷ luật (nơi duy nhất dễ đụng)
 
-- `components/icons/index.tsx` — *append* icon mới ở cuối file. Phình to thì tách nhiều file.
+- `components/icons/index.tsx` — _append_ icon mới ở cuối file. Phình to thì tách nhiều file.
 - `app/globals.css` — **chỉ** thêm token/biến hoặc class thật sự toàn cục. Style một trang → cho vào `.module.css`, không nhét vào đây.
 - `lib/api.ts` (khi nối backend) — nhóm theo domain hoặc tách `lib/api/jobs.ts`, `lib/api/auth.ts` để mỗi người một file.
 

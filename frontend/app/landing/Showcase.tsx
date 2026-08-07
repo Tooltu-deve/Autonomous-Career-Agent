@@ -22,7 +22,11 @@ export function Showcase() {
             Get Started for Free
           </a>
         </div>
-        <div className={styles["dash-mock"]} data-aos="fade-left" aria-label="Example autopilot dashboard">
+        <div
+          className={styles["dash-mock"]}
+          data-aos="fade-left"
+          aria-label="Example autopilot dashboard"
+        >
           <div className={styles["dash-topbar"]}>
             <span>Autopilot Dashboard</span>
             <span className={styles["dash-status"]}>
@@ -45,7 +49,13 @@ export function Showcase() {
           <div className={styles["dash-list"]}>
             {jobs.map(([letter, color, role, time, status]) => (
               <div className={styles["dash-row"]} key={role}>
-                <span className={[styles["dash-icon"], styles[color]].filter(Boolean).join(" ")}>{letter}</span>
+                <span
+                  className={[styles["dash-icon"], styles[color]]
+                    .filter(Boolean)
+                    .join(" ")}
+                >
+                  {letter}
+                </span>
                 <strong>{role}</strong>
                 <span className={styles["dash-time"]}>{time}</span>
                 <span className={styles["dash-pill"]}>{status}</span>

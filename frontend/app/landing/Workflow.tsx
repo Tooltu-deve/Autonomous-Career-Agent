@@ -31,8 +31,18 @@ export function Workflow() {
         </div>
         <div className={styles["steps-grid"]}>
           {steps.map(({ className, title, body }, index) => (
-            <article className={styles["step-card"]} data-aos="fade-up" style={{ "--aos-delay": `${index * 120}ms` } as CSSProperties} key={title}>
-              <div className={[styles["step-visual"], styles[className]].filter(Boolean).join(" ")} aria-hidden="true">
+            <article
+              className={styles["step-card"]}
+              data-aos="fade-up"
+              style={{ "--aos-delay": `${index * 120}ms` } as CSSProperties}
+              key={title}
+            >
+              <div
+                className={[styles["step-visual"], styles[className]]
+                  .filter(Boolean)
+                  .join(" ")}
+                aria-hidden="true"
+              >
                 {index === 0 ? (
                   <div className={styles["profile-sheet"]}>
                     <span>●</span>
@@ -46,7 +56,9 @@ export function Workflow() {
                     <div className={styles["floating-card"]}>
                       {index === 1 ? "▣ ━━━" : "━━━\n━━"}
                     </div>
-                    <div className={`${styles["floating-card"]} ${styles.second}`}>
+                    <div
+                      className={`${styles["floating-card"]} ${styles.second}`}
+                    >
                       {index === 1 ? "▣ ━━━" : "━━━\n━━"}
                     </div>
                   </>
