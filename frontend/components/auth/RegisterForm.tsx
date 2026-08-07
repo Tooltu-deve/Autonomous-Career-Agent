@@ -163,7 +163,7 @@ export function RegisterForm({
           id="r-password"
           label="Password"
           type="password"
-          placeholder="At least 8 characters"
+          placeholder="At least 8 characters (letter + number)"
           autoComplete="new-password"
           value={form.password}
           onChange={(v) => {
