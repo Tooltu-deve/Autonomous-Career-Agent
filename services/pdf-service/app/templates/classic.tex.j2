@@ -29,8 +29,8 @@
 % cột trái, căn trái cột phải -> dấu | và nhãn thẳng hàng giữa 2 dòng.
 \BLOCK{ if hdr.email or hdr.phone or hdr.github_url or hdr.linkedin_url }
 \begin{tabular}{r@{~~\textbar~~}l}
-\BLOCK{ if hdr.email or hdr.phone }\textbf{Email:}~\VAR{hdr.email | tex} & \textbf{Phone:}~\VAR{hdr.phone | tex} \\[2pt]\BLOCK{ endif }%
-\BLOCK{ if hdr.github_url or hdr.linkedin_url }\textbf{GitHub:}~\VAR{hdr.github_url | tex} & \textbf{LinkedIn:}~\VAR{hdr.linkedin_url | tex}\BLOCK{ endif }%
+\BLOCK{ if hdr.email and hdr.phone }\textbf{Email:}~\VAR{hdr.email | tex} & \textbf{Phone:}~\VAR{hdr.phone | tex} \\[2pt]\BLOCK{ elif hdr.email }\multicolumn{2}{c}{\textbf{Email:}~\VAR{hdr.email | tex}} \\[2pt]\BLOCK{ elif hdr.phone }\multicolumn{2}{c}{\textbf{Phone:}~\VAR{hdr.phone | tex}} \\[2pt]\BLOCK{ endif }%
+\BLOCK{ if hdr.github_url and hdr.linkedin_url }\href{\VAR{hdr.github_url | texurl}}{\textbf{\VAR{hdr.github_url | linklabel}}} & \href{\VAR{hdr.linkedin_url | texurl}}{\textbf{LinkedIn}}\BLOCK{ elif hdr.github_url }\multicolumn{2}{c}{\href{\VAR{hdr.github_url | texurl}}{\textbf{\VAR{hdr.github_url | linklabel}}}}\BLOCK{ elif hdr.linkedin_url }\multicolumn{2}{c}{\href{\VAR{hdr.linkedin_url | texurl}}{\textbf{LinkedIn}}}\BLOCK{ endif }%
 \end{tabular}
 \BLOCK{ endif }
 \end{center}
