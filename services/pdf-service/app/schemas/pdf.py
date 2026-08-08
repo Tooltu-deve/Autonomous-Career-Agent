@@ -29,10 +29,16 @@ class EducationItem(BaseModel):
     description: Optional[str] = None
 
 
+class CertificationItem(BaseModel):
+    title: str
+    obtain_date: date
+
+
 class CvData(BaseModel):
     summary: str
     experience: list[ExperienceItem] = []
     education: list[EducationItem] = []
+    certifications: list[CertificationItem] = []
     skills: list[str] = []
 
 

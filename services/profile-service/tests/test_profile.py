@@ -135,3 +135,75 @@ def test_prefs_empty_target_role_422(client):
     _put_profile(client)
     r = _put_prefs(client, target_role="")
     assert r.status_code == 422
+
+
+# ---- Certifications (SCRUM-66) ----
+CERTS = [
+    {
+        "title": "AWS Certified Developer",
+        "obtain_date": "2024-05-20",
+        "display_order": 0,
+    },
+    {"title": "Azure Fundamentals", "obtain_date": "2023-11-02", "display_order": 1},
+]
+
+
+def test_put_profile_saves_certifications(client):
+    r = _put_profile(client, certifications=CERTS)
+    assert r.status_code == 200
+    got = r.json()["certifications"]
+    assert [c["title"] for c in got] == [
+        "AWS Certified Developer",
+        "Azure Fundamentals",
+    ]
+    assert got[0]["obtain_date"] == "2024-05-20"
+    assert all("id" in c for c in got)
+
+
+def test_get_profile_returns_certifications(client):
+    _put_profile(client, certifications=CERTS)
+    r = client.get("/profile", headers=HEADERS)
+    assert r.status_code == 200
+    assert [c["title"] for c in r.json()["certifications"]] == [
+        "AWS Certified Developer",
+        "Azure Fundamentals",
+    ]
+
+
+def test_put_profile_replaces_certifications(client):
+    """PUT thay toàn bộ: gửi list mới -> không nhân đôi bản cũ."""
+    _put_profile(client, certifications=CERTS)
+    r = _put_profile(
+        client,
+        certifications=[{"title": "GCP ACE", "obtain_date": "2025-01-15"}],
+    )
+    assert r.status_code == 200
+    assert [c["title"] for c in r.json()["certifications"]] == ["GCP ACE"]
+
+
+def test_put_profile_without_certifications_clears_them(client):
+    """Bỏ trống certifications -> xoá hết (hành vi PUT thay toàn bộ).
+
+    Đây là lý do FE phải ride-along danh sách cũ khi màn hình không sửa mục này.
+    """
+    _put_profile(client, certifications=CERTS)
+    r = _put_profile(client)  # body mặc định không có certifications
+    assert r.status_code == 200
+    assert r.json()["certifications"] == []
+
+
+def test_certification_missing_obtain_date_422(client):
+    r = _put_profile(client, certifications=[{"title": "No date"}])
+    assert r.status_code == 422
+
+
+def test_certification_missing_title_422(client):
+    r = _put_profile(client, certifications=[{"obtain_date": "2024-05-20"}])
+    assert r.status_code == 422
+
+
+def test_certification_bad_date_format_422(client):
+    r = _put_profile(
+        client, certifications=[{"title": "X", "obtain_date": "20-05-2024"}]
+    )
+    assert r.status_code == 422

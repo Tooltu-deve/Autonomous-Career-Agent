@@ -62,6 +62,15 @@
 \BLOCK{ endfor }
 \BLOCK{ endif }
 
+% ---------- CERTIFICATIONS ----------
+\BLOCK{ if cv.certifications }
+\section{Certifications}
+\BLOCK{ for cert in cv.certifications }
+\textbf{\VAR{cert.title | tex}} \hfill \VAR{cert.obtain_date | tex}\par
+\vspace{4pt}
+\BLOCK{ endfor }
+\BLOCK{ endif }
+
 % ---------- SKILLS ----------
 \BLOCK{ if cv.skills }
 \section{Skills}

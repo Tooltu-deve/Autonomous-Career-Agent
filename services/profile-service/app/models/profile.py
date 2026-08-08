@@ -64,6 +64,10 @@ class Profile(Base):
         cascade="all, delete-orphan",
         order_by="ProfileEducation.display_order",
     )
+    certifications: Mapped[list["ProfileCertification"]] = relationship(
+        cascade="all, delete-orphan",
+        order_by="ProfileCertification.display_order",
+    )
     skills: Mapped[list["ProfileSkill"]] = relationship(
         cascade="all, delete-orphan",
         order_by="ProfileSkill.display_order",
@@ -105,6 +109,20 @@ class ProfileEducation(Base):
     start_date: Mapped[date | None] = mapped_column(Date)
     end_date: Mapped[date | None] = mapped_column(Date)
     description: Mapped[str | None] = mapped_column(Text)
+    display_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+
+class ProfileCertification(Base):
+    __tablename__ = "profile_certifications"
+
+    id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), primary_key=True, default=uuid.uuid4
+    )
+    profile_id: Mapped[uuid.UUID] = mapped_column(
+        Uuid(as_uuid=True), ForeignKey("profiles.id", ondelete="CASCADE")
+    )
+    title: Mapped[str] = mapped_column(String, nullable=False)
+    obtain_date: Mapped[date] = mapped_column(Date, nullable=False)
     display_order: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
 
