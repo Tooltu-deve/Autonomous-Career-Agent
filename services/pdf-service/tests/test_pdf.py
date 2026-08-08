@@ -111,3 +111,55 @@ def test_render_ok_without_header():
         tex = renderer.render(tpl, CV, {})
         assert r"\begin{document}" in tex
         assert "Backend engineer" in tex
+
+
+# ---- Certifications (SCRUM-66) ----
+CV_WITH_CERTS = {
+    **CV,
+    "certifications": [
+        {"title": "AWS Certified Developer", "obtain_date": "2024-05-20"},
+        {"title": "Azure Fundamentals", "obtain_date": "2023-11-02"},
+    ],
+}
+
+
+def test_render_includes_certifications_all_templates():
+    """Cả 3 template phải render title + obtain_date của mỗi chứng chỉ."""
+    for tpl in ("classic", "modern", "academic"):
+        tex = renderer.render(tpl, CV_WITH_CERTS, HEADER)
+        assert "AWS Certified Developer" in tex, tpl
+        assert "2024-05-20" in tex, tpl
+        assert "Azure Fundamentals" in tex, tpl
+
+
+def test_render_omits_certifications_section_when_empty():
+    """Không có chứng chỉ -> không in ra tiêu đề mục Certifications rỗng.
+
+    Bỏ qua dòng comment LaTeX (`%`) vì chúng không hiện trong PDF.
+    """
+    for tpl in ("classic", "modern", "academic"):
+        tex = renderer.render(tpl, {**CV, "certifications": []}, HEADER)
+        visible = [ln for ln in tex.splitlines() if not ln.lstrip().startswith("%")]
+        assert not any("ertification" in ln.lower() for ln in visible), tpl
+
+
+def test_certification_missing_obtain_date_422():
+    """`obtain_date` bắt buộc (API_CONTRACT §A2) -> thiếu là 422."""
+    bad = {**CV, "certifications": [{"title": "No date"}]}
+    r = client.post(
+        "/pdf/export", json={"template": "classic", "cv_data": bad, "header": HEADER}
+    )
+    assert r.status_code == 422
+
+
+def test_certification_escapes_latex_special_chars():
+    """Tên chứng chỉ có ký tự LaTeX đặc biệt phải được escape."""
+    cv = {
+        **CV,
+        "certifications": [
+            {"title": "C++ & 100% Pass_Rate", "obtain_date": "2024-01-01"}
+        ],
+    }
+    tex = renderer.render("classic", cv, HEADER)
+    assert "100\\%" in tex
+    assert "\\&" in tex

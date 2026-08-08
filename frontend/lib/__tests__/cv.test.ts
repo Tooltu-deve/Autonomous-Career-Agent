@@ -46,7 +46,13 @@ describe("loadCvViews — cover letter mapping", () => {
       cv_generation: {
         id: "cv-1",
         application_id: "app-1",
-        cv_json: { summary: "", experience: [], education: [], skills: [] },
+        cv_json: {
+          summary: "",
+          experience: [],
+          education: [],
+          certifications: [],
+          skills: [],
+        },
         edit_status: "draft",
         model_used: "claude-opus-4-8",
         generated_at: "2026-01-02T00:00:00Z",

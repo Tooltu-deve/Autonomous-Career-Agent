@@ -92,5 +92,12 @@
 \BLOCK{ endfor }
 \BLOCK{ endif }
 
+\BLOCK{ if cv.certifications }
+\cvsection{CERTIFICATIONS}
+\BLOCK{ for cert in cv.certifications }
+\cventry{\VAR{cert.title | tex}}{\VAR{cert.obtain_date | tex}}{}{}
+\BLOCK{ endfor }
+\BLOCK{ endif }
+
 \end{paracol}
 \end{document}

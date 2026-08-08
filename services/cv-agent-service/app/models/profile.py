@@ -27,6 +27,9 @@ class ProfileORM(Base):
     educations: Mapped[list["ProfileEducationORM"]] = relationship(
         order_by="ProfileEducationORM.display_order"
     )
+    certifications: Mapped[list["ProfileCertificationORM"]] = relationship(
+        order_by="ProfileCertificationORM.display_order"
+    )
     skills: Mapped[list["ProfileSkillORM"]] = relationship(
         order_by="ProfileSkillORM.display_order"
     )
@@ -56,6 +59,16 @@ class ProfileEducationORM(Base):
     start_date: Mapped[date | None] = mapped_column(Date)
     end_date: Mapped[date | None] = mapped_column(Date)
     description: Mapped[str | None] = mapped_column(Text)
+    display_order: Mapped[int] = mapped_column(Integer)
+
+
+class ProfileCertificationORM(Base):
+    __tablename__ = "profile_certifications"
+
+    id: Mapped[uuid.UUID] = mapped_column(Uuid(as_uuid=True), primary_key=True)
+    profile_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("profiles.id"))
+    title: Mapped[str] = mapped_column(String)
+    obtain_date: Mapped[date] = mapped_column(Date)
     display_order: Mapped[int] = mapped_column(Integer)
 
 

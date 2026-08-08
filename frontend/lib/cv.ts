@@ -47,6 +47,7 @@ const EMPTY_CONTENT: CvContent = {
   summary: "",
   experience: [],
   education: [],
+  certifications: [],
   skills: [],
 };
 

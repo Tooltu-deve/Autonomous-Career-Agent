@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 
 from app.models.profile import (
     Profile,
+    ProfileCertification,
     ProfileEducation,
     ProfileExperience,
     ProfilePreference,
@@ -48,6 +49,7 @@ def upsert_profile(db: Session, user_id: uuid.UUID, data: ProfileUpdate) -> Prof
     # unit-of-work chạy INSERT trước DELETE → vỡ UNIQUE (profile_id, skill_name).
     profile.experiences.clear()
     profile.educations.clear()
+    profile.certifications.clear()
     profile.skills.clear()
     db.flush()
 
@@ -55,6 +57,9 @@ def upsert_profile(db: Session, user_id: uuid.UUID, data: ProfileUpdate) -> Prof
         ProfileExperience(**e.model_dump()) for e in data.experiences
     ]
     profile.educations = [ProfileEducation(**e.model_dump()) for e in data.educations]
+    profile.certifications = [
+        ProfileCertification(**c.model_dump()) for c in data.certifications
+    ]
     # Lọc bỏ skill trùng trong request; display_order giữ đúng thứ tự người dùng nhập
     unique_skills = list(dict.fromkeys(data.skills))
     profile.skills = [

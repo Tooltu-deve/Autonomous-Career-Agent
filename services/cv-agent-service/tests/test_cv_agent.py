@@ -238,3 +238,66 @@ def test_put_cv_bad_schema_422(client, db):
     body = {"cv_json": {"experience": []}}  # thiếu summary
     r = client.put(f"/cvs/{cv.id}", json=body, headers={"X-User-Id": str(USER_ID)})
     assert r.status_code == 422
+
+
+# ---- Certifications (SCRUM-66) ----
+def test_read_profile_includes_certifications(db):
+    """readers.read_profile phải đưa certifications vào dict cho prompt."""
+    from datetime import date
+
+    from app.models.profile import ProfileCertificationORM
+    from app.services import readers
+
+    p = ProfileORM(id=uuid.uuid4(), user_id=USER_ID, headline="BE", summary="x")
+    p.certifications = [
+        ProfileCertificationORM(
+            id=uuid.uuid4(),
+            title="AWS Certified Developer",
+            obtain_date=date(2024, 5, 20),
+            display_order=0,
+        )
+    ]
+    db.add(p)
+    db.commit()
+
+    got = readers.read_profile(db, USER_ID)
+    assert got["certifications"] == [
+        {"title": "AWS Certified Developer", "obtain_date": "2024-05-20"}
+    ]
+
+
+def test_generate_persists_certifications_from_llm(db, monkeypatch, mock_publish):
+    """CV do LLM sinh có certifications -> lưu nguyên vào cv_json."""
+    _seed(db)
+    _mock_llm(
+        monkeypatch,
+        output=(
+            '{"summary": "Backend engineer", "experience": [], "education": [],'
+            ' "certifications": [{"title": "AWS Certified Developer",'
+            ' "obtain_date": "2024-05-20"}], "skills": ["python"]}'
+        ),
+    )
+
+    cv_id = cv_agent.generate(db, CvRequest(user_id=str(USER_ID), job_id=str(JOB_ID)))
+
+    cv = db.get(CvGenerationORM, cv_id)
+    assert cv.cv_json["certifications"] == [
+        {"title": "AWS Certified Developer", "obtain_date": "2024-05-20"}
+    ]
+
+
+def test_generate_accepts_cv_without_certifications(db, monkeypatch, mock_publish):
+    """certifications vắng mặt -> mặc định list rỗng, không lỗi (backward compat)."""
+    _seed(db)
+    _mock_llm(
+        monkeypatch,
+        output=(
+            '{"summary": "Backend engineer", "experience": [], "education": [],'
+            ' "skills": ["python"]}'
+        ),
+    )
+
+    cv_id = cv_agent.generate(db, CvRequest(user_id=str(USER_ID), job_id=str(JOB_ID)))
+
+    cv = db.get(CvGenerationORM, cv_id)
+    assert cv.cv_json["certifications"] == []

@@ -6,6 +6,7 @@ import { getPreferences, getProfile, putProfile } from "@/lib/api";
 import { getInitials } from "@/lib/format";
 import { KEYS } from "@/lib/storage";
 import type {
+  CertificationIn,
   PreferencesResponse,
   ProfileResponse,
   TemplateName,
@@ -56,6 +57,8 @@ interface DisplayProfile {
   summary: string;
   experiences: ProjectEntry[];
   education: EducationEntry[];
+  /** Ride-along: chưa sửa được trên trang này, giữ lại để PUT không xoá mất. */
+  certifications: CertificationIn[];
   skills: string[];
   preferences: {
     targetRole: string;
@@ -108,6 +111,7 @@ export default function MasterProfilePage() {
     summary: "",
     experiences: [],
     education: [],
+    certifications: [],
     skills: [],
     preferences: { targetRole: "", workType: "", preferredLocations: [] },
   });
@@ -194,6 +198,12 @@ export default function MasterProfilePage() {
                 description: edu.description,
               },
             })) ?? [],
+          certifications:
+            prof?.certifications?.map((c, i) => ({
+              title: c.title,
+              obtain_date: c.obtain_date,
+              display_order: c.display_order ?? i,
+            })) ?? [],
           skills: prof?.skills?.map((s) => s.skill_name) ?? [],
           preferences: {
             targetRole: pref?.target_role || "",
@@ -278,6 +288,9 @@ export default function MasterProfilePage() {
             description: e.server?.description ?? null,
             display_order: i,
           })),
+          // Ride-along: trang này chưa sửa certifications, gửi lại nguyên vẹn
+          // để PUT (thay toàn bộ) không xoá mất.
+          certifications: profile.certifications,
           skills: mergedSkills,
         });
 
