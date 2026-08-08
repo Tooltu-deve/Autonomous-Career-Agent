@@ -77,6 +77,13 @@ class EducationItem(BaseModel):
     description: Optional[str] = None
 
 
+class CertificationItem(BaseModel):
+    """Một chứng chỉ (dùng trong profile lẫn CV). Cả hai field bắt buộc."""
+
+    title: str
+    obtain_date: date
+
+
 class ProfileData(BaseModel):
     """Hồ sơ user dạng JSON dùng cho RAG khi sinh CV."""
 
@@ -93,6 +100,7 @@ class ProfileData(BaseModel):
     skills: list[str] = []
     experience: list[ExperienceItem] = []
     education: list[EducationItem] = []
+    certifications: list[CertificationItem] = []
 
 
 class CvRequest(BaseModel):
@@ -112,6 +120,7 @@ class CVContent(BaseModel):
     summary: str
     experience: list[ExperienceItem] = []
     education: list[EducationItem] = []
+    certifications: list[CertificationItem] = []
     skills: list[str] = []
 
 

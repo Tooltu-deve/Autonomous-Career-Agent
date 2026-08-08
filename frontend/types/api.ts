@@ -58,6 +58,16 @@ export interface SkillOut {
   skill_name: string;
 }
 
+export interface CertificationIn {
+  title: string;
+  obtain_date: string;
+  display_order?: number;
+}
+
+export interface CertificationOut extends CertificationIn {
+  id: string;
+}
+
 export interface ProfileUpdate {
   headline?: string | null;
   summary?: string | null;
@@ -68,6 +78,7 @@ export interface ProfileUpdate {
   preferred_template?: TemplateName;
   experiences: ExperienceIn[];
   educations: EducationIn[];
+  certifications: CertificationIn[];
   skills: string[];
 }
 
@@ -83,6 +94,7 @@ export interface ProfileResponse {
   preferred_template: TemplateName;
   experiences: ExperienceOut[];
   educations: EducationOut[];
+  certifications: CertificationOut[];
   skills: SkillOut[];
 }
 
@@ -213,10 +225,16 @@ export interface CvEducationItem {
   description?: string | null;
 }
 
+export interface CvCertificationItem {
+  title: string;
+  obtain_date: string;
+}
+
 export interface CvContent {
   summary: string;
   experience: CvExperienceItem[];
   education: CvEducationItem[];
+  certifications: CvCertificationItem[];
   skills: string[];
 }
 

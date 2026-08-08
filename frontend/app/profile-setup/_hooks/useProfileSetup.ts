@@ -70,6 +70,7 @@ function toProfileUpdate(data: ProfileData): ProfileUpdate {
         description: e.server?.description ?? null,
         display_order: i,
       })),
+    certifications: data.certifications,
     skills: data.skills,
   };
 }
@@ -95,6 +96,7 @@ export function useProfileSetup() {
     education: [{ id: uid(), university: "", degree: "" }],
     skills: ["Python", "C++", "SQL", "FastAPI"],
     projects: [{ id: uid(), name: "", description: "" }],
+    certifications: [],
   });
 
   /* ── Guard: token required; profile already on server → skip onboarding ── */
@@ -122,6 +124,13 @@ export function useProfileSetup() {
           skills: prof.skills?.length
             ? prof.skills.map((s) => s.skill_name)
             : d.skills,
+          // Giữ nguyên certifications từ server — wizard không sửa mục này
+          certifications:
+            prof.certifications?.map((c, i) => ({
+              title: c.title,
+              obtain_date: c.obtain_date,
+              display_order: c.display_order ?? i,
+            })) ?? d.certifications,
           education: prof.educations?.length
             ? prof.educations.map((e, idx) => ({
                 id: idx + 1,

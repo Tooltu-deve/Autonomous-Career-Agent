@@ -109,6 +109,15 @@ CREATE TABLE profile_educations (
     display_order  INT NOT NULL DEFAULT 0
 );
 
+-- profile_certifications
+CREATE TABLE profile_certifications (
+    id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    profile_id    UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
+    title         VARCHAR NOT NULL,
+    obtain_date   DATE NOT NULL,
+    display_order INT NOT NULL DEFAULT 0
+);
+
 -- profile_skills
 CREATE TABLE profile_skills (
     id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),

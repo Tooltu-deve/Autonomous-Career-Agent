@@ -36,6 +36,12 @@ export interface ProjectEntry {
   server?: ExperienceServerFields;
 }
 
+export interface CertificationEntry {
+  title: string;
+  obtain_date: string;
+  display_order?: number;
+}
+
 export interface ProfileData {
   name: string;
   headline: string;
@@ -49,6 +55,8 @@ export interface ProfileData {
   education: EducationEntry[];
   skills: string[];
   projects: ProjectEntry[];
+  /** Ride-along: wizard chưa sửa certifications, giữ lại để PUT không xoá mất. */
+  certifications: CertificationEntry[];
 }
 
 export const SUGGESTED_SKILLS = [

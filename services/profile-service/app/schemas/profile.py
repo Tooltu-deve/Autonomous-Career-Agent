@@ -29,12 +29,25 @@ class EducationIn(BaseModel):
     display_order: int = 0
 
 
+class CertificationIn(BaseModel):
+    """Chứng chỉ — `title` và `obtain_date` đều bắt buộc (API_CONTRACT §A2)."""
+
+    title: str
+    obtain_date: date
+    display_order: int = 0
+
+
 class ExperienceOut(ExperienceIn):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
 
 
 class EducationOut(EducationIn):
+    model_config = ConfigDict(from_attributes=True)
+    id: uuid.UUID
+
+
+class CertificationOut(CertificationIn):
     model_config = ConfigDict(from_attributes=True)
     id: uuid.UUID
 
@@ -58,6 +71,7 @@ class ProfileUpdate(BaseModel):
     preferred_template: TemplateName = "classic"
     experiences: list[ExperienceIn] = []
     educations: list[EducationIn] = []
+    certifications: list[CertificationIn] = []
     skills: list[str] = []
 
 
@@ -75,6 +89,7 @@ class ProfileResponse(BaseModel):
     preferred_template: TemplateName
     experiences: list[ExperienceOut] = []
     educations: list[EducationOut] = []
+    certifications: list[CertificationOut] = []
     skills: list[SkillOut] = []
 
 

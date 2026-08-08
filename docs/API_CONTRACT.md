@@ -131,6 +131,12 @@ Trả về profile lồng của user hiện tại (`user_id` lấy từ token; `
       "end_date": "2023-06-01", "description": "...", "display_order": 1
     }
   ],
+  "certifications": [
+    {
+      "id": "cert-uuid", "title": "AWS Certified Developer",
+      "obtain_date": "2024-05-20", "display_order": 0
+    }
+  ],
   "skills": [
     { "id": "skill-uuid", "skill_name": "python" },
     { "id": "skill-uuid", "skill_name": "fastapi" }
@@ -138,6 +144,9 @@ Trả về profile lồng của user hiện tại (`user_id` lấy từ token; `
 }
 ```
 Lỗi: `404` chưa có profile.
+
+> **`certifications`**: `title` và `obtain_date` đều **bắt buộc** (`obtain_date` dạng ISO
+> `YYYY-MM-DD`); thiếu một trong hai → `422`. Danh sách rỗng nếu user chưa khai chứng chỉ nào.
 
 ### `PUT /profile` → `200`
 Tạo mới hoặc thay toàn bộ profile + các bảng con (idempotent). Body giống response nhưng

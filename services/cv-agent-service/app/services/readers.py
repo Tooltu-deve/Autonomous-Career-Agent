@@ -48,6 +48,10 @@ def read_profile(db: Session, user_id: uuid.UUID) -> dict | None:
             }
             for e in profile.educations
         ],
+        "certifications": [
+            {"title": c.title, "obtain_date": _iso(c.obtain_date)}
+            for c in profile.certifications
+        ],
         "skills": [s.skill_name for s in profile.skills],
     }
 

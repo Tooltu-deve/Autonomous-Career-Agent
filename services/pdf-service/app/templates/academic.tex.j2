@@ -56,6 +56,14 @@
 \BLOCK{ endfor }
 \BLOCK{ endif }
 
+% ---------- CERTIFICATIONS ----------
+\BLOCK{ if cv.certifications }
+\cvsection{Certifications}
+\BLOCK{ for cert in cv.certifications }
+\academicentry{\VAR{cert.title | tex}}{\VAR{cert.obtain_date | tex}}{}
+\BLOCK{ endfor }
+\BLOCK{ endif }
+
 % ---------- SKILLS ----------
 \BLOCK{ if cv.skills }
 \cvsection{Technical Skills \& Competencies}

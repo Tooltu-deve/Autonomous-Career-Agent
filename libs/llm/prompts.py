@@ -44,6 +44,8 @@ def cv_generation(
         "- skills: sắp kỹ năng khớp JD lên đầu.",
         "- Viết TOÀN BỘ nội dung bằng TIẾNG ANH, bất kể ngôn ngữ của JD hay hồ sơ.",
         "- Ngày tháng định dạng ISO YYYY-MM-DD; end_date là null nếu đang làm.",
+        "- certifications: chép nguyên từ hồ sơ, KHÔNG bịa thêm; bỏ trống nếu hồ "
+        "sơ không có. Mỗi mục cần title và obtain_date (ISO YYYY-MM-DD).",
         "\nTrả về JSON đúng theo mẫu sau (thay giá trị):",
         "{\n"
         '  "summary": "Backend engineer with 3 years of experience...",\n'
@@ -54,6 +56,8 @@ def cv_generation(
         '  "education": [{"school": "HCMUS", "degree": "BSc",\n'
         '    "field_of_study": "Computer Science", "start_date": "2019-09-01",\n'
         '    "end_date": "2023-06-01", "description": null}],\n'
+        '  "certifications": [{"title": "AWS Certified Developer",\n'
+        '    "obtain_date": "2024-05-20"}],\n'
         '  "skills": ["python", "fastapi", "postgresql"]\n'
         "}",
     ]
