@@ -27,8 +27,8 @@
 \BLOCK{ if hdr.location }\VAR{hdr.location | tex}\\[2pt]\BLOCK{ endif }%
 \BLOCK{ if hdr.email or hdr.phone or hdr.github_url or hdr.linkedin_url }
 \begin{tabular}{r@{~~\textbar~~}l}
-\BLOCK{ if hdr.email or hdr.phone }Email:~\VAR{hdr.email | tex} & Phone:~\VAR{hdr.phone | tex} \\[2pt]\BLOCK{ endif }%
-\BLOCK{ if hdr.github_url or hdr.linkedin_url }GitHub:~\VAR{hdr.github_url | tex} & LinkedIn:~\VAR{hdr.linkedin_url | tex}\BLOCK{ endif }%
+\BLOCK{ if hdr.email and hdr.phone }Email:~\VAR{hdr.email | tex} & Phone:~\VAR{hdr.phone | tex} \\[2pt]\BLOCK{ elif hdr.email }\multicolumn{2}{c}{Email:~\VAR{hdr.email | tex}} \\[2pt]\BLOCK{ elif hdr.phone }\multicolumn{2}{c}{Phone:~\VAR{hdr.phone | tex}} \\[2pt]\BLOCK{ endif }%
+\BLOCK{ if hdr.github_url and hdr.linkedin_url }\href{\VAR{hdr.github_url | texurl}}{\VAR{hdr.github_url | linklabel}} & \href{\VAR{hdr.linkedin_url | texurl}}{LinkedIn}\BLOCK{ elif hdr.github_url }\multicolumn{2}{c}{\href{\VAR{hdr.github_url | texurl}}{\VAR{hdr.github_url | linklabel}}}\BLOCK{ elif hdr.linkedin_url }\multicolumn{2}{c}{\href{\VAR{hdr.linkedin_url | texurl}}{LinkedIn}}\BLOCK{ endif }%
 \end{tabular}
 \BLOCK{ endif }
 \end{center}

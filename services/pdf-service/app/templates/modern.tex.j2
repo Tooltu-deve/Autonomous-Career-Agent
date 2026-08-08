@@ -55,8 +55,8 @@
 \BLOCK{ if hdr.email }{\color{white!88}\small \textbf{Email}\\ \VAR{hdr.email | tex}}\par\vspace{6pt}\BLOCK{ endif }%
 \BLOCK{ if hdr.phone }{\color{white!88}\small \textbf{Phone}\\ \VAR{hdr.phone | tex}}\par\vspace{6pt}\BLOCK{ endif }%
 \BLOCK{ if hdr.location }{\color{white!88}\small \textbf{Location}\\ \VAR{hdr.location | tex}}\par\vspace{6pt}\BLOCK{ endif }%
-\BLOCK{ if hdr.github_url }{\color{white!88}\small \textbf{GitHub}\\ \VAR{hdr.github_url | tex}}\par\vspace{6pt}\BLOCK{ endif }%
-\BLOCK{ if hdr.linkedin_url }{\color{white!88}\small \textbf{LinkedIn}\\ \VAR{hdr.linkedin_url | tex}}\par\vspace{6pt}\BLOCK{ endif }
+\BLOCK{ if hdr.github_url }{\small\href{\VAR{hdr.github_url | texurl}}{\color{white!88}\textbf{\VAR{hdr.github_url | linklabel}}}}\par\vspace{6pt}\BLOCK{ endif }%
+\BLOCK{ if hdr.linkedin_url }{\small\href{\VAR{hdr.linkedin_url | texurl}}{\color{white!88}\textbf{LinkedIn}}}\par\vspace{6pt}\BLOCK{ endif }
 \BLOCK{ endif }
 
 \BLOCK{ if cv.skills }

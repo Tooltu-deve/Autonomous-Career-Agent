@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getPreferences, getProfile, putProfile } from "@/lib/api";
 import { getInitials } from "@/lib/format";
 import { KEYS } from "@/lib/storage";
+import { validateProfile, type ProfileFormErrors } from "@/lib/validation";
 import type {
   CertificationIn,
   PreferencesResponse,
@@ -922,21 +923,23 @@ function BasicInfoModal({
   const [preferredTemplate, setPreferredTemplate] = useState<TemplateName>(
     initialProfile.preferredTemplate,
   );
+  const [fieldErrors, setFieldErrors] = useState<ProfileFormErrors>({});
+
+  const handleSave = () => {
+    const errs = validateProfile({ phone, github, linkedin });
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      return;
+    }
+    setFieldErrors({});
+    onSave({ headline, location, phone, github, linkedin, preferredTemplate });
+  };
 
   return (
     <ModalWrapper
       title="👤 Personal Information & CV Template"
       onClose={onClose}
-      onSave={() =>
-        onSave({
-          headline,
-          location,
-          phone,
-          github,
-          linkedin,
-          preferredTemplate,
-        })
-      }
+      onSave={handleSave}
       saving={saving}
     >
       <div className={s.formGroup}>
@@ -961,37 +964,64 @@ function BasicInfoModal({
             onChange={(e) => setLocation(e.target.value)}
           />
         </div>
-        <div className={s.formGroup}>
+        <div
+          className={`${s.formGroup}${fieldErrors.phone ? ` ${s.formGroupError}` : ""}`}
+        >
           <label className={s.formLabel}>Phone Number</label>
           <input
             className={s.formInput}
             type="text"
             value={phone}
             placeholder="e.g., +84 901 234 567"
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={(e) => {
+              setPhone(e.target.value);
+              if (fieldErrors.phone)
+                setFieldErrors((p) => ({ ...p, phone: undefined }));
+            }}
           />
+          {fieldErrors.phone && (
+            <p className={s.formFieldError}>{fieldErrors.phone}</p>
+          )}
         </div>
       </div>
       <div className={s.formGrid2}>
-        <div className={s.formGroup}>
+        <div
+          className={`${s.formGroup}${fieldErrors.github ? ` ${s.formGroupError}` : ""}`}
+        >
           <label className={s.formLabel}>GitHub / Portfolio</label>
           <input
             className={s.formInput}
             type="text"
             value={github}
             placeholder="e.g., github.com/username"
-            onChange={(e) => setGithub(e.target.value)}
+            onChange={(e) => {
+              setGithub(e.target.value);
+              if (fieldErrors.github)
+                setFieldErrors((p) => ({ ...p, github: undefined }));
+            }}
           />
+          {fieldErrors.github && (
+            <p className={s.formFieldError}>{fieldErrors.github}</p>
+          )}
         </div>
-        <div className={s.formGroup}>
+        <div
+          className={`${s.formGroup}${fieldErrors.linkedin ? ` ${s.formGroupError}` : ""}`}
+        >
           <label className={s.formLabel}>LinkedIn</label>
           <input
             className={s.formInput}
             type="text"
             value={linkedin}
             placeholder="e.g., linkedin.com/in/username"
-            onChange={(e) => setLinkedin(e.target.value)}
+            onChange={(e) => {
+              setLinkedin(e.target.value);
+              if (fieldErrors.linkedin)
+                setFieldErrors((p) => ({ ...p, linkedin: undefined }));
+            }}
           />
+          {fieldErrors.linkedin && (
+            <p className={s.formFieldError}>{fieldErrors.linkedin}</p>
+          )}
         </div>
       </div>
 

@@ -13,6 +13,7 @@ import {
   UserIcon,
 } from "./Icons";
 import type { ProfileData } from "../_types/types";
+import type { FormErrors } from "../_hooks/useProfileSetup";
 
 interface Props {
   data: ProfileData;
@@ -21,6 +22,7 @@ interface Props {
   onSkip: () => void;
   onNext: () => void;
   onShowToast: (msg: string) => void;
+  errors?: FormErrors;
 }
 
 export function StepBasicInfo({
@@ -30,6 +32,7 @@ export function StepBasicInfo({
   onSkip,
   onNext,
   onShowToast,
+  errors = {},
 }: Props) {
   return (
     <div className="ps-card ps-animate-in">
@@ -103,7 +106,9 @@ export function StepBasicInfo({
           </div>
         </div>
 
-        <div className="ps-form-group">
+        <div
+          className={`ps-form-group${errors.phone ? " ps-field-error-state" : ""}`}
+        >
           <label htmlFor="ps-phone">Phone Number</label>
           <div className="ps-input-wrap">
             <input
@@ -117,6 +122,7 @@ export function StepBasicInfo({
             />
             <PhoneIcon />
           </div>
+          {errors.phone && <p className="ps-field-error">{errors.phone}</p>}
         </div>
 
         <div className="ps-form-group ps-span-full">
@@ -135,7 +141,9 @@ export function StepBasicInfo({
           </div>
         </div>
 
-        <div className="ps-form-group">
+        <div
+          className={`ps-form-group${errors.github ? " ps-field-error-state" : ""}`}
+        >
           <label htmlFor="ps-github">GitHub / Portfolio</label>
           <div className="ps-input-wrap">
             <input
@@ -149,9 +157,12 @@ export function StepBasicInfo({
             />
             <LinkIcon />
           </div>
+          {errors.github && <p className="ps-field-error">{errors.github}</p>}
         </div>
 
-        <div className="ps-form-group">
+        <div
+          className={`ps-form-group${errors.linkedin ? " ps-field-error-state" : ""}`}
+        >
           <label htmlFor="ps-linkedin">LinkedIn</label>
           <div className="ps-input-wrap">
             <input
@@ -165,6 +176,9 @@ export function StepBasicInfo({
             />
             <LinkIcon />
           </div>
+          {errors.linkedin && (
+            <p className="ps-field-error">{errors.linkedin}</p>
+          )}
         </div>
 
         <div className="ps-form-group ps-span-full">

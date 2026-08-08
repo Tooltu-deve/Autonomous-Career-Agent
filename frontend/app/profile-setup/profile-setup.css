@@ -1341,3 +1341,23 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ── Inline field validation errors ── */
+.ps-field-error {
+  font-size: 12.5px;
+  color: #e8384f;
+  font-weight: 500;
+  margin: 4px 0 0;
+  line-height: 1.4;
+}
+
+.ps-field-error-state .ps-input-wrap input,
+.ps-field-error-state .ps-input-wrap textarea {
+  border-color: #e8384f;
+}
+
+.ps-field-error-state .ps-input-wrap input:focus,
+.ps-field-error-state .ps-input-wrap textarea:focus {
+  border-color: #e8384f;
+  box-shadow: 0 0 0 3px rgba(232, 56, 79, 0.15);
+}

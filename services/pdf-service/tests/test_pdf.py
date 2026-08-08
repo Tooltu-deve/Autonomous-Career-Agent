@@ -163,3 +163,125 @@ def test_certification_escapes_latex_special_chars():
     tex = renderer.render("classic", cv, HEADER)
     assert "100\\%" in tex
     assert "\\&" in tex
+
+
+# ---- Contact links: \href + chuẩn hoá URL ----
+
+
+def test_contact_urls_become_clickable_links():
+    """github/linkedin phải là \\href để bấm được trong PDF, ở cả 3 template.
+
+    Chữ hiển thị là "GitHub"/"LinkedIn", không phải URL trần.
+    """
+    for tpl in ("classic", "modern", "academic"):
+        tex = renderer.render(tpl, CV, HEADER)
+        assert "\\href{https://github.com/nva}" in tex, tpl
+        assert "\\href{https://linkedin.com/in/nva}" in tex, tpl
+
+
+def test_link_text_is_the_site_name_not_the_url():
+    """CV hiển thị "GitHub"/"LinkedIn" chứ không in URL trần ra trang."""
+    for tpl in ("classic", "modern", "academic"):
+        tex = renderer.render(tpl, CV, HEADER)
+        # URL chỉ xuất hiện trong target của \href, không nằm ở phần hiển thị
+        assert tex.count("github.com/nva") == 1, tpl
+        assert tex.count("linkedin.com/in/nva") == 1, tpl
+        assert "{GitHub}" in tex or "{\\textbf{GitHub}}" in tex, tpl
+        assert "{LinkedIn}" in tex or "{\\textbf{LinkedIn}}" in tex, tpl
+
+
+def test_href_target_keeps_underscore_intact():
+    """Target của \\href KHÔNG được escape kiểu LaTeX.
+
+    escape_tex biến `_` thành `\\_`, làm hỏng URL — mà `_` rất phổ biến trong
+    username GitHub/LinkedIn.
+    """
+    hdr = {
+        **HEADER,
+        "github_url": "github.com/thomas_tu",
+        "linkedin_url": "linkedin.com/in/thomas_tu_07",
+    }
+    for tpl in ("classic", "modern", "academic"):
+        tex = renderer.render(tpl, CV, hdr)
+        assert "\\href{https://github.com/thomas_tu}" in tex, tpl
+        assert "\\href{https://linkedin.com/in/thomas_tu_07}" in tex, tpl
+
+
+def test_href_target_gets_https_prefix():
+    """Thiếu scheme thì \\href trỏ đường dẫn tương đối và không mở được."""
+    hdr = {**HEADER, "github_url": "www.github.com/nva"}
+    tex = renderer.render("classic", CV, hdr)
+    assert "\\href{https://www.github.com/nva}" in tex
+    # scheme sẵn có thì giữ nguyên, không thêm lần nữa
+    hdr2 = {**HEADER, "github_url": "http://github.com/nva"}
+    assert "\\href{http://github.com/nva}" in renderer.render("classic", CV, hdr2)
+
+
+def test_href_target_does_not_double_encode():
+    """URL đã percent-encode (vd tên tiếng Việt) phải giữ nguyên."""
+    hdr = {**HEADER, "linkedin_url": "linkedin.com/in/nguy%E1%BB%85n-van-a"}
+    tex = renderer.render("classic", CV, hdr)
+    # `%` escape kiểu LaTeX -> hyperref trả lại `%` gốc, không encode lần hai
+    assert "\\href{https://linkedin.com/in/nguy\\%E1\\%BB\\%85n-van-a}" in tex
+    assert "%25E1" not in tex
+
+
+def test_percent_in_url_is_latex_escaped():
+    """`%` là ký tự comment của LaTeX -> phải escape, percent-encode KHÔNG cứu được
+    vì `%25` cũng bắt đầu bằng `%` và vẫn bị nuốt lúc tokenize."""
+    hdr = {**HEADER, "github_url": "github.com/100%pass"}
+    tex = renderer.render("classic", CV, hdr)
+    assert "\\href{https://github.com/100\\%pass}" in tex
+
+
+def test_no_dangling_label_when_only_one_contact_link():
+    """Chỉ điền 1 trong 2 -> không được in nhãn của cái còn lại rồi bỏ trống."""
+    only_github = {**HEADER, "linkedin_url": None}
+    for tpl in ("classic", "academic"):
+        tex = renderer.render(tpl, CV, only_github)
+        assert "LinkedIn" not in tex, tpl
+        assert "GitHub" in tex, tpl
+
+    only_linkedin = {**HEADER, "github_url": None}
+    for tpl in ("classic", "academic"):
+        tex = renderer.render(tpl, CV, only_linkedin)
+        assert "GitHub" not in tex, tpl
+        assert "LinkedIn" in tex, tpl
+
+
+def test_no_dangling_label_when_only_one_of_email_phone():
+    """Cùng lỗi ở dòng Email/Phone — user không có phone rất phổ biến."""
+    for tpl in ("classic", "academic"):
+        tex = renderer.render(tpl, CV, {**HEADER, "phone": None})
+        assert "Phone" not in tex, tpl
+        assert "Email" in tex, tpl
+
+
+def test_link_label_follows_the_host():
+    """Field trên UI là "GitHub / Portfolio" nên nhãn phải theo nội dung."""
+    assert renderer.link_label("github.com/nva") == "GitHub"
+    assert renderer.link_label("https://www.github.com/nva/") == "GitHub"
+    assert renderer.link_label("GitHub.com/NVA") == "GitHub"
+    assert renderer.link_label("thomastu.dev") == "Portfolio"
+    assert renderer.link_label("https://my-site.vercel.app/cv") == "Portfolio"
+    # github.io là trang cá nhân, chỉ tình cờ host trên GitHub Pages
+    assert renderer.link_label("nva.github.io") == "Portfolio"
+    assert renderer.link_label("") == ""
+    assert renderer.link_label(None) == ""
+
+
+def test_portfolio_link_is_labelled_portfolio_not_github():
+    """Regression: trước đây nhãn cứng "GitHub" nên link portfolio bị ghi sai."""
+    hdr = {**HEADER, "github_url": "thomastu.dev"}
+    for tpl in ("classic", "modern", "academic"):
+        tex = renderer.render(tpl, CV, hdr)
+        assert "Portfolio" in tex, tpl
+        assert "GitHub" not in tex, tpl
+        assert "\\href{https://thomastu.dev}" in tex, tpl
+
+
+def test_github_link_still_labelled_github():
+    for tpl in ("classic", "modern", "academic"):
+        tex = renderer.render(tpl, CV, {**HEADER, "github_url": "github.com/nva"})
+        assert "GitHub" in tex, tpl
+        assert "Portfolio" not in tex, tpl

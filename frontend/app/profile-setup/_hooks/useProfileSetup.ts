@@ -15,6 +15,12 @@ import {
 } from "@/lib/api";
 import type { ProfileUpdate } from "@/types/api";
 import type { ProfileData } from "../_types/types";
+import { validateProfile, type ProfileFormErrors } from "@/lib/validation";
+
+/* Wizard dùng đúng bộ luật chung — không thêm luật riêng.
+ * `name` cố tình KHÔNG validate: nó luôn được prefill từ session và
+ * `toProfileUpdate()` không gửi nó đi đâu cả (bảng profiles không có cột name). */
+export type FormErrors = ProfileFormErrors;
 
 /* ── Utility: simple unique ID generator ── */
 let nextId = 100;
@@ -82,6 +88,7 @@ export function useProfileSetup() {
   const [toast, setToast] = useState<string | null>(null);
   const [isFinishing, setIsFinishing] = useState(false);
   const [customSkill, setCustomSkill] = useState("");
+  const [errors, setErrors] = useState<FormErrors>({});
 
   const [data, setData] = useState<ProfileData>({
     name: "",
@@ -280,8 +287,24 @@ export function useProfileSetup() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  /* ── API save ── */
-  const saveProfile = async (afterSaveMsg: string) => {
+  /* ── API save ──
+   * `shouldValidate` false cho luồng Skip: user bấm Skip nghĩa là không muốn
+   * điền, nên chặn họ lại vì một field sai định dạng là phản tác dụng. */
+  const saveProfile = async (afterSaveMsg: string, shouldValidate = true) => {
+    if (shouldValidate) {
+      const errs = validateProfile({
+        phone: data.phone,
+        github: data.github,
+        linkedin: data.linkedin,
+      });
+      if (Object.keys(errs).length > 0) {
+        setErrors(errs);
+        goToStep(1); // phone nằm ở step 1
+        return;
+      }
+    }
+    setErrors({});
+
     setIsFinishing(true);
     try {
       await putProfile(toProfileUpdate(data));
@@ -308,7 +331,7 @@ export function useProfileSetup() {
     }
   };
 
-  const skipAndFinish = () => void saveProfile("Proceeding...");
+  const skipAndFinish = () => void saveProfile("Proceeding...", false);
 
   const completeSetup = () => void saveProfile("Profile saved!");
 
@@ -319,6 +342,7 @@ export function useProfileSetup() {
     goToStep,
     toast,
     isFinishing,
+    errors,
     customSkill,
     setCustomSkill,
     showToast,
