@@ -3,5 +3,5 @@ export function isValidEmail(v: string): boolean {
 }
 
 export function isValidPassword(v: string): boolean {
-  return v.length >= 8;
+  return v.length >= 8 && /[a-zA-Z]/.test(v) && /[0-9]/.test(v);
 }

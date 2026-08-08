@@ -50,7 +50,7 @@ export function RegisterForm({
       email: emailValid ? undefined : "Please enter a valid email.",
       password: passwordValid
         ? undefined
-        : "Password must be at least 8 characters.",
+        : "Password must be at least 8 characters long and contain at least one letter and one number.",
     });
 
     if (!form.terms) {
@@ -163,7 +163,7 @@ export function RegisterForm({
           id="r-password"
           label="Password"
           type="password"
-          placeholder="At least 8 characters"
+          placeholder="At least 8 characters (letter + number)"
           autoComplete="new-password"
           value={form.password}
           onChange={(v) => {

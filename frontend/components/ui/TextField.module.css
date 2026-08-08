@@ -77,12 +77,18 @@
   fill: none;
 }
 
-/* No rule bodies exist for these in the source app/auth.css (verified via
-   grep across all frontend CSS files) — they are currently unstyled.
-   Declared here (empty) only so the CSS Modules export resolves the class
-   name instead of `undefined`; this does not change visual behavior. */
 .field-error {
+  font-size: 12.5px;
+  color: var(--error, #e8384f);
+  font-weight: 500;
+  margin-top: 2px;
 }
 
-.field.has-error {
+.field.has-error input {
+  border-color: var(--error, #e8384f);
+}
+
+.field.has-error input:focus {
+  border-color: var(--error, #e8384f);
+  box-shadow: 0 0 0 3px rgba(232, 56, 79, 0.15);
 }
