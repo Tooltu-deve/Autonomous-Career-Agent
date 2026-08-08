@@ -13,6 +13,7 @@ import {
   UserIcon,
 } from "./Icons";
 import type { ProfileData } from "../_types/types";
+import type { FormErrors } from "../_hooks/useProfileSetup";
 
 interface Props {
   data: ProfileData;
@@ -21,6 +22,7 @@ interface Props {
   onSkip: () => void;
   onNext: () => void;
   onShowToast: (msg: string) => void;
+  errors?: FormErrors;
 }
 
 export function StepBasicInfo({
@@ -30,6 +32,7 @@ export function StepBasicInfo({
   onSkip,
   onNext,
   onShowToast,
+  errors = {},
 }: Props) {
   return (
     <div className="ps-card ps-animate-in">
@@ -57,8 +60,11 @@ export function StepBasicInfo({
       </div>
 
       <div className="ps-grid2">
-        <div className="ps-form-group ps-span-full">
-          <label htmlFor="ps-name">Full Name</label>
+        <div className={`ps-form-group ps-span-full${errors.name ? " ps-field-error-state" : ""}`}>
+          <label htmlFor="ps-name">
+            Full Name{" "}
+            <span aria-hidden="true" style={{ color: "#e8384f" }}>*</span>
+          </label>
           <div className="ps-input-wrap">
             <input
               id="ps-name"
@@ -69,10 +75,14 @@ export function StepBasicInfo({
             />
             <UserIcon />
           </div>
+          {errors.name && <p className="ps-field-error">{errors.name}</p>}
         </div>
 
-        <div className="ps-form-group ps-span-full">
-          <label htmlFor="ps-headline">Professional Headline</label>
+        <div className={`ps-form-group ps-span-full${errors.headline ? " ps-field-error-state" : ""}`}>
+          <label htmlFor="ps-headline">
+            Professional Headline{" "}
+            <span aria-hidden="true" style={{ color: "#e8384f" }}>*</span>
+          </label>
           <div className="ps-input-wrap">
             <input
               id="ps-headline"
@@ -85,6 +95,9 @@ export function StepBasicInfo({
             />
             <FileIcon />
           </div>
+          {errors.headline && (
+            <p className="ps-field-error">{errors.headline}</p>
+          )}
         </div>
 
         <div className="ps-form-group">
@@ -103,7 +116,7 @@ export function StepBasicInfo({
           </div>
         </div>
 
-        <div className="ps-form-group">
+        <div className={`ps-form-group${errors.phone ? " ps-field-error-state" : ""}`}>
           <label htmlFor="ps-phone">Phone Number</label>
           <div className="ps-input-wrap">
             <input
@@ -117,6 +130,7 @@ export function StepBasicInfo({
             />
             <PhoneIcon />
           </div>
+          {errors.phone && <p className="ps-field-error">{errors.phone}</p>}
         </div>
 
         <div className="ps-form-group ps-span-full">

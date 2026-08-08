@@ -32,6 +32,7 @@ export default function ProfileSetupPage() {
     goToStep,
     toast,
     isFinishing,
+    errors,
     customSkill,
     setCustomSkill,
     showToast,
@@ -142,6 +143,7 @@ export default function ProfileSetupPage() {
                 onSkip={skipAndFinish}
                 onNext={() => goToStep(2)}
                 onShowToast={showToast}
+                errors={errors}
               />
             )}
 

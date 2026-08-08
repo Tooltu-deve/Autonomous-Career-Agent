@@ -5,6 +5,7 @@ import Link from "next/link";
 import { getPreferences, getProfile, putProfile } from "@/lib/api";
 import { getInitials } from "@/lib/format";
 import { KEYS } from "@/lib/storage";
+import { validateProfile } from "@/lib/validation";
 import type {
   CertificationIn,
   PreferencesResponse,
@@ -922,33 +923,47 @@ function BasicInfoModal({
   const [preferredTemplate, setPreferredTemplate] = useState<TemplateName>(
     initialProfile.preferredTemplate,
   );
+  const [fieldErrors, setFieldErrors] = useState<{
+    headline?: string;
+    phone?: string;
+  }>({});
+
+  const handleSave = () => {
+    const errs = validateProfile({ headline, phone });
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs);
+      return;
+    }
+    setFieldErrors({});
+    onSave({ headline, location, phone, github, linkedin, preferredTemplate });
+  };
 
   return (
     <ModalWrapper
       title="👤 Personal Information & CV Template"
       onClose={onClose}
-      onSave={() =>
-        onSave({
-          headline,
-          location,
-          phone,
-          github,
-          linkedin,
-          preferredTemplate,
-        })
-      }
+      onSave={handleSave}
       saving={saving}
     >
-      <div className={s.formGroup}>
-        <label className={s.formLabel}>Professional Headline</label>
+      <div className={`${s.formGroup}${fieldErrors.headline ? ` ${s.formGroupError}` : ""}`}>
+        <label className={s.formLabel}>
+          Professional Headline{" "}
+          <span aria-hidden="true" style={{ color: "#e8384f" }}>*</span>
+        </label>
         <input
           className={s.formInput}
           type="text"
           value={headline}
           placeholder="e.g., Computer Science Student · MIT"
-          onChange={(e) => setHeadline(e.target.value)}
+          onChange={(e) => {
+            setHeadline(e.target.value);
+            if (fieldErrors.headline) setFieldErrors((p) => ({ ...p, headline: undefined }));
+          }}
           autoFocus
         />
+        {fieldErrors.headline && (
+          <p className={s.formFieldError}>{fieldErrors.headline}</p>
+        )}
       </div>
       <div className={s.formGrid2}>
         <div className={s.formGroup}>
@@ -961,15 +976,21 @@ function BasicInfoModal({
             onChange={(e) => setLocation(e.target.value)}
           />
         </div>
-        <div className={s.formGroup}>
+        <div className={`${s.formGroup}${fieldErrors.phone ? ` ${s.formGroupError}` : ""}`}>
           <label className={s.formLabel}>Phone Number</label>
           <input
             className={s.formInput}
             type="text"
             value={phone}
             placeholder="e.g., +84 901 234 567"
-            onChange={(e) => setPhone(e.target.value)}
+            onChange={(e) => {
+              setPhone(e.target.value);
+              if (fieldErrors.phone) setFieldErrors((p) => ({ ...p, phone: undefined }));
+            }}
           />
+          {fieldErrors.phone && (
+            <p className={s.formFieldError}>{fieldErrors.phone}</p>
+          )}
         </div>
       </div>
       <div className={s.formGrid2}>

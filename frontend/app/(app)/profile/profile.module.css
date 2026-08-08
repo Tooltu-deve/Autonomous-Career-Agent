@@ -727,6 +727,26 @@
   background: #ffffff;
 }
 
+/* ── Field-level validation errors ── */
+.formGroupError .formInput,
+.formGroupError .formTextarea {
+  border-color: #e8384f;
+}
+
+.formGroupError .formInput:focus,
+.formGroupError .formTextarea:focus {
+  border-color: #e8384f;
+  box-shadow: 0 0 0 3px rgba(232, 56, 79, 0.15);
+}
+
+.formFieldError {
+  font-size: 12px;
+  color: #e8384f;
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.4;
+}
+
 .formTextarea {
   width: 100%;
   padding: 12px 14px;

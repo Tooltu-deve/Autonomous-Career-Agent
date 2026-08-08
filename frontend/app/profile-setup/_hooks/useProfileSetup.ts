@@ -15,6 +15,24 @@ import {
 } from "@/lib/api";
 import type { ProfileUpdate } from "@/types/api";
 import type { ProfileData } from "../_types/types";
+import { validateProfile } from "@/lib/validation";
+
+/* ── Wizard-specific validation (extends shared validateProfile with 'name') ── */
+export interface FormErrors {
+  name?: string;
+  headline?: string;
+  phone?: string;
+}
+
+function validate(data: ProfileData): FormErrors {
+  const errs: FormErrors = {};
+  if (!data.name.trim()) errs.name = "Full Name is required.";
+  // Reuse shared rules for headline + phone
+  const shared = validateProfile({ headline: data.headline, phone: data.phone });
+  if (shared.headline) errs.headline = shared.headline;
+  if (shared.phone) errs.phone = shared.phone;
+  return errs;
+}
 
 /* ── Utility: simple unique ID generator ── */
 let nextId = 100;
@@ -82,6 +100,7 @@ export function useProfileSetup() {
   const [toast, setToast] = useState<string | null>(null);
   const [isFinishing, setIsFinishing] = useState(false);
   const [customSkill, setCustomSkill] = useState("");
+  const [errors, setErrors] = useState<FormErrors>({});
 
   const [data, setData] = useState<ProfileData>({
     name: "",
@@ -282,6 +301,15 @@ export function useProfileSetup() {
 
   /* ── API save ── */
   const saveProfile = async (afterSaveMsg: string) => {
+    // Validate before touching the server
+    const errs = validate(data);
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      goToStep(1); // errors are on step 1 fields
+      return;
+    }
+    setErrors({});
+
     setIsFinishing(true);
     try {
       await putProfile(toProfileUpdate(data));
@@ -319,6 +347,7 @@ export function useProfileSetup() {
     goToStep,
     toast,
     isFinishing,
+    errors,
     customSkill,
     setCustomSkill,
     showToast,
