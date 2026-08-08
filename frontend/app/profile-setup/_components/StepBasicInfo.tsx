@@ -60,11 +60,8 @@ export function StepBasicInfo({
       </div>
 
       <div className="ps-grid2">
-        <div className={`ps-form-group ps-span-full${errors.name ? " ps-field-error-state" : ""}`}>
-          <label htmlFor="ps-name">
-            Full Name{" "}
-            <span aria-hidden="true" style={{ color: "#e8384f" }}>*</span>
-          </label>
+        <div className="ps-form-group ps-span-full">
+          <label htmlFor="ps-name">Full Name</label>
           <div className="ps-input-wrap">
             <input
               id="ps-name"
@@ -75,14 +72,10 @@ export function StepBasicInfo({
             />
             <UserIcon />
           </div>
-          {errors.name && <p className="ps-field-error">{errors.name}</p>}
         </div>
 
-        <div className={`ps-form-group ps-span-full${errors.headline ? " ps-field-error-state" : ""}`}>
-          <label htmlFor="ps-headline">
-            Professional Headline{" "}
-            <span aria-hidden="true" style={{ color: "#e8384f" }}>*</span>
-          </label>
+        <div className="ps-form-group ps-span-full">
+          <label htmlFor="ps-headline">Professional Headline</label>
           <div className="ps-input-wrap">
             <input
               id="ps-headline"
@@ -95,9 +88,6 @@ export function StepBasicInfo({
             />
             <FileIcon />
           </div>
-          {errors.headline && (
-            <p className="ps-field-error">{errors.headline}</p>
-          )}
         </div>
 
         <div className="ps-form-group">
@@ -116,7 +106,9 @@ export function StepBasicInfo({
           </div>
         </div>
 
-        <div className={`ps-form-group${errors.phone ? " ps-field-error-state" : ""}`}>
+        <div
+          className={`ps-form-group${errors.phone ? " ps-field-error-state" : ""}`}
+        >
           <label htmlFor="ps-phone">Phone Number</label>
           <div className="ps-input-wrap">
             <input
@@ -149,7 +141,9 @@ export function StepBasicInfo({
           </div>
         </div>
 
-        <div className="ps-form-group">
+        <div
+          className={`ps-form-group${errors.github ? " ps-field-error-state" : ""}`}
+        >
           <label htmlFor="ps-github">GitHub / Portfolio</label>
           <div className="ps-input-wrap">
             <input
@@ -163,9 +157,12 @@ export function StepBasicInfo({
             />
             <LinkIcon />
           </div>
+          {errors.github && <p className="ps-field-error">{errors.github}</p>}
         </div>
 
-        <div className="ps-form-group">
+        <div
+          className={`ps-form-group${errors.linkedin ? " ps-field-error-state" : ""}`}
+        >
           <label htmlFor="ps-linkedin">LinkedIn</label>
           <div className="ps-input-wrap">
             <input
@@ -179,6 +176,9 @@ export function StepBasicInfo({
             />
             <LinkIcon />
           </div>
+          {errors.linkedin && (
+            <p className="ps-field-error">{errors.linkedin}</p>
+          )}
         </div>
 
         <div className="ps-form-group ps-span-full">

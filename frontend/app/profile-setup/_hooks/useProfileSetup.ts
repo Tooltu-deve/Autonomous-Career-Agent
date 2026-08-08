@@ -15,24 +15,12 @@ import {
 } from "@/lib/api";
 import type { ProfileUpdate } from "@/types/api";
 import type { ProfileData } from "../_types/types";
-import { validateProfile } from "@/lib/validation";
+import { validateProfile, type ProfileFormErrors } from "@/lib/validation";
 
-/* ── Wizard-specific validation (extends shared validateProfile with 'name') ── */
-export interface FormErrors {
-  name?: string;
-  headline?: string;
-  phone?: string;
-}
-
-function validate(data: ProfileData): FormErrors {
-  const errs: FormErrors = {};
-  if (!data.name.trim()) errs.name = "Full Name is required.";
-  // Reuse shared rules for headline + phone
-  const shared = validateProfile({ headline: data.headline, phone: data.phone });
-  if (shared.headline) errs.headline = shared.headline;
-  if (shared.phone) errs.phone = shared.phone;
-  return errs;
-}
+/* Wizard dùng đúng bộ luật chung — không thêm luật riêng.
+ * `name` cố tình KHÔNG validate: nó luôn được prefill từ session và
+ * `toProfileUpdate()` không gửi nó đi đâu cả (bảng profiles không có cột name). */
+export type FormErrors = ProfileFormErrors;
 
 /* ── Utility: simple unique ID generator ── */
 let nextId = 100;
@@ -299,14 +287,21 @@ export function useProfileSetup() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  /* ── API save ── */
-  const saveProfile = async (afterSaveMsg: string) => {
-    // Validate before touching the server
-    const errs = validate(data);
-    if (Object.keys(errs).length > 0) {
-      setErrors(errs);
-      goToStep(1); // errors are on step 1 fields
-      return;
+  /* ── API save ──
+   * `shouldValidate` false cho luồng Skip: user bấm Skip nghĩa là không muốn
+   * điền, nên chặn họ lại vì một field sai định dạng là phản tác dụng. */
+  const saveProfile = async (afterSaveMsg: string, shouldValidate = true) => {
+    if (shouldValidate) {
+      const errs = validateProfile({
+        phone: data.phone,
+        github: data.github,
+        linkedin: data.linkedin,
+      });
+      if (Object.keys(errs).length > 0) {
+        setErrors(errs);
+        goToStep(1); // phone nằm ở step 1
+        return;
+      }
     }
     setErrors({});
 
@@ -336,7 +331,7 @@ export function useProfileSetup() {
     }
   };
 
-  const skipAndFinish = () => void saveProfile("Proceeding...");
+  const skipAndFinish = () => void saveProfile("Proceeding...", false);
 
   const completeSetup = () => void saveProfile("Profile saved!");
 

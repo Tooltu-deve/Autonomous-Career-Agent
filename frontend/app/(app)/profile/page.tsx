@@ -5,7 +5,7 @@ import Link from "next/link";
 import { getPreferences, getProfile, putProfile } from "@/lib/api";
 import { getInitials } from "@/lib/format";
 import { KEYS } from "@/lib/storage";
-import { validateProfile } from "@/lib/validation";
+import { validateProfile, type ProfileFormErrors } from "@/lib/validation";
 import type {
   CertificationIn,
   PreferencesResponse,
@@ -923,13 +923,10 @@ function BasicInfoModal({
   const [preferredTemplate, setPreferredTemplate] = useState<TemplateName>(
     initialProfile.preferredTemplate,
   );
-  const [fieldErrors, setFieldErrors] = useState<{
-    headline?: string;
-    phone?: string;
-  }>({});
+  const [fieldErrors, setFieldErrors] = useState<ProfileFormErrors>({});
 
   const handleSave = () => {
-    const errs = validateProfile({ headline, phone });
+    const errs = validateProfile({ phone, github, linkedin });
     if (Object.keys(errs).length > 0) {
       setFieldErrors(errs);
       return;
@@ -945,25 +942,16 @@ function BasicInfoModal({
       onSave={handleSave}
       saving={saving}
     >
-      <div className={`${s.formGroup}${fieldErrors.headline ? ` ${s.formGroupError}` : ""}`}>
-        <label className={s.formLabel}>
-          Professional Headline{" "}
-          <span aria-hidden="true" style={{ color: "#e8384f" }}>*</span>
-        </label>
+      <div className={s.formGroup}>
+        <label className={s.formLabel}>Professional Headline</label>
         <input
           className={s.formInput}
           type="text"
           value={headline}
           placeholder="e.g., Computer Science Student · MIT"
-          onChange={(e) => {
-            setHeadline(e.target.value);
-            if (fieldErrors.headline) setFieldErrors((p) => ({ ...p, headline: undefined }));
-          }}
+          onChange={(e) => setHeadline(e.target.value)}
           autoFocus
         />
-        {fieldErrors.headline && (
-          <p className={s.formFieldError}>{fieldErrors.headline}</p>
-        )}
       </div>
       <div className={s.formGrid2}>
         <div className={s.formGroup}>
@@ -976,7 +964,9 @@ function BasicInfoModal({
             onChange={(e) => setLocation(e.target.value)}
           />
         </div>
-        <div className={`${s.formGroup}${fieldErrors.phone ? ` ${s.formGroupError}` : ""}`}>
+        <div
+          className={`${s.formGroup}${fieldErrors.phone ? ` ${s.formGroupError}` : ""}`}
+        >
           <label className={s.formLabel}>Phone Number</label>
           <input
             className={s.formInput}
@@ -985,7 +975,8 @@ function BasicInfoModal({
             placeholder="e.g., +84 901 234 567"
             onChange={(e) => {
               setPhone(e.target.value);
-              if (fieldErrors.phone) setFieldErrors((p) => ({ ...p, phone: undefined }));
+              if (fieldErrors.phone)
+                setFieldErrors((p) => ({ ...p, phone: undefined }));
             }}
           />
           {fieldErrors.phone && (
@@ -994,25 +985,43 @@ function BasicInfoModal({
         </div>
       </div>
       <div className={s.formGrid2}>
-        <div className={s.formGroup}>
+        <div
+          className={`${s.formGroup}${fieldErrors.github ? ` ${s.formGroupError}` : ""}`}
+        >
           <label className={s.formLabel}>GitHub / Portfolio</label>
           <input
             className={s.formInput}
             type="text"
             value={github}
             placeholder="e.g., github.com/username"
-            onChange={(e) => setGithub(e.target.value)}
+            onChange={(e) => {
+              setGithub(e.target.value);
+              if (fieldErrors.github)
+                setFieldErrors((p) => ({ ...p, github: undefined }));
+            }}
           />
+          {fieldErrors.github && (
+            <p className={s.formFieldError}>{fieldErrors.github}</p>
+          )}
         </div>
-        <div className={s.formGroup}>
+        <div
+          className={`${s.formGroup}${fieldErrors.linkedin ? ` ${s.formGroupError}` : ""}`}
+        >
           <label className={s.formLabel}>LinkedIn</label>
           <input
             className={s.formInput}
             type="text"
             value={linkedin}
             placeholder="e.g., linkedin.com/in/username"
-            onChange={(e) => setLinkedin(e.target.value)}
+            onChange={(e) => {
+              setLinkedin(e.target.value);
+              if (fieldErrors.linkedin)
+                setFieldErrors((p) => ({ ...p, linkedin: undefined }));
+            }}
           />
+          {fieldErrors.linkedin && (
+            <p className={s.formFieldError}>{fieldErrors.linkedin}</p>
+          )}
         </div>
       </div>
 
