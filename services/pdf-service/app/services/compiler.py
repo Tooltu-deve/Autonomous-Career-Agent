@@ -44,18 +44,18 @@ def compile_pdf(tex_source: str) -> bytes:
             )
         except subprocess.TimeoutExpired as exc:
             logger.warning("Tectonic timeout sau %ss", COMPILE_TIMEOUT_SEC)
-            raise CompileError("Compile LaTeX quá thời gian") from exc
+            raise CompileError("LaTeX compilation timed out") from exc
         except FileNotFoundError as exc:  # tectonic chưa cài
-            raise CompileError("Tectonic không khả dụng") from exc
+            raise CompileError("Tectonic is not available") from exc
 
         if result.returncode != 0:
             # Log rút gọn stderr (không đổ nguyên khối log lỗi LaTeX dài)
             tail = result.stderr.decode("utf-8", "replace")[-500:]
             logger.warning("Tectonic lỗi (rc=%s): %s", result.returncode, tail)
-            raise CompileError("Compile LaTeX thất bại")
+            raise CompileError("LaTeX compilation failed")
 
         pdf_file = tmp_dir / "cv.pdf"
         if not pdf_file.exists():
-            raise CompileError("Không sinh được file PDF")
+            raise CompileError("PDF file was not generated")
         return pdf_file.read_bytes()
     # TemporaryDirectory tự dọn thư mục tạm khi ra khỏi `with`.
