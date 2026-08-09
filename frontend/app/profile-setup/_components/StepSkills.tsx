@@ -7,7 +7,6 @@ interface Props {
   skills: string[];
   customSkill: string;
   setCustomSkill: (val: string) => void;
-  onAddSkill: (skill: string) => void;
   onRemoveSkill: (skill: string) => void;
   onCustomAdd: () => void;
   onBack: () => void;
@@ -18,7 +17,6 @@ export function StepSkills({
   skills,
   customSkill,
   setCustomSkill,
-  onAddSkill,
   onRemoveSkill,
   onCustomAdd,
   onBack,
@@ -38,7 +36,6 @@ export function StepSkills({
         skills={skills}
         customSkill={customSkill}
         setCustomSkill={setCustomSkill}
-        onAddSkill={onAddSkill}
         onRemoveSkill={onRemoveSkill}
         onCustomAdd={onCustomAdd}
       />

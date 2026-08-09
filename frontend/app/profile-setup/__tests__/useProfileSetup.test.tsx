@@ -285,6 +285,33 @@ describe("useProfileSetup — nạp dòng kinh nghiệm cũ (isCurrent)", () => 
   });
 });
 
+describe("useProfileSetup — không bịa dữ liệu cho user mới", () => {
+  it("wizard mở ra với danh sách kỹ năng RỖNG", async () => {
+    // Trước đây điền sẵn ["Python", "C++", "SQL", "FastAPI"]. Người tìm việc
+    // tài chính, luật... bấm Next là mang theo 4 kỹ năng chưa từng chọn.
+    const { result } = await mountWithValidPhone();
+    expect(result.current.data.skills).toEqual([]);
+  });
+
+  it("user không đụng vào kỹ năng -> gửi lên mảng rỗng", async () => {
+    const { result } = await mountWithValidPhone();
+
+    act(() => {
+      result.current.completeSetup();
+    });
+
+    await waitFor(() => expect(putProfile).toHaveBeenCalledTimes(1));
+    expect(putProfile.mock.calls[0][0].skills).toEqual([]);
+  });
+
+  it("profile trên server không có kỹ năng -> vẫn rỗng, không rơi về mặc định", async () => {
+    // Loader dùng `prof.skills?.length ? ... : d.skills`, nên mặc định cứng sẽ
+    // quay lại với cả user đã chủ động xoá hết kỹ năng.
+    const { result } = await mountWithProfile(makeProfile({ skills: [] }));
+    expect(result.current.data.skills).toEqual([]);
+  });
+});
+
 describe("useProfileSetup — toProfileUpdate: shape kinh nghiệm & học vấn", () => {
   it("dòng kinh nghiệm đầy đủ gửi đúng shape, không kèm field thừa", async () => {
     const { result } = await mountWithValidPhone();

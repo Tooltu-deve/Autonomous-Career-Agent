@@ -35,14 +35,3 @@ export interface ProfileData {
    * ghép thành chuỗi ISO (obtain_date) trong toProfileUpdate() trước khi gửi. */
   certifications: CertificationEntry[];
 }
-
-export const SUGGESTED_SKILLS = [
-  "React",
-  "Git",
-  "Docker",
-  "PostgreSQL",
-  "English",
-  "TypeScript",
-  "Node.js",
-  "AWS",
-];

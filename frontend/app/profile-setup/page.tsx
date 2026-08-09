@@ -36,7 +36,6 @@ export default function ProfileSetupPage() {
     customSkill,
     setCustomSkill,
     showToast,
-    addSkill,
     removeSkill,
     handleCustomSkillAdd,
     addEducation,
@@ -171,7 +170,6 @@ export default function ProfileSetupPage() {
                 skills={data.skills}
                 customSkill={customSkill}
                 setCustomSkill={setCustomSkill}
-                onAddSkill={addSkill}
                 onRemoveSkill={removeSkill}
                 onCustomAdd={handleCustomSkillAdd}
                 onBack={() => goToStep(2)}

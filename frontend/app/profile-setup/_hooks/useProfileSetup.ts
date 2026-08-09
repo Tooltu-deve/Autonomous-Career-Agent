@@ -150,7 +150,10 @@ export function useProfileSetup() {
         description: "",
       },
     ],
-    skills: ["Python", "C++", "SQL", "FastAPI"],
+    // Rỗng, không điền sẵn: hồ sơ chỉ được chứa kỹ năng người dùng tự khai.
+    // Điền sẵn kỹ năng IT thì người tìm việc tài chính, luật... bấm Next là
+    // mang theo dữ liệu họ chưa từng chọn, và nó đi thẳng lên CV.
+    skills: [],
     experiences: [
       {
         id: uid(),
@@ -478,7 +481,6 @@ export function useProfileSetup() {
     customSkill,
     setCustomSkill,
     showToast,
-    addSkill,
     removeSkill,
     handleCustomSkillAdd,
     addEducation,

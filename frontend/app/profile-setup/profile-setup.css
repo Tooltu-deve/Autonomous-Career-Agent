@@ -653,46 +653,6 @@
   margin-bottom: 24px;
 }
 
-.ps-suggested-label {
-  font-size: 11.5px;
-  font-weight: 700;
-  color: #9ca1a8;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  margin-bottom: 10px;
-}
-
-.ps-suggested-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.ps-chip-suggest {
-  background: #ffffff;
-  border: 1px dashed #c7c5c2;
-  color: #6d6e6f;
-  padding: 6px 14px;
-  border-radius: 9999px;
-  font-size: 12.5px;
-  font-weight: 500;
-  font-family: inherit;
-  transition: all 120ms;
-  cursor: pointer;
-}
-
-.ps-chip-suggest:hover:not(:disabled) {
-  border-color: #f06a6a;
-  color: #e5544f;
-  background: #fce8e6;
-}
-
-.ps-chip-suggest:disabled {
-  opacity: 0.4;
-  cursor: default;
-  border-style: solid;
-}
-
 /* Footer Actions */
 .ps-footer-actions {
   display: flex;

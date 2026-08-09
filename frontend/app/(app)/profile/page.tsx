@@ -1463,7 +1463,6 @@ function SkillsModal({
         skills={skills}
         customSkill={custom}
         setCustomSkill={setCustom}
-        onAddSkill={addSkill}
         onRemoveSkill={removeSkill}
         onCustomAdd={handleCustomAdd}
       />
