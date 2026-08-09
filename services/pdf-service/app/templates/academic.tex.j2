@@ -60,7 +60,7 @@
 \BLOCK{ if cv.certifications }
 \cvsection{Certifications}
 \BLOCK{ for cert in cv.certifications }
-\academicentry{\VAR{cert.title | tex}}{\VAR{cert.obtain_date | tex}}{}
+\academicentry{\VAR{cert.title | tex}}{\VAR{cert.obtain_date | monthyear | tex}}{}
 \BLOCK{ endfor }
 \BLOCK{ endif }
 

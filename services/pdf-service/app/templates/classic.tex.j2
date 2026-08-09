@@ -66,7 +66,7 @@
 \BLOCK{ if cv.certifications }
 \section{Certifications}
 \BLOCK{ for cert in cv.certifications }
-\textbf{\VAR{cert.title | tex}} \hfill \VAR{cert.obtain_date | tex}\par
+\textbf{\VAR{cert.title | tex}} \hfill \VAR{cert.obtain_date | monthyear | tex}\par
 \vspace{4pt}
 \BLOCK{ endfor }
 \BLOCK{ endif }

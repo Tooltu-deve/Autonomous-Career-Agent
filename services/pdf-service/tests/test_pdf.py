@@ -124,12 +124,19 @@ CV_WITH_CERTS = {
 
 
 def test_render_includes_certifications_all_templates():
-    """Cả 3 template phải render title + obtain_date của mỗi chứng chỉ."""
+    """Cả 3 template phải render title + obtain_date (định dạng "May 2024") của
+    mỗi chứng chỉ.
+
+    Cập nhật theo Task 5 (định dạng ngày cấp chứng chỉ): trước đây assert chuỗi
+    ISO thô `2024-05-20`, nay template in "May 2024" nên assertion phải theo
+    đúng output mới, không còn kiểm tra chuỗi ISO.
+    """
     for tpl in ("classic", "modern", "academic"):
         tex = renderer.render(tpl, CV_WITH_CERTS, HEADER)
         assert "AWS Certified Developer" in tex, tpl
-        assert "2024-05-20" in tex, tpl
+        assert "May 2024" in tex, tpl
         assert "Azure Fundamentals" in tex, tpl
+        assert "November 2023" in tex, tpl
 
 
 def test_render_omits_certifications_section_when_empty():
@@ -285,3 +292,36 @@ def test_github_link_still_labelled_github():
         tex = renderer.render(tpl, CV, {**HEADER, "github_url": "github.com/nva"})
         assert "GitHub" in tex, tpl
         assert "Portfolio" not in tex, tpl
+
+
+# ---- Định dạng ngày cấp chứng chỉ ----
+
+
+def test_month_year_formats_date_and_iso_string():
+    """Nhận cả `date` (đường ORM) lẫn chuỗi ISO (đường JSON API)."""
+    from datetime import date
+
+    assert renderer.month_year(date(2024, 5, 1)) == "May 2024"
+    assert renderer.month_year("2024-05-01") == "May 2024"
+    assert renderer.month_year("2019-12-01") == "December 2019"
+
+
+def test_month_year_returns_empty_for_unusable_input():
+    """Giá trị rỗng/rác -> chuỗi rỗng để template bỏ qua thay vì in rác."""
+    assert renderer.month_year("") == ""
+    assert renderer.month_year(None) == ""
+    assert renderer.month_year("khong-phai-ngay") == ""
+
+
+def test_certifications_render_as_month_year_not_iso():
+    """CV in "May 2024", không in ngày ISO — ngày 01 chỉ là giá trị kỹ thuật."""
+    cv = {
+        **CV,
+        "certifications": [
+            {"title": "AWS Certified Developer", "obtain_date": "2024-05-01"}
+        ],
+    }
+    for tpl in ("classic", "modern", "academic"):
+        tex = renderer.render(tpl, cv, HEADER)
+        assert "May 2024" in tex, tpl
+        assert "2024-05-01" not in tex, tpl

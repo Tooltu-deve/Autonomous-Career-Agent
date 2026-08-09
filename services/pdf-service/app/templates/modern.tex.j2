@@ -95,7 +95,7 @@
 \BLOCK{ if cv.certifications }
 \cvsection{CERTIFICATIONS}
 \BLOCK{ for cert in cv.certifications }
-\cventry{\VAR{cert.title | tex}}{\VAR{cert.obtain_date | tex}}{}{}
+\cventry{\VAR{cert.title | tex}}{\VAR{cert.obtain_date | monthyear | tex}}{}{}
 \BLOCK{ endfor }
 \BLOCK{ endif }
 
