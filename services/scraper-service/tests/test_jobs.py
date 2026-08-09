@@ -202,3 +202,39 @@ def test_list_jobs_scoped_to_user(monkeypatch):
     r = client.get("/jobs", headers=_AUTH_HEADER)
     assert r.status_code == 200
     assert captured["user_id"] == _FAKE_USER_ID
+
+
+# ---------------------------------------------------------------------------
+# DELETE /jobs/{job_id}
+# ---------------------------------------------------------------------------
+
+
+def test_unsave_job_returns_204(monkeypatch):
+    """DELETE /jobs/{id} thành công → 204, không có body."""
+    monkeypatch.setattr(
+        "app.api.jobs.scraper_service.unsave_job",
+        lambda **kwargs: None,
+    )
+    r = client.delete(f"/jobs/{uuid.uuid4()}", headers=_AUTH_HEADER)
+    assert r.status_code == 204
+    assert r.content == b""
+
+
+def test_unsave_job_404_when_not_on_radar(monkeypatch):
+    """DELETE /jobs/{id} khi job không có trên radar → 404 (LookupError)."""
+    monkeypatch.setattr(
+        "app.api.jobs.scraper_service.unsave_job",
+        lambda **kwargs: (_ for _ in ()).throw(LookupError("Không có trên radar")),
+    )
+    r = client.delete(f"/jobs/{uuid.uuid4()}", headers=_AUTH_HEADER)
+    assert r.status_code == 404
+
+
+def test_unsave_job_409_when_has_application(monkeypatch):
+    """DELETE /jobs/{id} khi job đã có application → 409 (PermissionError)."""
+    monkeypatch.setattr(
+        "app.api.jobs.scraper_service.unsave_job",
+        lambda **kwargs: (_ for _ in ()).throw(PermissionError("Job đã có CV")),
+    )
+    r = client.delete(f"/jobs/{uuid.uuid4()}", headers=_AUTH_HEADER)
+    assert r.status_code == 409

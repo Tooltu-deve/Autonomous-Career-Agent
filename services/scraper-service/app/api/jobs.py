@@ -6,6 +6,7 @@ Endpoints:
   POST /jobs/select  → 202  Tạo application, publish cv.requested
   GET  /jobs         → 200  Danh sách jobs phân trang
   GET  /jobs/{id}    → 200  Chi tiết một job
+  DELETE /jobs/{id} → 204  Gỡ job khỏi radar của user (không xoá khỏi kho chung)
 """
 
 from uuid import UUID
@@ -110,6 +111,25 @@ def get_job(
             status_code=status.HTTP_404_NOT_FOUND, detail="Job không tồn tại."
         )
     return JobOut.model_validate(job)
+
+
+@router.delete("/{job_id}", status_code=status.HTTP_204_NO_CONTENT)
+def unsave_job(
+    job_id: UUID,
+    db: Session = Depends(get_db),
+    current_user_id: str = Depends(get_current_user_id),
+) -> None:
+    """Gỡ job khỏi radar của user hiện tại. Không xoá job khỏi kho chung."""
+    try:
+        scraper_service.unsave_job(db=db, user_id=current_user_id, job_id=job_id)
+    except LookupError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail=str(exc)
+        ) from exc
+    except PermissionError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT, detail=str(exc)
+        ) from exc
 
 
 # ---------------------------------------------------------------------------
