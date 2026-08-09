@@ -40,6 +40,22 @@ def test_protected_with_valid_token_injects_uid(client):
     assert r.json()["uid"] == "user-123"
 
 
+def test_client_supplied_x_user_id_is_ignored(client):
+    # Regression: client tự gắn X-User-Id không được phép ghi đè uid lấy từ
+    # JWT hợp lệ — nếu không kẻ tấn công có thể giả mạo user khác chỉ bằng
+    # cách thêm 1 header.
+    token = create_access_token(subject="user-123")
+    r = client.get(
+        "/profile",
+        headers={
+            "Authorization": f"Bearer {token}",
+            "X-User-Id": "attacker-999",
+        },
+    )
+    assert r.status_code == 200
+    assert r.json()["uid"] == "user-123"
+
+
 def test_bad_token_401(client):
     r = client.get("/profile", headers={"Authorization": "Bearer garbage"})
     assert r.status_code == 401

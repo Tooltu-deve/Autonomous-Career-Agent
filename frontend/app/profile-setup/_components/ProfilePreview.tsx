@@ -82,22 +82,22 @@ export function ProfilePreview({ data, initials }: Props) {
         </div>
       )}
 
-      {data.projects.some((p) => p.name) && (
+      {data.experiences.some((e) => e.title) && (
         <div className="ps-pv-block">
-          <div className="ps-pv-block-title">PROJECTS</div>
-          {data.projects
-            .filter((p) => p.name)
-            .map((p) => (
+          <div className="ps-pv-block-title">WORK EXPERIENCE</div>
+          {data.experiences
+            .filter((e) => e.title)
+            .map((e) => (
               <div
-                key={p.id}
+                key={e.id}
                 className="ps-pv-block-text"
                 style={{ marginBottom: "8px" }}
               >
-                <strong>{p.name}</strong>
-                {p.description && (
+                <strong>{e.title}</strong>
+                {e.description && (
                   <>
                     <br />
-                    {p.description}
+                    {e.description}
                   </>
                 )}
               </div>

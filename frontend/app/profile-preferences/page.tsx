@@ -19,15 +19,6 @@ export interface PreferencesData {
   location: string;
 }
 
-const SUGGESTED_POSITIONS = [
-  "Backend Engineer",
-  "Frontend Developer",
-  "Fullstack Developer",
-  "Data Engineer",
-  "DevOps Engineer",
-  "AI/ML Engineer",
-];
-
 const WORK_FORMATS: {
   key: WorkFormat;
   label: string;
@@ -374,23 +365,6 @@ export default function ProfilePreferencesPage() {
                 >
                   Add
                 </button>
-              </div>
-
-              {/* Suggested */}
-              <div className="ps-suggested-label">
-                Suggestions for IT Students
-              </div>
-              <div className="ps-suggested-chips">
-                {SUGGESTED_POSITIONS.map((pos) => (
-                  <button
-                    key={pos}
-                    className="ps-chip-suggest"
-                    disabled={data.positions.includes(pos)}
-                    onClick={() => addPosition(pos)}
-                  >
-                    + {pos}
-                  </button>
-                ))}
               </div>
             </div>
 

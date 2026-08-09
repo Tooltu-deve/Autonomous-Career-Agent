@@ -63,3 +63,59 @@ export function validateProfile(fields: {
 
   return errs;
 }
+
+/* ── Chứng chỉ ── */
+
+export interface CertificationRow {
+  id: number | string;
+  title: string;
+  month: string;
+  year: string;
+}
+
+/**
+ * Kiểm tra từng dòng chứng chỉ, trả map `id` -> thông điệp lỗi.
+ *
+ * Dòng trống hoàn toàn KHÔNG phải lỗi: người dùng bấm "Add" rồi đổi ý là chuyện
+ * bình thường, và những dòng đó bị lọc bỏ trước khi gửi API.
+ */
+export function validateCertifications(
+  list: CertificationRow[],
+): Record<string, string> {
+  const errs: Record<string, string> = {};
+  for (const c of list) {
+    const title = c.title.trim();
+    const hasDate = Boolean(c.month && c.year);
+    if (!title && !c.month && !c.year) continue;
+    if (title && !hasDate) {
+      errs[String(c.id)] = "Select the month and year this was obtained.";
+    } else if (!title) {
+      errs[String(c.id)] = "Enter the certification name.";
+    }
+  }
+  return errs;
+}
+
+/* ── Kinh nghiệm làm việc ── */
+
+/**
+ * `organization` là `str` bắt buộc ở backend (ExperienceIn), nên dòng nào có
+ * chức danh thì phải có tổ chức, và ngược lại. Ngày tháng KHÔNG bắt buộc —
+ * backend khai Optional, siết chặt hơn sẽ làm hỏng luồng Skip.
+ */
+export function validateExperiences(
+  list: { id: number | string; title: string; organization: string }[],
+): Record<string, string> {
+  const errs: Record<string, string> = {};
+  for (const e of list) {
+    const title = e.title.trim();
+    const org = e.organization.trim();
+    if (!title && !org) continue;
+    if (title && !org) {
+      errs[String(e.id)] = "Enter the company or organization.";
+    } else if (!title) {
+      errs[String(e.id)] = "Enter the job title.";
+    }
+  }
+  return errs;
+}

@@ -40,3 +40,19 @@ export function formatDate(iso?: string | null): string {
     year: "numeric",
   });
 }
+
+/* ── Tháng/năm dùng chung ──
+ * Dùng cho chứng chỉ, kinh nghiệm làm việc và học vấn — UI chỉ cho chọn
+ * tháng + năm; ngày 01 là giá trị kỹ thuật để thoả kiểu DATE của Postgres
+ * và không bao giờ hiển thị cho người dùng. */
+
+export function splitMonthYear(iso: string): { month: string; year: string } {
+  const m = /^(\d{4})-(\d{2})-\d{2}$/.exec(iso.trim());
+  if (!m) return { month: "", year: "" };
+  return { year: m[1], month: m[2] };
+}
+
+export function joinMonthYear(month: string, year: string): string {
+  if (!month || !year) return "";
+  return `${year}-${month}-01`;
+}

@@ -36,15 +36,17 @@ export default function ProfileSetupPage() {
     customSkill,
     setCustomSkill,
     showToast,
-    addSkill,
     removeSkill,
     handleCustomSkillAdd,
     addEducation,
     removeEducation,
     updateEducation,
-    addProject,
-    removeProject,
-    updateProject,
+    addCertification,
+    removeCertification,
+    updateCertification,
+    addExperience,
+    removeExperience,
+    updateExperience,
     skipAndFinish,
     completeSetup,
   } = useProfileSetup();
@@ -54,7 +56,7 @@ export default function ProfileSetupPage() {
 
   const STEPS = [
     { num: 1, label: "Personal Info", icon: <UserIcon /> },
-    { num: 2, label: "Education", icon: <EduIcon /> },
+    { num: 2, label: "Education & Certs", icon: <EduIcon /> },
     { num: 3, label: "Skills", icon: <TrendIcon /> },
     { num: 4, label: "Other", icon: <LayersIcon /> },
   ];
@@ -153,6 +155,11 @@ export default function ProfileSetupPage() {
                 onAdd={addEducation}
                 onRemove={removeEducation}
                 onUpdate={updateEducation}
+                certifications={data.certifications}
+                certificationErrors={errors.certifications}
+                onAddCertification={addCertification}
+                onRemoveCertification={removeCertification}
+                onUpdateCertification={updateCertification}
                 onBack={() => goToStep(1)}
                 onNext={() => goToStep(3)}
               />
@@ -163,7 +170,6 @@ export default function ProfileSetupPage() {
                 skills={data.skills}
                 customSkill={customSkill}
                 setCustomSkill={setCustomSkill}
-                onAddSkill={addSkill}
                 onRemoveSkill={removeSkill}
                 onCustomAdd={handleCustomSkillAdd}
                 onBack={() => goToStep(2)}
@@ -177,10 +183,11 @@ export default function ProfileSetupPage() {
                 onSelectTemplate={(t) =>
                   setData((d) => ({ ...d, preferred_template: t }))
                 }
-                projects={data.projects}
-                onAddProject={addProject}
-                onRemoveProject={removeProject}
-                onUpdateProject={updateProject}
+                experiences={data.experiences}
+                experienceErrors={errors.experiences}
+                onAddExperience={addExperience}
+                onRemoveExperience={removeExperience}
+                onUpdateExperience={updateExperience}
                 onBack={() => goToStep(3)}
                 onFinish={completeSetup}
                 isFinishing={isFinishing}

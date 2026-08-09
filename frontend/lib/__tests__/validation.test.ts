@@ -3,6 +3,9 @@ import {
   isValidEmail,
   isValidPassword,
   validateProfile,
+  validateCertifications,
+  validateExperiences,
+  type CertificationRow,
 } from "@/lib/validation";
 
 describe("isValidEmail", () => {
@@ -105,5 +108,103 @@ describe("validateProfile — github / linkedin", () => {
     expect(
       ok({ linkedin: "linkedin.com/company/acme" }).linkedin,
     ).toBeDefined();
+  });
+});
+
+describe("validateCertifications", () => {
+  const row = (over: Partial<CertificationRow> & { id: string }) => ({
+    title: "",
+    month: "",
+    year: "",
+    ...over,
+  });
+
+  it("danh sách rỗng thì không có lỗi", () => {
+    expect(validateCertifications([])).toEqual({});
+  });
+
+  it("bỏ qua dòng trống hoàn toàn — bấm Add rồi đổi ý là bình thường", () => {
+    expect(validateCertifications([row({ id: "a" })])).toEqual({});
+  });
+
+  it("có tên nhưng thiếu tháng hoặc năm thì báo lỗi", () => {
+    expect(
+      validateCertifications([row({ id: "a", title: "AWS" })]).a,
+    ).toContain("month and year");
+    expect(
+      validateCertifications([row({ id: "a", title: "AWS", month: "05" })]).a,
+    ).toContain("month and year");
+    expect(
+      validateCertifications([row({ id: "a", title: "AWS", year: "2024" })]).a,
+    ).toContain("month and year");
+  });
+
+  it("có ngày nhưng thiếu tên thì báo lỗi", () => {
+    const errs = validateCertifications([
+      row({ id: "a", month: "05", year: "2024" }),
+    ]);
+    expect(errs.a).toContain("name");
+  });
+
+  it("dòng hợp lệ thì không có lỗi", () => {
+    expect(
+      validateCertifications([
+        row({ id: "a", title: "AWS", month: "05", year: "2024" }),
+      ]),
+    ).toEqual({});
+  });
+
+  it("nhiều dòng lỗi trả đúng map theo id", () => {
+    const errs = validateCertifications([
+      row({ id: "a", title: "AWS" }),
+      row({ id: "b", title: "Azure", month: "01", year: "2023" }),
+      row({ id: "c", month: "03", year: "2022" }),
+    ]);
+    expect(Object.keys(errs).sort()).toEqual(["a", "c"]);
+  });
+});
+
+describe("validateExperiences", () => {
+  const row = (over: {
+    id: string;
+    title?: string;
+    organization?: string;
+  }) => ({
+    title: "",
+    organization: "",
+    ...over,
+  });
+
+  it("danh sách rỗng thì không có lỗi", () => {
+    expect(validateExperiences([])).toEqual({});
+  });
+
+  it("bỏ qua dòng trống hoàn toàn", () => {
+    expect(validateExperiences([row({ id: "a" })])).toEqual({});
+  });
+
+  it("có chức danh nhưng thiếu tổ chức thì báo lỗi", () => {
+    // organization là `str` bắt buộc ở backend -> thiếu sẽ 422.
+    expect(validateExperiences([row({ id: "a", title: "Dev" })]).a).toContain(
+      "company or organization",
+    );
+  });
+
+  it("có tổ chức nhưng thiếu chức danh thì báo lỗi", () => {
+    expect(
+      validateExperiences([row({ id: "a", organization: "ACME" })]).a,
+    ).toContain("job title");
+  });
+
+  it("dòng đủ hai field thì không có lỗi", () => {
+    expect(
+      validateExperiences([
+        row({ id: "a", title: "Dev", organization: "ACME" }),
+      ]),
+    ).toEqual({});
+  });
+
+  it("chuỗi toàn khoảng trắng tính là rỗng", () => {
+    expect(validateExperiences([row({ id: "a", title: "   " })])).toEqual({});
   });
 });

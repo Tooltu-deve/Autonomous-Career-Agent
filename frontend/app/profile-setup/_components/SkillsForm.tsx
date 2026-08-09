@@ -1,13 +1,11 @@
 "use client";
 
 import { XSmallIcon } from "./Icons";
-import { SUGGESTED_SKILLS } from "../_types/types";
 
 interface Props {
   skills: string[];
   customSkill: string;
   setCustomSkill: (val: string) => void;
-  onAddSkill: (skill: string) => void;
   onRemoveSkill: (skill: string) => void;
   onCustomAdd: () => void;
 }
@@ -16,7 +14,6 @@ export function SkillsForm({
   skills,
   customSkill,
   setCustomSkill,
-  onAddSkill,
   onRemoveSkill,
   onCustomAdd,
 }: Props) {
@@ -60,22 +57,6 @@ export function SkillsForm({
         <button className="ps-btn-upload" type="button" onClick={onCustomAdd}>
           Add
         </button>
-      </div>
-
-      {/* Suggested skills */}
-      <div className="ps-suggested-label">POPULAR SKILL SUGGESTIONS</div>
-      <div className="ps-suggested-chips">
-        {SUGGESTED_SKILLS.map((s) => (
-          <button
-            key={s}
-            type="button"
-            className="ps-chip-suggest"
-            disabled={skills.includes(s)}
-            onClick={() => onAddSkill(s)}
-          >
-            + {s}
-          </button>
-        ))}
       </div>
     </div>
   );

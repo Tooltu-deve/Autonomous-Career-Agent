@@ -44,7 +44,7 @@
 \BLOCK{ if cv.experience }
 \section{Work Experience}
 \BLOCK{ for e in cv.experience }
-\textbf{\VAR{e.organization | tex}} \hfill \BLOCK{ if e.start_date }\VAR{e.start_date | tex} -- \VAR{(e.end_date or "Present") | tex}\BLOCK{ endif }\par
+\textbf{\VAR{e.organization | tex}} \hfill \BLOCK{ if e.start_date | monthyear }\VAR{e.start_date | monthyear | tex} -- \VAR{((e.end_date | monthyear) or "Present") | tex}\BLOCK{ endif }\par
 \textbf{\VAR{e.title | tex}}\par
 \BLOCK{ if e.description }\VAR{e.description | tex}\par\BLOCK{ endif }
 \vspace{8pt}
@@ -55,7 +55,7 @@
 \BLOCK{ if cv.education }
 \section{Education}
 \BLOCK{ for ed in cv.education }
-\textbf{\VAR{ed.school | tex}} \hfill \BLOCK{ if ed.start_date }\VAR{ed.start_date | tex} -- \VAR{(ed.end_date or "Present") | tex}\BLOCK{ endif }\par
+\textbf{\VAR{ed.school | tex}} \hfill \BLOCK{ if ed.start_date | monthyear }\VAR{ed.start_date | monthyear | tex} -- \VAR{((ed.end_date | monthyear) or "Present") | tex}\BLOCK{ endif }\par
 \BLOCK{ if ed.degree }\VAR{ed.degree | tex}\BLOCK{ if ed.field_of_study } --- \VAR{ed.field_of_study | tex}\BLOCK{ endif }\par\BLOCK{ endif }%
 \BLOCK{ if ed.description }\VAR{ed.description | tex}\par\BLOCK{ endif }
 \vspace{6pt}
@@ -66,7 +66,7 @@
 \BLOCK{ if cv.certifications }
 \section{Certifications}
 \BLOCK{ for cert in cv.certifications }
-\textbf{\VAR{cert.title | tex}} \hfill \VAR{cert.obtain_date | tex}\par
+\textbf{\VAR{cert.title | tex}} \hfill \VAR{cert.obtain_date | monthyear | tex}\par
 \vspace{4pt}
 \BLOCK{ endfor }
 \BLOCK{ endif }

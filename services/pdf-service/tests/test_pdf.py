@@ -124,12 +124,19 @@ CV_WITH_CERTS = {
 
 
 def test_render_includes_certifications_all_templates():
-    """Cả 3 template phải render title + obtain_date của mỗi chứng chỉ."""
+    """Cả 3 template phải render title + obtain_date (định dạng "May 2024") của
+    mỗi chứng chỉ.
+
+    Cập nhật theo Task 5 (định dạng ngày cấp chứng chỉ): trước đây assert chuỗi
+    ISO thô `2024-05-20`, nay template in "May 2024" nên assertion phải theo
+    đúng output mới, không còn kiểm tra chuỗi ISO.
+    """
     for tpl in ("classic", "modern", "academic"):
         tex = renderer.render(tpl, CV_WITH_CERTS, HEADER)
         assert "AWS Certified Developer" in tex, tpl
-        assert "2024-05-20" in tex, tpl
+        assert "May 2024" in tex, tpl
         assert "Azure Fundamentals" in tex, tpl
+        assert "November 2023" in tex, tpl
 
 
 def test_render_omits_certifications_section_when_empty():
@@ -285,3 +292,158 @@ def test_github_link_still_labelled_github():
         tex = renderer.render(tpl, CV, {**HEADER, "github_url": "github.com/nva"})
         assert "GitHub" in tex, tpl
         assert "Portfolio" not in tex, tpl
+
+
+# ---- Định dạng ngày cấp chứng chỉ ----
+
+
+def test_month_year_formats_date_and_iso_string():
+    """Nhận cả `date` (đường ORM) lẫn chuỗi ISO (đường JSON API)."""
+    from datetime import date
+
+    assert renderer.month_year(date(2024, 5, 1)) == "May 2024"
+    assert renderer.month_year("2024-05-01") == "May 2024"
+    assert renderer.month_year("2019-12-01") == "December 2019"
+
+
+def test_month_year_returns_empty_for_unusable_input():
+    """Giá trị rỗng/rác -> chuỗi rỗng để template bỏ qua thay vì in rác."""
+    assert renderer.month_year("") == ""
+    assert renderer.month_year(None) == ""
+    assert renderer.month_year("khong-phai-ngay") == ""
+
+
+def test_certifications_render_as_month_year_not_iso():
+    """CV in "May 2024", không in ngày ISO — ngày 01 chỉ là giá trị kỹ thuật."""
+    cv = {
+        **CV,
+        "certifications": [
+            {"title": "AWS Certified Developer", "obtain_date": "2024-05-01"}
+        ],
+    }
+    for tpl in ("classic", "modern", "academic"):
+        tex = renderer.render(tpl, cv, HEADER)
+        assert "May 2024" in tex, tpl
+        assert "2024-05-01" not in tex, tpl
+
+
+# ---- CV in đủ dữ liệu experience/education (trước đây UI không nhập được) ----
+
+CV_FULL = {
+    "summary": "Backend engineer.",
+    "experience": [
+        {
+            "title": "Backend Developer",
+            "organization": "ACME Corp",
+            "start_date": "2022-01-01",
+            "end_date": None,
+            "description": "Built APIs",
+        },
+        {
+            "title": "Intern",
+            "organization": "VNG",
+            "start_date": "2020-06-01",
+            "end_date": "2021-12-01",
+            "description": None,
+        },
+    ],
+    "education": [
+        {
+            "school": "HCMUS",
+            "degree": "BSc",
+            "field_of_study": "Computer Science",
+            "start_date": "2019-09-01",
+            "end_date": "2023-06-01",
+            "description": None,
+        }
+    ],
+    "certifications": [],
+    "skills": ["python"],
+}
+
+
+def test_cv_renders_real_organization_not_placeholder():
+    """Tên tổ chức phải là giá trị thật, không phải 'Personal Project'."""
+    for tpl in ("classic", "modern", "academic"):
+        tex = renderer.render(tpl, CV_FULL, HEADER)
+        assert "ACME Corp" in tex, tpl
+        assert "VNG" in tex, tpl
+        assert "Personal Project" not in tex, tpl
+
+
+def test_cv_renders_experience_date_range():
+    """start_date có giá trị -> khối `if` chạy, và in dạng người đọc được."""
+    for tpl in ("classic", "modern", "academic"):
+        tex = renderer.render(tpl, CV_FULL, HEADER)
+        assert "January 2022" in tex, tpl
+        assert "June 2020" in tex, tpl
+        assert "December 2021" in tex, tpl
+
+
+def test_cv_never_prints_iso_dates():
+    """Ngày ISO là định dạng lưu trữ, không bao giờ được lọt lên CV."""
+    for tpl in ("classic", "modern", "academic"):
+        tex = renderer.render(tpl, CV_FULL, HEADER)
+        for iso in ("2022-01-01", "2020-06-01", "2021-12-01", "2019-09-01"):
+            assert iso not in tex, f"{tpl}: {iso}"
+
+
+def test_cv_renders_present_for_current_job():
+    """end_date null -> CV in 'Present', không phải chuỗi rỗng.
+
+    Hồi quy: filter monthyear trả "" cho giá trị không parse được, nên phải
+    lấy monthyear TRƯỚC rồi mới `or "Present"` — làm ngược lại sẽ nuốt mất chữ.
+    """
+    for tpl in ("classic", "modern", "academic"):
+        tex = renderer.render(tpl, CV_FULL, HEADER)
+        assert "January 2022 -- Present" in tex, tpl
+
+
+def test_cv_renders_education_dates_and_field_of_study():
+    for tpl in ("classic", "modern", "academic"):
+        tex = renderer.render(tpl, CV_FULL, HEADER)
+        assert "Computer Science" in tex, tpl
+        assert "September 2019 -- June 2023" in tex, tpl
+
+
+def test_cv_omits_date_range_when_start_date_missing():
+    """Ngày không bắt buộc: thiếu start_date thì bỏ khoảng thời gian, không in rác."""
+    cv = {
+        **CV_FULL,
+        "experience": [
+            {
+                "title": "Volunteer",
+                "organization": "Local NGO",
+                "start_date": None,
+                "end_date": None,
+                "description": None,
+            }
+        ],
+    }
+    tex = renderer.render("classic", cv, HEADER)
+    assert "Local NGO" in tex
+    assert "Present" not in tex
+
+
+def test_cv_omits_date_range_when_start_date_unparseable():
+    """Dữ liệu rác không được biến thành gạch ngang trơ trọi hay 'Present'.
+
+    Khối `if` xét giá trị SAU khi định dạng, nên start_date không parse được
+    thì cả khoảng thời gian biến mất thay vì in "-- Present".
+    """
+    cv = {
+        **CV_FULL,
+        "experience": [
+            {
+                "title": "Volunteer",
+                "organization": "Local NGO",
+                "start_date": "sometime in 2019",
+                "end_date": None,
+                "description": None,
+            }
+        ],
+    }
+    tex = renderer.render("classic", cv, HEADER)
+    assert "Local NGO" in tex
+    assert "sometime in 2019" not in tex
+    assert "Present" not in tex

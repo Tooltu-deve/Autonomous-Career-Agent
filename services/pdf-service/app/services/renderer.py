@@ -5,6 +5,8 @@ user nhập, nếu không user có thể chèn lệnh LaTeX (\input, \write18...
 cú pháp. Escape được cài như một Jinja2 filter `tex`.
 """
 
+from datetime import date
+
 from jinja2 import Environment, FileSystemLoader
 
 from app.core.settings import TEMPLATE_DIR
@@ -97,6 +99,48 @@ def link_label(value: object) -> str:
     return "GitHub" if _host_of(text) == "github.com" else "Portfolio"
 
 
+_MONTH_NAMES = (
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+)
+
+
+def month_year(value: object) -> str:
+    """Định dạng ngày cho CV: date hoặc chuỗi ISO -> "May 2024".
+
+    Dùng cho cả ngày cấp chứng chỉ lẫn khoảng thời gian của kinh nghiệm và
+    học vấn.
+
+    Ngày trong tháng cố tình bị bỏ: UI chỉ cho chọn tháng + năm, ngày 01 chỉ là
+    giá trị kỹ thuật để thoả kiểu DATE của Postgres.
+
+    Giá trị rỗng hoặc không parse được trả chuỗi rỗng, để template bỏ qua thay
+    vì in rác lên CV.
+    """
+    if value is None:
+        return ""
+    if isinstance(value, date):
+        return f"{_MONTH_NAMES[value.month - 1]} {value.year}"
+    text = str(value).strip()
+    if not text:
+        return ""
+    try:
+        parsed = date.fromisoformat(text)
+    except ValueError:
+        return ""
+    return f"{_MONTH_NAMES[parsed.month - 1]} {parsed.year}"
+
+
 # Delimiter Jinja2 đổi khác mặc định để không đụng cú pháp LaTeX ({}, %).
 _env = Environment(
     loader=FileSystemLoader(str(TEMPLATE_DIR)),
@@ -113,6 +157,7 @@ _env = Environment(
 _env.filters["tex"] = escape_tex
 _env.filters["texurl"] = escape_tex_url
 _env.filters["linklabel"] = link_label
+_env.filters["monthyear"] = month_year
 
 
 def render(template: str, cv_data: dict, header: dict | None = None) -> str:
