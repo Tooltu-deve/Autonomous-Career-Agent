@@ -706,6 +706,26 @@
   background: var(--cm-surface-2);
   border-color: #c4c2c0;
 }
+.cm-actions button.cm-delete {
+  background: #fff;
+  border: 1px solid var(--cm-border);
+  color: var(--cm-muted);
+}
+.cm-actions button.cm-delete:hover:not(:disabled) {
+  background: #fdecec;
+  border-color: #e8384f;
+  color: #e8384f;
+}
+.cm-actions button.cm-delete:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.cm-delete-error {
+  margin: 0;
+  color: #e8384f;
+  font-size: 13px;
+  line-height: 1.5;
+}
 @media (max-width: 800px) {
   .cm-app {
     grid-template-columns: 1fr;

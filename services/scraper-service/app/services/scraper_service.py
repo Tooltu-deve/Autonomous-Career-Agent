@@ -259,3 +259,33 @@ def list_jobs(
 def get_job(job_id: UUID, db: Session) -> JobDB | None:
     """Trả một job theo id, hoặc None nếu không tìm thấy."""
     return db.get(JobDB, job_id)
+
+
+def unsave_job(db: Session, user_id: str, job_id: UUID) -> None:
+    """Gỡ job khỏi radar của user — chỉ xoá dòng `user_jobs`.
+
+    KHÔNG đụng bảng `jobs`: đó là kho dùng chung, xoá đi ảnh hưởng mọi user.
+
+    Raises:
+        LookupError: job không có trên radar của user này.
+        PermissionError: job đã có application — user phải xoá CV trước.
+    """
+    user_uuid = uuid.UUID(user_id)
+
+    row = db.get(UserJobDB, (user_uuid, job_id))
+    if row is None:
+        raise LookupError("Job không có trên radar của bạn.")
+
+    has_application = db.scalar(
+        select(ApplicationDB.id).where(
+            ApplicationDB.user_id == user_uuid,
+            ApplicationDB.job_id == job_id,
+        )
+    )
+    if has_application is not None:
+        raise PermissionError(
+            "Job này đã có CV. Xoá CV trong CV Manager trước khi gỡ job."
+        )
+
+    db.delete(row)
+    db.commit()

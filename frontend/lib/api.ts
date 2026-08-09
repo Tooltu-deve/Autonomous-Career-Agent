@@ -91,6 +91,9 @@ async function request<T>(
   });
 
   if (!res.ok) throw await parseError(res);
+  // 204 No Content (các route DELETE) không có body — res.json() sẽ ném
+  // SyntaxError nếu cứ parse vô điều kiện.
+  if (res.status === 204) return undefined as T;
   return (await res.json()) as T;
 }
 
@@ -160,6 +163,10 @@ export function selectJobs(jobIds: string[]): Promise<SelectResponse> {
   });
 }
 
+export function unsaveJob(jobId: string): Promise<void> {
+  return request<void>(`/jobs/${jobId}`, { method: "DELETE" });
+}
+
 /* ── A5. Applications ── */
 export function listApplications(
   page = 1,
@@ -182,6 +189,12 @@ export function updateApplicationStage(
     `/applications/${id}`,
     { method: "PATCH", body: { pipeline_stage: stage } },
   );
+}
+
+export function deleteApplication(applicationId: string): Promise<void> {
+  return request<void>(`/applications/${applicationId}`, {
+    method: "DELETE",
+  });
 }
 
 /* ── A6. CVs ── */

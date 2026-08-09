@@ -2171,3 +2171,76 @@ select {
     grid-auto-columns: minmax(200px, 260px);
   }
 }
+
+/* ── Jobs: nút gỡ khỏi radar + dialog xác nhận ── */
+.job-unsave {
+  margin-left: auto;
+  border: 0;
+  background: none;
+  color: var(--ink-subtle);
+  font-size: 15px;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.job-unsave:hover {
+  background: #fdecec;
+  color: var(--error);
+}
+
+.jobs-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 50;
+}
+.jobs-modal {
+  background: #fff;
+  border-radius: var(--r-lg);
+  padding: 22px 24px;
+  width: min(420px, calc(100vw - 32px));
+  box-shadow: var(--shadow-elevated);
+}
+.jobs-modal h3 {
+  margin: 0 0 6px;
+  font-size: 16px;
+}
+.jobs-modal p {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--ink-muted);
+  line-height: 1.55;
+}
+.jobs-modal-warn {
+  color: #b4791e;
+}
+.jobs-modal-error {
+  color: var(--error);
+}
+.jobs-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 16px;
+}
+.jobs-modal-actions button {
+  padding: 8px 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #fff;
+  font: 600 13px inherit;
+  cursor: pointer;
+}
+.jobs-modal-actions button.danger {
+  background: var(--error);
+  border-color: var(--error);
+  color: #fff;
+}
+.jobs-modal-actions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

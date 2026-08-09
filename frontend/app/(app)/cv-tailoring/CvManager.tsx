@@ -2,7 +2,13 @@
 
 import { useEffect, useMemo, useState } from "react";
 import styles from "./cv-manager.module.css";
-import { ApiError, exportPdf, getProfile, putCv } from "@/lib/api";
+import {
+  ApiError,
+  deleteApplication,
+  exportPdf,
+  getProfile,
+  putCv,
+} from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { loadCvViews, validateCvContent, type CvView } from "@/lib/cv";
 import type {
@@ -229,6 +235,9 @@ export function CvManager() {
   const [report, setReport] = useState<CvView | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<CvView | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -315,6 +324,29 @@ export function CvManager() {
           ? err.message
           : "Cannot reach the server — not saved.",
       );
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    try {
+      await deleteApplication(pendingDelete.applicationId);
+      // Tải lại từ server thay vì tự cắt phần tử khỏi mảng — tránh state
+      // lệch với server nếu có tab khác vừa đổi dữ liệu.
+      setCvs(await loadCvViews());
+      setPendingDelete(null);
+      setNotice("CV deleted.");
+      setError(null);
+    } catch (err) {
+      // Lỗi xoá hiển thị ngay trong dialog — Resume/CvEditor không mount lúc
+      // dialog đang mở nên prop `error` của nó không tới được người dùng.
+      // Giữ dialog mở để người dùng đọc lỗi rồi thử lại hoặc huỷ.
+      setDeleteError(
+        err instanceof ApiError ? err.message : "Cannot reach the server.",
+      );
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -426,6 +458,24 @@ export function CvManager() {
                   >
                     ✓ &nbsp; ATS Report
                   </button>
+                  <button
+                    className={styles["cm-delete"]}
+                    disabled={pending}
+                    title={
+                      pending
+                        ? "Cannot delete while the CV is being generated"
+                        : "Delete this CV"
+                    }
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      if (!pending) {
+                        setDeleteError(null);
+                        setPendingDelete(cv);
+                      }
+                    }}
+                  >
+                    Delete
+                  </button>
                 </div>
               </article>
             );
@@ -441,6 +491,53 @@ export function CvManager() {
           error={error}
           notice={notice}
         />
+      )}
+      {pendingDelete && (
+        <Modal close={() => !deleting && setPendingDelete(null)}>
+          <header className={styles["cm-modal-header"]}>
+            <div>
+              <h2>Delete this CV?</h2>
+              <p>{pendingDelete.title}</p>
+            </div>
+          </header>
+          <div className={styles["cm-ats-content"]}>
+            <p>
+              The generated CV and its ATS report will be permanently deleted.
+              This cannot be undone.
+            </p>
+            <p>
+              This also removes the job&rsquo;s entry from the Applications
+              board, including its pipeline stage (e.g. Interview) — that cannot
+              be recovered either.
+            </p>
+            <p>
+              The job stays on your radar — you can generate a new CV for it at
+              any time.
+            </p>
+            {deleteError && (
+              <p className={styles["cm-delete-error"]}>{deleteError}</p>
+            )}
+          </div>
+          <footer className={styles["cm-modal-footer"]}>
+            <span />
+            <div>
+              <button
+                className={styles["cm-secondary"]}
+                onClick={() => setPendingDelete(null)}
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                className={styles["cm-primary"]}
+                onClick={() => void confirmDelete()}
+                disabled={deleting}
+              >
+                {deleting ? "Deleting…" : "Delete"}
+              </button>
+            </div>
+          </footer>
+        </Modal>
       )}
       {report && <AtsReport cv={report} close={() => setReport(null)} />}
     </div>

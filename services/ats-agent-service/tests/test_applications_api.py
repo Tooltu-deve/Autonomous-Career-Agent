@@ -129,3 +129,96 @@ def test_patch_pipeline_stage_invalid_value_422(client, db):
         json={"pipeline_stage": "ghosted"},
     )
     assert r.status_code == 422
+
+
+# ---- DELETE /applications/{id} ----
+
+IN_FLIGHT = ("cv_queued", "cv_generating", "cv_generated", "ats_scoring")
+TERMINAL = ("saved", "completed", "needs_review", "failed")
+
+
+def _set_status(db, status_value: str) -> None:
+    from app.models.application import ApplicationORM
+
+    row = db.get(ApplicationORM, APP_ID)
+    row.generation_status = status_value
+    db.commit()
+
+
+def test_delete_application_removes_cv_and_report(client, db):
+    """Xoá application phải dọn luôn cv_generation và ats_report của nó."""
+    from app.models.application import ApplicationORM
+    from app.models.cv import CvGenerationORM
+    from app.models.report import AtsReportORM
+
+    _seed_with_report(db)
+    _set_status(db, "completed")
+
+    r = client.delete(f"/applications/{APP_ID}", headers=_headers())
+
+    assert r.status_code == 204
+    assert r.content == b""
+    assert db.get(ApplicationORM, APP_ID) is None
+    assert db.get(CvGenerationORM, CV_ID) is None
+    assert db.query(AtsReportORM).filter_by(cv_generation_id=CV_ID).first() is None
+
+
+def test_delete_application_of_another_user_404(client, db):
+    """Không phải của mình -> 404, và dòng đó vẫn còn nguyên."""
+    from app.models.application import ApplicationORM
+
+    _seed_with_report(db)
+    _set_status(db, "completed")
+
+    r = client.delete(f"/applications/{APP_ID}", headers=_headers(user_id=uuid.uuid4()))
+
+    assert r.status_code == 404
+    assert db.get(ApplicationORM, APP_ID) is not None
+
+
+def test_delete_application_not_found_404(client, db):
+    _seed_with_report(db)
+    r = client.delete(f"/applications/{uuid.uuid4()}", headers=_headers())
+    assert r.status_code == 404
+
+
+@pytest.mark.parametrize("status_value", IN_FLIGHT)
+def test_delete_application_in_flight_409(client, db, status_value):
+    """Đang chạy pipeline -> 409, dữ liệu không mất."""
+    from app.models.application import ApplicationORM
+
+    _seed_with_report(db)
+    _set_status(db, status_value)
+
+    r = client.delete(f"/applications/{APP_ID}", headers=_headers())
+
+    assert r.status_code == 409
+    assert db.get(ApplicationORM, APP_ID) is not None
+
+
+@pytest.mark.parametrize("status_value", TERMINAL)
+def test_delete_application_terminal_204(client, db, status_value):
+    from app.models.application import ApplicationORM
+
+    _seed_with_report(db)
+    _set_status(db, status_value)
+
+    r = client.delete(f"/applications/{APP_ID}", headers=_headers())
+
+    assert r.status_code == 204
+    assert db.get(ApplicationORM, APP_ID) is None
+
+
+def test_delete_application_without_cv_204(client, db):
+    """Application ở trạng thái `saved` chưa có CV -> vẫn xoá được."""
+    from app.models.application import ApplicationORM
+
+    from tests.conftest import seed_pipeline
+
+    seed_pipeline(db, with_cv=False)
+    _set_status(db, "saved")
+
+    r = client.delete(f"/applications/{APP_ID}", headers=_headers())
+
+    assert r.status_code == 204
+    assert db.get(ApplicationORM, APP_ID) is None

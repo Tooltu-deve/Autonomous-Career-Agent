@@ -3,7 +3,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { JobStage, JobView } from "@/types/jobs";
-import type { ApplicationListItem, PipelineStage } from "@/types/api";
+import type {
+  ApplicationListItem,
+  GenerationStatus,
+  PipelineStage,
+} from "@/types/api";
 import {
   ApiError,
   getPreferences,
@@ -11,6 +15,7 @@ import {
   listJobs,
   searchJobs,
   selectJobs,
+  unsaveJob,
 } from "@/lib/api";
 import { daysUntil, timeAgo } from "@/lib/format";
 
@@ -37,6 +42,27 @@ function buildViews(
   });
 }
 
+/** Vì sao job này chưa gỡ khỏi radar được — phụ thuộc trạng thái CV, tránh
+ *  nói sai là "đã có CV" khi CV đang chạy pipeline hoặc generate thất bại
+ *  (loadCvViews không tạo card cho application "failed" nên CV Manager
+ *  không có gì để xoá trong trường hợp đó — đây là khoảng trống UX đã biết). */
+function unsaveBlockedReason(status: GenerationStatus | undefined): string {
+  switch (status) {
+    case "completed":
+    case "needs_review":
+      return "This job already has a generated CV. Delete it in CV Manager first.";
+    case "cv_queued":
+    case "cv_generating":
+    case "cv_generated":
+    case "ats_scoring":
+      return "A CV is currently being generated for this job — try again once it finishes.";
+    case "failed":
+    case "saved":
+    default:
+      return "This job has an application record that must be removed in CV Manager first — there's currently no CV to delete (a known gap).";
+  }
+}
+
 const GENERATION_LABEL: Record<string, string> = {
   saved: "Saved — CV not generated yet",
   cv_queued: "CV generation queued…",
@@ -61,6 +87,9 @@ export default function JobRadar() {
   const [detailTab, setDetailTab] = useState<"desc" | "preview">("desc");
   const [isScanning, setIsScanning] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [pendingUnsave, setPendingUnsave] = useState<JobView | null>(null);
+  const [unsaving, setUnsaving] = useState(false);
+  const [unsaveError, setUnsaveError] = useState<string | null>(null);
 
   const triggerToast = (msg: string) => {
     setToastMsg(msg);
@@ -87,6 +116,30 @@ export default function JobRadar() {
   useEffect(() => {
     void load();
   }, [load]);
+
+  const confirmUnsave = async () => {
+    if (!pendingUnsave) return;
+    setUnsaving(true);
+    setUnsaveError(null);
+    try {
+      await unsaveJob(pendingUnsave.job.id);
+      await load();
+      setPendingUnsave(null);
+      setToastMsg("Job removed from your radar.");
+    } catch (err) {
+      // 409 là tình huống người dùng bình thường gặp, không phải lỗi hệ thống
+      // — chỉ đường cho họ thay vì hiện thông báo lỗi chung chung.
+      if (err instanceof ApiError && err.status === 409) {
+        setUnsaveError(unsaveBlockedReason(pendingUnsave.generationStatus));
+      } else {
+        setUnsaveError(
+          err instanceof ApiError ? err.message : "Cannot reach the server.",
+        );
+      }
+    } finally {
+      setUnsaving(false);
+    }
+  };
 
   const handleScanJobs = async () => {
     if (isScanning) return;
@@ -421,6 +474,22 @@ export default function JobRadar() {
                           <div className="card-title">{job.title}</div>
                           <div className="card-company">{job.company}</div>
                         </div>
+                        <button
+                          className="job-unsave"
+                          title={
+                            view.applicationId
+                              ? unsaveBlockedReason(view.generationStatus)
+                              : "Remove from radar"
+                          }
+                          aria-label={`Remove ${job.title} from radar`}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setUnsaveError(null);
+                            setPendingUnsave(view);
+                          }}
+                        >
+                          ✕
+                        </button>
                       </div>
 
                       <div className="card-sub-info">
@@ -675,6 +744,49 @@ export default function JobRadar() {
         </svg>
         <span>{toastMsg}</span>
       </div>
+
+      {pendingUnsave && (
+        <div
+          className="jobs-modal-backdrop"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !unsaving)
+              setPendingUnsave(null);
+          }}
+        >
+          <div className="jobs-modal">
+            <h3>Remove this job?</h3>
+            <p>
+              {pendingUnsave.job.title} — {pendingUnsave.job.company}
+            </p>
+            {pendingUnsave.applicationId ? (
+              <p className="jobs-modal-warn">
+                {unsaveBlockedReason(pendingUnsave.generationStatus)}
+              </p>
+            ) : (
+              <p>
+                It will disappear from your Smart Radar. A future scan may find
+                it again.
+              </p>
+            )}
+            {unsaveError && <p className="jobs-modal-error">{unsaveError}</p>}
+            <div className="jobs-modal-actions">
+              <button
+                onClick={() => setPendingUnsave(null)}
+                disabled={unsaving}
+              >
+                Cancel
+              </button>
+              <button
+                className="danger"
+                onClick={() => void confirmUnsave()}
+                disabled={unsaving || Boolean(pendingUnsave.applicationId)}
+              >
+                {unsaving ? "Removing…" : "Remove"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
