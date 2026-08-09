@@ -2,29 +2,7 @@
 
 import { PlusIcon, TrashIcon } from "./Icons";
 import type { CertificationRow } from "@/lib/validation";
-
-const MONTHS = [
-  { value: "01", label: "January" },
-  { value: "02", label: "February" },
-  { value: "03", label: "March" },
-  { value: "04", label: "April" },
-  { value: "05", label: "May" },
-  { value: "06", label: "June" },
-  { value: "07", label: "July" },
-  { value: "08", label: "August" },
-  { value: "09", label: "September" },
-  { value: "10", label: "October" },
-  { value: "11", label: "November" },
-  { value: "12", label: "December" },
-];
-
-/** Năm hiện tại lùi về 1970 — đủ cho mọi chứng chỉ thực tế. */
-function yearOptions(): string[] {
-  const now = new Date().getFullYear();
-  const years: string[] = [];
-  for (let y = now; y >= 1970; y--) years.push(String(y));
-  return years;
-}
+import { MONTHS, yearOptions } from "./monthYear";
 
 interface Props {
   certifications: CertificationRow[];

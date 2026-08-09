@@ -15,18 +15,22 @@ import {
 } from "@/lib/api";
 import type { ProfileUpdate } from "@/types/api";
 import type { ProfileData } from "../_types/types";
+import type { EducationField } from "../_components/EducationForm";
+import type { ExperienceField } from "../_components/ExperienceForm";
 import {
   validateCertifications,
+  validateExperiences,
   validateProfile,
   type ProfileFormErrors,
 } from "@/lib/validation";
-import { joinObtainDate, splitObtainDate } from "@/lib/format";
+import { joinMonthYear, splitMonthYear } from "@/lib/format";
 
 /* Wizard dùng đúng bộ luật chung — không thêm luật riêng.
  * `name` cố tình KHÔNG validate: nó luôn được prefill từ session và
  * `toProfileUpdate()` không gửi nó đi đâu cả (bảng profiles không có cột name). */
 export type FormErrors = ProfileFormErrors & {
   certifications?: Record<string, string>;
+  experiences?: Record<string, string>;
 };
 
 /* ── Utility: simple unique ID generator ── */
@@ -43,16 +47,33 @@ export function calcCompleteness(data: ProfileData): number {
   if (data.summary.trim()) score += 20;
   if (data.skills.length > 0) score += 20;
   if (data.education.length > 0 && data.education[0].university) score += 15;
-  if (data.projects.length > 0 && data.projects[0].name) score += 10;
+  if (data.experiences.length > 0 && data.experiences[0].title) score += 10;
   return Math.min(score, 100);
 }
 
 export { getInitials } from "@/lib/format";
 
-/* ── Map wizard state → backend PUT /profile body ──
- * PUT /profile thay TOÀN BỘ profile + bảng con, nên các field wizard không
- * cho sửa (organization, ngày tháng, field_of_study, linkedin_url) phải được
- * gửi lại nguyên vẹn từ `server` ride-along — nếu không sẽ bị xoá vĩnh viễn. */
+/** Tách start/end ISO của server thành 4 field month/year cho UI. */
+function splitStartEnd(
+  start?: string | null,
+  end?: string | null,
+): {
+  startMonth: string;
+  startYear: string;
+  endMonth: string;
+  endYear: string;
+} {
+  const s = splitMonthYear(start || "");
+  const e = splitMonthYear(end || "");
+  return {
+    startMonth: s.month,
+    startYear: s.year,
+    endMonth: e.month,
+    endYear: e.year,
+  };
+}
+
+/* ── Map wizard state → backend PUT /profile body ── */
 function toProfileUpdate(data: ProfileData): ProfileUpdate {
   return {
     headline: data.headline.trim() || null,
@@ -62,14 +83,17 @@ function toProfileUpdate(data: ProfileData): ProfileUpdate {
     github_url: data.github.trim() || null,
     linkedin_url: data.linkedin.trim() || null,
     preferred_template: data.preferred_template,
-    experiences: data.projects
-      .filter((p) => p.name.trim())
-      .map((p, i) => ({
-        title: p.name.trim(),
-        organization: p.server?.organization || "Personal Project",
-        start_date: p.server?.start_date ?? null,
-        end_date: p.server?.end_date ?? null,
-        description: p.description.trim() || null,
+    experiences: data.experiences
+      .filter((e) => e.title.trim() && e.organization.trim())
+      .map((e, i) => ({
+        title: e.title.trim(),
+        organization: e.organization.trim(),
+        start_date: joinMonthYear(e.startMonth, e.startYear) || null,
+        // isCurrent = đang làm -> backend nhận null và CV in "Present".
+        end_date: e.isCurrent
+          ? null
+          : joinMonthYear(e.endMonth, e.endYear) || null,
+        description: e.description.trim() || null,
         display_order: i,
       })),
     educations: data.education
@@ -77,17 +101,17 @@ function toProfileUpdate(data: ProfileData): ProfileUpdate {
       .map((e, i) => ({
         school: e.university.trim(),
         degree: e.degree.trim() || null,
-        field_of_study: e.server?.field_of_study ?? null,
-        start_date: e.server?.start_date ?? null,
-        end_date: e.server?.end_date ?? null,
-        description: e.server?.description ?? null,
+        field_of_study: e.fieldOfStudy.trim() || null,
+        start_date: joinMonthYear(e.startMonth, e.startYear) || null,
+        end_date: joinMonthYear(e.endMonth, e.endYear) || null,
+        description: e.description.trim() || null,
         display_order: i,
       })),
     certifications: data.certifications
       .filter((c) => c.title.trim() && c.month && c.year)
       .map((c, i) => ({
         title: c.title.trim(),
-        obtain_date: joinObtainDate(c.month, c.year),
+        obtain_date: joinMonthYear(c.month, c.year),
         display_order: i,
       })),
     skills: data.skills,
@@ -113,9 +137,33 @@ export function useProfileSetup() {
     linkedin: "",
     summary: "",
     preferred_template: "classic",
-    education: [{ id: uid(), university: "", degree: "" }],
+    education: [
+      {
+        id: uid(),
+        university: "",
+        degree: "",
+        fieldOfStudy: "",
+        startMonth: "",
+        startYear: "",
+        endMonth: "",
+        endYear: "",
+        description: "",
+      },
+    ],
     skills: ["Python", "C++", "SQL", "FastAPI"],
-    projects: [{ id: uid(), name: "", description: "" }],
+    experiences: [
+      {
+        id: uid(),
+        title: "",
+        organization: "",
+        startMonth: "",
+        startYear: "",
+        endMonth: "",
+        endYear: "",
+        isCurrent: false,
+        description: "",
+      },
+    ],
     certifications: [],
   });
 
@@ -150,34 +198,31 @@ export function useProfileSetup() {
             prof.certifications?.map((c) => ({
               id: c.id,
               title: c.title,
-              ...splitObtainDate(c.obtain_date),
+              ...splitMonthYear(c.obtain_date),
             })) ?? d.certifications,
           education: prof.educations?.length
-            ? prof.educations.map((e, idx) => ({
-                id: idx + 1,
-                university: e.school || "",
+            ? prof.educations.map((e) => ({
+                id: e.id,
+                university: e.school,
                 degree: e.degree || "",
-                // Giữ nguyên các field wizard không sửa để PUT không xoá mất
-                server: {
-                  field_of_study: e.field_of_study,
-                  start_date: e.start_date,
-                  end_date: e.end_date,
-                  description: e.description,
-                },
+                fieldOfStudy: e.field_of_study || "",
+                ...splitStartEnd(e.start_date, e.end_date),
+                description: e.description || "",
               }))
             : d.education,
-          projects: prof.experiences?.length
-            ? prof.experiences.map((exp, idx) => ({
-                id: idx + 1,
-                name: exp.title || "",
-                description: exp.description || "",
-                server: {
-                  organization: exp.organization,
-                  start_date: exp.start_date,
-                  end_date: exp.end_date,
-                },
+          experiences: prof.experiences?.length
+            ? prof.experiences.map((e) => ({
+                id: e.id,
+                title: e.title,
+                organization: e.organization || "",
+                ...splitStartEnd(e.start_date, e.end_date),
+                // Có start_date mà không có end_date -> đang làm, khớp cách CV
+                // in "Present". Thiếu cả hai (dữ liệu cũ trước khi có form
+                // này) nghĩa là chưa nhập ngày, KHÔNG phải đang làm.
+                isCurrent: !!e.start_date && !e.end_date,
+                description: e.description || "",
               }))
-            : d.projects,
+            : d.experiences,
         }));
       } catch {
         /* 404 (no profile yet) or network error — stay on empty form */
@@ -239,7 +284,20 @@ export function useProfileSetup() {
   const addEducation = () => {
     setData((d) => ({
       ...d,
-      education: [...d.education, { id: uid(), university: "", degree: "" }],
+      education: [
+        ...d.education,
+        {
+          id: uid(),
+          university: "",
+          degree: "",
+          fieldOfStudy: "",
+          startMonth: "",
+          startYear: "",
+          endMonth: "",
+          endYear: "",
+          description: "",
+        },
+      ],
     }));
     showToast("Added new education entry");
   };
@@ -254,7 +312,7 @@ export function useProfileSetup() {
 
   const updateEducation = (
     id: number | string,
-    field: "university" | "degree",
+    field: EducationField,
     value: string,
   ) => {
     setData((d) => ({
@@ -298,32 +356,45 @@ export function useProfileSetup() {
     }));
   };
 
-  /* ── Projects ── */
-  const addProject = () => {
+  /* ── Experiences (Work Experience) ── */
+  const addExperience = () => {
     setData((d) => ({
       ...d,
-      projects: [...d.projects, { id: uid(), name: "", description: "" }],
+      experiences: [
+        ...d.experiences,
+        {
+          id: uid(),
+          title: "",
+          organization: "",
+          startMonth: "",
+          startYear: "",
+          endMonth: "",
+          endYear: "",
+          isCurrent: false,
+          description: "",
+        },
+      ],
     }));
-    showToast("Added new project entry");
+    showToast("Added new experience entry");
   };
 
-  const removeProject = (id: number | string) => {
+  const removeExperience = (id: number | string) => {
     setData((d) => ({
       ...d,
-      projects: d.projects.filter((p) => p.id !== id),
+      experiences: d.experiences.filter((e) => e.id !== id),
     }));
     showToast("Entry removed");
   };
 
-  const updateProject = (
+  const updateExperience = (
     id: number | string,
-    field: "name" | "description",
-    value: string,
+    field: ExperienceField,
+    value: string | boolean,
   ) => {
     setData((d) => ({
       ...d,
-      projects: d.projects.map((p) =>
-        p.id === id ? { ...p, [field]: value } : p,
+      experiences: d.experiences.map((e) =>
+        e.id === id ? { ...e, [field]: value } : e,
       ),
     }));
   };
@@ -354,6 +425,13 @@ export function useProfileSetup() {
       if (Object.keys(certErrs).length > 0) {
         setErrors({ certifications: certErrs });
         goToStep(2); // chứng chỉ nằm ở step 2
+        return;
+      }
+
+      const expErrs = validateExperiences(data.experiences);
+      if (Object.keys(expErrs).length > 0) {
+        setErrors({ experiences: expErrs });
+        goToStep(4); // kinh nghiệm nằm ở step 4
         return;
       }
     }
@@ -409,9 +487,9 @@ export function useProfileSetup() {
     addCertification,
     removeCertification,
     updateCertification,
-    addProject,
-    removeProject,
-    updateProject,
+    addExperience,
+    removeExperience,
+    updateExperience,
     skipAndFinish,
     completeSetup,
   };

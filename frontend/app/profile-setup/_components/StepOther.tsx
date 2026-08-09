@@ -2,20 +2,24 @@
 
 import type { TemplateName } from "@/types/api";
 import { ArrowLeftIcon, LayersIcon } from "./Icons";
-import { ProjectsForm } from "./ProjectsForm";
+import {
+  ExperienceForm,
+  type ExperienceField,
+  type ExperienceItem,
+} from "./ExperienceForm";
 import { TemplatePicker } from "./TemplatePicker";
-import type { ProjectEntry } from "../_types/types";
 
 interface Props {
   selectedTemplate: TemplateName;
   onSelectTemplate: (t: TemplateName) => void;
-  projects: ProjectEntry[];
-  onAddProject: () => void;
-  onRemoveProject: (id: number | string) => void;
-  onUpdateProject: (
+  experiences: ExperienceItem[];
+  experienceErrors?: Record<string, string>;
+  onAddExperience: () => void;
+  onRemoveExperience: (id: number | string) => void;
+  onUpdateExperience: (
     id: number | string,
-    field: "name" | "description",
-    value: string,
+    field: ExperienceField,
+    value: string | boolean,
   ) => void;
   onBack: () => void;
   onFinish: () => void;
@@ -25,10 +29,11 @@ interface Props {
 export function StepOther({
   selectedTemplate,
   onSelectTemplate,
-  projects,
-  onAddProject,
-  onRemoveProject,
-  onUpdateProject,
+  experiences,
+  experienceErrors,
+  onAddExperience,
+  onRemoveExperience,
+  onUpdateExperience,
   onBack,
   onFinish,
   isFinishing,
@@ -49,7 +54,7 @@ export function StepOther({
         onSelect={onSelectTemplate}
       />
 
-      {/* Projects Section */}
+      {/* Work Experience Section */}
       <div className="ps-projects-heading">
         <span
           style={{
@@ -61,14 +66,15 @@ export function StepOther({
         >
           <LayersIcon />
         </span>
-        Projects &amp; Highlights
+        Work Experience
       </div>
 
-      <ProjectsForm
-        projects={projects}
-        onAddProject={onAddProject}
-        onRemoveProject={onRemoveProject}
-        onUpdateProject={onUpdateProject}
+      <ExperienceForm
+        experiences={experiences}
+        errors={experienceErrors}
+        onAdd={onAddExperience}
+        onRemove={onRemoveExperience}
+        onUpdate={onUpdateExperience}
       />
 
       <div className="ps-footer-actions">

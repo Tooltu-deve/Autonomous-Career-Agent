@@ -95,3 +95,27 @@ export function validateCertifications(
   }
   return errs;
 }
+
+/* ── Kinh nghiệm làm việc ── */
+
+/**
+ * `organization` là `str` bắt buộc ở backend (ExperienceIn), nên dòng nào có
+ * chức danh thì phải có tổ chức, và ngược lại. Ngày tháng KHÔNG bắt buộc —
+ * backend khai Optional, siết chặt hơn sẽ làm hỏng luồng Skip.
+ */
+export function validateExperiences(
+  list: { id: number | string; title: string; organization: string }[],
+): Record<string, string> {
+  const errs: Record<string, string> = {};
+  for (const e of list) {
+    const title = e.title.trim();
+    const org = e.organization.trim();
+    if (!title && !org) continue;
+    if (title && !org) {
+      errs[String(e.id)] = "Enter the company or organization.";
+    } else if (!title) {
+      errs[String(e.id)] = "Enter the job title.";
+    }
+  }
+  return errs;
+}

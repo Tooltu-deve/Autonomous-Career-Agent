@@ -1325,6 +1325,23 @@
   border-color: #e8384f;
 }
 
+.ps-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0 12px;
+  font-size: 13px;
+  color: #6d6e6f;
+  cursor: pointer;
+}
+
+.ps-checkbox-row input {
+  width: 15px;
+  height: 15px;
+  accent-color: #f06a6a;
+  cursor: pointer;
+}
+
 .ps-section-divider {
   margin: 22px 0 12px;
   padding-top: 18px;

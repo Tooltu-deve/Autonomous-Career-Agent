@@ -116,7 +116,10 @@ _MONTH_NAMES = (
 
 
 def month_year(value: object) -> str:
-    """Định dạng ngày cấp chứng chỉ cho CV: date hoặc chuỗi ISO -> "May 2024".
+    """Định dạng ngày cho CV: date hoặc chuỗi ISO -> "May 2024".
+
+    Dùng cho cả ngày cấp chứng chỉ lẫn khoảng thời gian của kinh nghiệm và
+    học vấn.
 
     Ngày trong tháng cố tình bị bỏ: UI chỉ cho chọn tháng + năm, ngày 01 chỉ là
     giá trị kỹ thuật để thoả kiểu DATE của Postgres.

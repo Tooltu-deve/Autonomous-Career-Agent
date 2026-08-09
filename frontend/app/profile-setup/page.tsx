@@ -45,9 +45,9 @@ export default function ProfileSetupPage() {
     addCertification,
     removeCertification,
     updateCertification,
-    addProject,
-    removeProject,
-    updateProject,
+    addExperience,
+    removeExperience,
+    updateExperience,
     skipAndFinish,
     completeSetup,
   } = useProfileSetup();
@@ -185,10 +185,11 @@ export default function ProfileSetupPage() {
                 onSelectTemplate={(t) =>
                   setData((d) => ({ ...d, preferred_template: t }))
                 }
-                projects={data.projects}
-                onAddProject={addProject}
-                onRemoveProject={removeProject}
-                onUpdateProject={updateProject}
+                experiences={data.experiences}
+                experienceErrors={errors.experiences}
+                onAddExperience={addExperience}
+                onRemoveExperience={removeExperience}
+                onUpdateExperience={updateExperience}
                 onBack={() => goToStep(3)}
                 onFinish={completeSetup}
                 isFinishing={isFinishing}

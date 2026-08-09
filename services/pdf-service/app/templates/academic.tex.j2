@@ -42,7 +42,7 @@
 \BLOCK{ if cv.education }
 \cvsection{Education}
 \BLOCK{ for ed in cv.education }
-\academicentry{\VAR{ed.degree | tex}\BLOCK{ if ed.field_of_study } in \VAR{ed.field_of_study | tex}\BLOCK{ endif }}{\BLOCK{ if ed.start_date }\VAR{ed.start_date | tex} -- \VAR{(ed.end_date or "Present") | tex}\BLOCK{ endif }}{\VAR{ed.school | tex}}
+\academicentry{\VAR{ed.degree | tex}\BLOCK{ if ed.field_of_study } in \VAR{ed.field_of_study | tex}\BLOCK{ endif }}{\BLOCK{ if ed.start_date | monthyear }\VAR{ed.start_date | monthyear | tex} -- \VAR{((ed.end_date | monthyear) or "Present") | tex}\BLOCK{ endif }}{\VAR{ed.school | tex}}
 \BLOCK{ if ed.description }\begin{itemize}\item \VAR{ed.description | tex}\end{itemize}\BLOCK{ endif }
 \BLOCK{ endfor }
 \BLOCK{ endif }
@@ -51,7 +51,7 @@
 \BLOCK{ if cv.experience }
 \cvsection{Professional Appointments}
 \BLOCK{ for e in cv.experience }
-\academicentry{\VAR{e.title | tex}}{\BLOCK{ if e.start_date }\VAR{e.start_date | tex} -- \VAR{(e.end_date or "Present") | tex}\BLOCK{ endif }}{\VAR{e.organization | tex}}
+\academicentry{\VAR{e.title | tex}}{\BLOCK{ if e.start_date | monthyear }\VAR{e.start_date | monthyear | tex} -- \VAR{((e.end_date | monthyear) or "Present") | tex}\BLOCK{ endif }}{\VAR{e.organization | tex}}
 \BLOCK{ if e.description }\begin{itemize}\item \VAR{e.description | tex}\end{itemize}\BLOCK{ endif }
 \BLOCK{ endfor }
 \BLOCK{ endif }

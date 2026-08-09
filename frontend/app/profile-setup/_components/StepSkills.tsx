@@ -48,7 +48,7 @@ export function StepSkills({
           <ArrowLeftIcon /> Back
         </button>
         <button className="ps-btn-next" onClick={onNext} type="button">
-          Next: Projects →
+          Next: Work Experience →
         </button>
       </div>
     </div>

@@ -3,10 +3,11 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { getPreferences, getProfile, putProfile } from "@/lib/api";
-import { getInitials, joinObtainDate, splitObtainDate } from "@/lib/format";
+import { getInitials, joinMonthYear, splitMonthYear } from "@/lib/format";
 import { KEYS } from "@/lib/storage";
 import {
   validateCertifications,
+  validateExperiences,
   validateProfile,
   type CertificationRow,
   type ProfileFormErrors,
@@ -17,8 +18,16 @@ import type {
   TemplateName,
 } from "@/types/api";
 import { CertificationsForm } from "@/app/profile-setup/_components/CertificationsForm";
-import { EducationForm } from "@/app/profile-setup/_components/EducationForm";
-import { ProjectsForm } from "@/app/profile-setup/_components/ProjectsForm";
+import {
+  EducationForm,
+  type EducationField,
+  type EducationItem,
+} from "@/app/profile-setup/_components/EducationForm";
+import {
+  ExperienceForm,
+  type ExperienceField,
+  type ExperienceItem,
+} from "@/app/profile-setup/_components/ExperienceForm";
 import { SkillsForm } from "@/app/profile-setup/_components/SkillsForm";
 import { TemplatePicker } from "@/app/profile-setup/_components/TemplatePicker";
 import "@/app/profile-setup/profile-setup.css";
@@ -27,29 +36,6 @@ import s from "./profile.module.css";
 /* ═══════════════════════════════════════════════════
    Types
 ═══════════════════════════════════════════════════ */
-interface EducationEntry {
-  id: string;
-  university: string;
-  degree: string;
-  server?: {
-    field_of_study?: string | null;
-    start_date?: string | null;
-    end_date?: string | null;
-    description?: string | null;
-  };
-}
-
-interface ProjectEntry {
-  id: string;
-  name: string;
-  description: string;
-  server?: {
-    organization?: string | null;
-    start_date?: string | null;
-    end_date?: string | null;
-  };
-}
-
 interface DisplayProfile {
   name: string;
   avatarInitials: string;
@@ -61,8 +47,8 @@ interface DisplayProfile {
   linkedin: string;
   preferredTemplate: TemplateName;
   summary: string;
-  experiences: ProjectEntry[];
-  education: EducationEntry[];
+  experiences: ExperienceItem[];
+  education: EducationItem[];
   certifications: CertificationRow[];
   skills: string[];
   preferences: {
@@ -75,7 +61,7 @@ interface DisplayProfile {
 type ActiveModal =
   | "basic"
   | "summary"
-  | "projects"
+  | "experience"
   | "education"
   | "certifications"
   | "skills"
@@ -106,6 +92,40 @@ function formatMonthYear(month: string, year: string): string {
   const idx = Number(month) - 1;
   if (!year || idx < 0 || idx > 11) return "";
   return `${MONTH_LABELS[idx]} ${year}`;
+}
+
+/** In khoảng thời gian dạng "May 2024 - Present". Rỗng nếu không có mốc nào. */
+function formatDateRange(
+  startMonth: string,
+  startYear: string,
+  endMonth: string,
+  endYear: string,
+  isCurrent = false,
+): string {
+  const start = formatMonthYear(startMonth, startYear);
+  const end = isCurrent ? "Present" : formatMonthYear(endMonth, endYear);
+  if (start && end) return `${start} - ${end}`;
+  return start || end;
+}
+
+/** Tách start/end ISO của server thành 4 field month/year cho UI. */
+function splitStartEnd(
+  start?: string | null,
+  end?: string | null,
+): {
+  startMonth: string;
+  startYear: string;
+  endMonth: string;
+  endYear: string;
+} {
+  const s = splitMonthYear(start || "");
+  const e = splitMonthYear(end || "");
+  return {
+    startMonth: s.month,
+    startYear: s.year,
+    endMonth: e.month,
+    endYear: e.year,
+  };
 }
 
 /* ═══════════════════════════════════════════════════
@@ -211,31 +231,29 @@ export default function MasterProfilePage() {
           experiences:
             prof?.experiences?.map((exp) => ({
               id: exp.id,
-              name: exp.title,
+              title: exp.title,
+              organization: exp.organization || "",
+              ...splitStartEnd(exp.start_date, exp.end_date),
+              // Có start_date mà không có end_date -> đang làm, khớp cách CV
+              // in "Present". Thiếu cả hai (dữ liệu cũ trước khi có form
+              // này) nghĩa là chưa nhập ngày, KHÔNG phải đang làm.
+              isCurrent: !!exp.start_date && !exp.end_date,
               description: exp.description || "",
-              server: {
-                organization: exp.organization,
-                start_date: exp.start_date,
-                end_date: exp.end_date,
-              },
             })) ?? [],
           education:
             prof?.educations?.map((edu) => ({
               id: edu.id,
               university: edu.school,
               degree: edu.degree || "",
-              server: {
-                field_of_study: edu.field_of_study,
-                start_date: edu.start_date,
-                end_date: edu.end_date,
-                description: edu.description,
-              },
+              fieldOfStudy: edu.field_of_study || "",
+              ...splitStartEnd(edu.start_date, edu.end_date),
+              description: edu.description || "",
             })) ?? [],
           certifications:
             prof?.certifications?.map((c) => ({
               id: c.id,
               title: c.title,
-              ...splitObtainDate(c.obtain_date),
+              ...splitMonthYear(c.obtain_date),
             })) ?? [],
           skills: prof?.skills?.map((s) => s.skill_name) ?? [],
           preferences: {
@@ -267,8 +285,8 @@ export default function MasterProfilePage() {
         linkedin: string;
         preferredTemplate: TemplateName;
         summary: string;
-        experiences: ProjectEntry[];
-        education: EducationEntry[];
+        experiences: ExperienceItem[];
+        education: EducationItem[];
         certifications: CertificationRow[];
         skills: string[];
       }>,
@@ -295,7 +313,9 @@ export default function MasterProfilePage() {
         const mergedSkills = patch.skills ?? profile.skills;
 
         // Filter once — use for both PUT and setProfile so UI stays in sync
-        const filteredExp = mergedExp.filter((e) => e.name.trim());
+        const filteredExp = mergedExp.filter(
+          (e) => e.title.trim() && e.organization.trim(),
+        );
         const filteredEdu = mergedEdu.filter((e) => e.university.trim());
         const filteredCerts = mergedCerts.filter(
           (c) => c.title.trim() && c.month && c.year,
@@ -310,25 +330,28 @@ export default function MasterProfilePage() {
           linkedin_url: mergedLinkedin.trim() || null,
           preferred_template: mergedTemplate,
           experiences: filteredExp.map((e, i) => ({
-            title: e.name.trim(),
-            organization: e.server?.organization || "Personal Project",
-            start_date: e.server?.start_date ?? null,
-            end_date: e.server?.end_date ?? null,
+            title: e.title.trim(),
+            organization: e.organization.trim(),
+            start_date: joinMonthYear(e.startMonth, e.startYear) || null,
+            // isCurrent = đang làm -> backend nhận null và CV in "Present".
+            end_date: e.isCurrent
+              ? null
+              : joinMonthYear(e.endMonth, e.endYear) || null,
             description: e.description.trim() || null,
             display_order: i,
           })),
           educations: filteredEdu.map((e, i) => ({
             school: e.university.trim(),
             degree: e.degree.trim() || null,
-            field_of_study: e.server?.field_of_study ?? null,
-            start_date: e.server?.start_date ?? null,
-            end_date: e.server?.end_date ?? null,
-            description: e.server?.description ?? null,
+            field_of_study: e.fieldOfStudy.trim() || null,
+            start_date: joinMonthYear(e.startMonth, e.startYear) || null,
+            end_date: joinMonthYear(e.endMonth, e.endYear) || null,
+            description: e.description.trim() || null,
             display_order: i,
           })),
           certifications: filteredCerts.map((c, i) => ({
             title: c.title.trim(),
-            obtain_date: joinObtainDate(c.month, c.year),
+            obtain_date: joinMonthYear(c.month, c.year),
             display_order: i,
           })),
           skills: mergedSkills,
@@ -583,11 +606,11 @@ export default function MasterProfilePage() {
                   <polyline points="2 17 12 22 22 17" />
                   <polyline points="2 12 12 17 22 12" />
                 </svg>
-                Projects &amp; Experience
+                Work Experience
               </div>
               <button
                 className={s.btnAddItem}
-                onClick={() => setActiveModal("projects")}
+                onClick={() => setActiveModal("experience")}
                 type="button"
               >
                 + Add / Edit
@@ -596,27 +619,42 @@ export default function MasterProfilePage() {
 
             <div className={s.projectGrid}>
               {profile.experiences.length > 0 ? (
-                profile.experiences.map((exp) => (
-                  <div key={exp.id} className={s.projectCard}>
-                    <div>
-                      <div className={s.pTitle}>
-                        {exp.name}
-                        <svg
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                          <polyline points="15 3 21 3 21 9" />
-                          <line x1="10" y1="14" x2="21" y2="3" />
-                        </svg>
+                profile.experiences.map((exp) => {
+                  const period = formatDateRange(
+                    exp.startMonth,
+                    exp.startYear,
+                    exp.endMonth,
+                    exp.endYear,
+                    exp.isCurrent,
+                  );
+                  return (
+                    <div key={exp.id} className={s.projectCard}>
+                      <div>
+                        <div className={s.pTitle}>
+                          {exp.title}
+                          <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                            <polyline points="15 3 21 3 21 9" />
+                            <line x1="10" y1="14" x2="21" y2="3" />
+                          </svg>
+                        </div>
+                        {exp.organization && (
+                          <div className={s.itemCompany}>
+                            {exp.organization}
+                          </div>
+                        )}
+                        {period && <div className={s.itemPeriod}>{period}</div>}
+                        <div className={s.pDesc}>{exp.description}</div>
                       </div>
-                      <div className={s.pDesc}>{exp.description}</div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div
                   style={{
@@ -625,8 +663,8 @@ export default function MasterProfilePage() {
                     gridColumn: "1/-1",
                   }}
                 >
-                  No projects added yet — click &apos;+ Add / Edit&apos; to add
-                  one.
+                  No work experience added yet — click &apos;+ Add / Edit&apos;
+                  to add one.
                 </div>
               )}
             </div>
@@ -659,20 +697,34 @@ export default function MasterProfilePage() {
 
             <div className={s.timelineList}>
               {profile.education.length > 0 ? (
-                profile.education.map((edu) => (
-                  <div key={edu.id} className={s.timelineItem}>
-                    <div
-                      className={s.itemLogo}
-                      style={{ background: "var(--surface-2)" }}
-                    >
-                      🎓
+                profile.education.map((edu) => {
+                  const period = formatDateRange(
+                    edu.startMonth,
+                    edu.startYear,
+                    edu.endMonth,
+                    edu.endYear,
+                  );
+                  const subtitle = [edu.degree, edu.fieldOfStudy]
+                    .filter(Boolean)
+                    .join(" · ");
+                  return (
+                    <div key={edu.id} className={s.timelineItem}>
+                      <div
+                        className={s.itemLogo}
+                        style={{ background: "var(--surface-2)" }}
+                      >
+                        🎓
+                      </div>
+                      <div className={s.itemBody}>
+                        <div className={s.itemRole}>{edu.university}</div>
+                        {subtitle && (
+                          <div className={s.itemCompany}>{subtitle}</div>
+                        )}
+                        {period && <div className={s.itemPeriod}>{period}</div>}
+                      </div>
                     </div>
-                    <div className={s.itemBody}>
-                      <div className={s.itemRole}>{edu.university}</div>
-                      <div className={s.itemCompany}>{edu.degree}</div>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
                 <div style={{ color: "#888", fontSize: "13px" }}>
                   No education entries — click &apos;+ Add / Edit&apos; to add
@@ -891,12 +943,12 @@ export default function MasterProfilePage() {
         />
       )}
 
-      {/* Projects Modal */}
-      {activeModal === "projects" && (
-        <ProjectsModal
-          initialProjects={profile.experiences}
+      {/* Experience Modal */}
+      {activeModal === "experience" && (
+        <ExperienceModal
+          initialExperiences={profile.experiences}
           saving={saving}
-          onSave={(projects) => void saveProfile({ experiences: projects })}
+          onSave={(experiences) => void saveProfile({ experiences })}
           onClose={() => setActiveModal(null)}
         />
       )}
@@ -1175,50 +1227,73 @@ function SummaryModal({
 }
 
 /* ═══════════════════════════════════════════════════
-   Projects Modal (uses shared ProjectsForm component)
+   Experience Modal (uses shared ExperienceForm component)
 ═══════════════════════════════════════════════════ */
-function ProjectsModal({
-  initialProjects,
+function emptyExperience(): ExperienceItem {
+  return {
+    id: uid(),
+    title: "",
+    organization: "",
+    startMonth: "",
+    startYear: "",
+    endMonth: "",
+    endYear: "",
+    isCurrent: false,
+    description: "",
+  };
+}
+
+function ExperienceModal({
+  initialExperiences,
   saving,
   onSave,
   onClose,
 }: {
-  initialProjects: ProjectEntry[];
+  initialExperiences: ExperienceItem[];
   saving: boolean;
-  onSave: (projects: ProjectEntry[]) => void;
+  onSave: (experiences: ExperienceItem[]) => void;
   onClose: () => void;
 }) {
-  const [projects, setProjects] = useState<ProjectEntry[]>(
-    initialProjects.length > 0
-      ? initialProjects
-      : [{ id: uid(), name: "", description: "" }],
+  const [experiences, setExperiences] = useState<ExperienceItem[]>(
+    initialExperiences.length > 0 ? initialExperiences : [emptyExperience()],
   );
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const addProject = () =>
-    setProjects((p) => [...p, { id: uid(), name: "", description: "" }]);
-  const removeProject = (id: string | number) =>
-    setProjects((p) => p.filter((x) => x.id !== id));
-  const updateProject = (
+  const addExp = () => setExperiences((e) => [...e, emptyExperience()]);
+  const removeExp = (id: string | number) =>
+    setExperiences((e) => e.filter((x) => x.id !== id));
+  const updateExp = (
     id: string | number,
-    field: "name" | "description",
-    val: string,
+    field: ExperienceField,
+    value: string | boolean,
   ) =>
-    setProjects((p) =>
-      p.map((x) => (x.id === id ? { ...x, [field]: val } : x)),
+    setExperiences((e) =>
+      e.map((x) => (x.id === id ? { ...x, [field]: value } : x)),
     );
+
+  const handleSave = () => {
+    const errs = validateExperiences(experiences);
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      return;
+    }
+    setErrors({});
+    onSave(experiences);
+  };
 
   return (
     <ModalWrapper
-      title="📁 Projects & Experience"
+      title="💼 Work Experience"
       onClose={onClose}
-      onSave={() => onSave(projects)}
+      onSave={handleSave}
       saving={saving}
     >
-      <ProjectsForm
-        projects={projects}
-        onAddProject={addProject}
-        onRemoveProject={removeProject}
-        onUpdateProject={updateProject}
+      <ExperienceForm
+        experiences={experiences}
+        errors={errors}
+        onAdd={addExp}
+        onRemove={removeExp}
+        onUpdate={updateExp}
       />
     </ModalWrapper>
   );
@@ -1227,32 +1302,39 @@ function ProjectsModal({
 /* ═══════════════════════════════════════════════════
    Education Modal (uses shared EducationForm component)
 ═══════════════════════════════════════════════════ */
+function emptyEducation(): EducationItem {
+  return {
+    id: uid(),
+    university: "",
+    degree: "",
+    fieldOfStudy: "",
+    startMonth: "",
+    startYear: "",
+    endMonth: "",
+    endYear: "",
+    description: "",
+  };
+}
+
 function EducationModal({
   initialEducation,
   saving,
   onSave,
   onClose,
 }: {
-  initialEducation: EducationEntry[];
+  initialEducation: EducationItem[];
   saving: boolean;
-  onSave: (edu: EducationEntry[]) => void;
+  onSave: (edu: EducationItem[]) => void;
   onClose: () => void;
 }) {
-  const [education, setEducation] = useState<EducationEntry[]>(
-    initialEducation.length > 0
-      ? initialEducation
-      : [{ id: uid(), university: "", degree: "" }],
+  const [education, setEducation] = useState<EducationItem[]>(
+    initialEducation.length > 0 ? initialEducation : [emptyEducation()],
   );
 
-  const addEdu = () =>
-    setEducation((e) => [...e, { id: uid(), university: "", degree: "" }]);
+  const addEdu = () => setEducation((e) => [...e, emptyEducation()]);
   const removeEdu = (id: string | number) =>
     setEducation((e) => e.filter((x) => x.id !== id));
-  const updateEdu = (
-    id: string | number,
-    field: "university" | "degree",
-    val: string,
-  ) =>
+  const updateEdu = (id: string | number, field: EducationField, val: string) =>
     setEducation((e) =>
       e.map((x) => (x.id === id ? { ...x, [field]: val } : x)),
     );

@@ -1,7 +1,7 @@
 "use client";
 
 import { ArrowLeftIcon, EduIcon } from "./Icons";
-import { EducationForm } from "./EducationForm";
+import { EducationForm, type EducationField } from "./EducationForm";
 import { CertificationsForm } from "./CertificationsForm";
 import type { CertificationEntry, EducationEntry } from "../_types/types";
 
@@ -9,11 +9,7 @@ interface Props {
   education: EducationEntry[];
   onAdd: () => void;
   onRemove: (id: number | string) => void;
-  onUpdate: (
-    id: number | string,
-    field: "university" | "degree",
-    value: string,
-  ) => void;
+  onUpdate: (id: number | string, field: EducationField, value: string) => void;
   certifications: CertificationEntry[];
   certificationErrors?: Record<string, string>;
   onAddCertification: () => void;
