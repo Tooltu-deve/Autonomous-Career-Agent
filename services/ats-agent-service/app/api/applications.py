@@ -10,6 +10,7 @@ from app.core.db import get_db
 from app.models.application import ApplicationORM
 from app.models.cv import CvGenerationORM
 from app.models.job import JobORM
+from app.models.report import AtsReportORM
 from app.schemas.applications import (
     ApplicationDetail,
     ApplicationListItem,
@@ -116,3 +117,43 @@ def update_pipeline_stage(
     return ApplicationStageResponse(
         id=app_row.id, pipeline_stage=app_row.pipeline_stage
     )
+
+
+# Trạng thái pipeline đang chạy — chặn xoá để không có message nào đang bay
+# tham chiếu tới dòng vừa bị xoá (xem spec §"Chặn xoá khi pipeline đang chạy").
+IN_FLIGHT_STATUSES = frozenset(
+    {"cv_queued", "cv_generating", "cv_generated", "ats_scoring"}
+)
+
+
+@router.delete("/{application_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_application(
+    application_id: uuid.UUID,
+    user_id: uuid.UUID = Depends(current_user_id),
+    db: Session = Depends(get_db),
+) -> None:
+    """Xoá application kèm CV và ATS report của nó.
+
+    Xoá tường minh chứ không dựa vào ON DELETE CASCADE: ORM của service này
+    không khai báo ForeignKey nào, nên bảng SQLite trong test không có cascade
+    và dữ liệu con sẽ bị bỏ mồ côi. Trên Postgres cascade thật vẫn chạy — xoá
+    tường minh chỉ là làm trước, không xung đột.
+    """
+    app_row = db.get(ApplicationORM, application_id)
+    if app_row is None or app_row.user_id != user_id:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Application không tồn tại")
+
+    if app_row.generation_status in IN_FLIGHT_STATUSES:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "CV đang được tạo, không xoá được. Thử lại sau khi xong.",
+        )
+
+    cv = _cv_of(db, app_row.id)
+    if cv is not None:
+        db.query(AtsReportORM).filter(AtsReportORM.cv_generation_id == cv.id).delete(
+            synchronize_session=False
+        )
+        db.delete(cv)
+    db.delete(app_row)
+    db.commit()
