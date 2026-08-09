@@ -42,6 +42,9 @@ export default function ProfileSetupPage() {
     addEducation,
     removeEducation,
     updateEducation,
+    addCertification,
+    removeCertification,
+    updateCertification,
     addProject,
     removeProject,
     updateProject,
@@ -54,7 +57,7 @@ export default function ProfileSetupPage() {
 
   const STEPS = [
     { num: 1, label: "Personal Info", icon: <UserIcon /> },
-    { num: 2, label: "Education", icon: <EduIcon /> },
+    { num: 2, label: "Education & Certs", icon: <EduIcon /> },
     { num: 3, label: "Skills", icon: <TrendIcon /> },
     { num: 4, label: "Other", icon: <LayersIcon /> },
   ];
@@ -153,6 +156,11 @@ export default function ProfileSetupPage() {
                 onAdd={addEducation}
                 onRemove={removeEducation}
                 onUpdate={updateEducation}
+                certifications={data.certifications}
+                certificationErrors={errors.certifications}
+                onAddCertification={addCertification}
+                onRemoveCertification={removeCertification}
+                onUpdateCertification={updateCertification}
                 onBack={() => goToStep(1)}
                 onNext={() => goToStep(3)}
               />

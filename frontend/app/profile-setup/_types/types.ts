@@ -36,10 +36,14 @@ export interface ProjectEntry {
   server?: ExperienceServerFields;
 }
 
+/** Tầng UI giữ month/year TÁCH RỜI, không giữ chuỗi ISO — nếu gộp thì chọn
+ * tháng khi chưa có năm sẽ bị mất (join trả rỗng). Ghép sang ISO chỉ ở
+ * toProfileUpdate(), tách từ ISO chỉ khi nạp dữ liệu từ server. */
 export interface CertificationEntry {
+  id: number | string;
   title: string;
-  obtain_date: string;
-  display_order?: number;
+  month: string;
+  year: string;
 }
 
 export interface ProfileData {
@@ -55,7 +59,8 @@ export interface ProfileData {
   education: EducationEntry[];
   skills: string[];
   projects: ProjectEntry[];
-  /** Ride-along: wizard chưa sửa certifications, giữ lại để PUT không xoá mất. */
+  /** Wizard sửa certifications ở step 2: lưu tách month/year riêng, chỉ
+   * ghép thành chuỗi ISO (obtain_date) trong toProfileUpdate() trước khi gửi. */
   certifications: CertificationEntry[];
 }
 

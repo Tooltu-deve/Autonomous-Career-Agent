@@ -15,12 +15,19 @@ import {
 } from "@/lib/api";
 import type { ProfileUpdate } from "@/types/api";
 import type { ProfileData } from "../_types/types";
-import { validateProfile, type ProfileFormErrors } from "@/lib/validation";
+import {
+  validateCertifications,
+  validateProfile,
+  type ProfileFormErrors,
+} from "@/lib/validation";
+import { joinObtainDate, splitObtainDate } from "@/lib/format";
 
 /* Wizard dùng đúng bộ luật chung — không thêm luật riêng.
  * `name` cố tình KHÔNG validate: nó luôn được prefill từ session và
  * `toProfileUpdate()` không gửi nó đi đâu cả (bảng profiles không có cột name). */
-export type FormErrors = ProfileFormErrors;
+export type FormErrors = ProfileFormErrors & {
+  certifications?: Record<string, string>;
+};
 
 /* ── Utility: simple unique ID generator ── */
 let nextId = 100;
@@ -76,7 +83,13 @@ function toProfileUpdate(data: ProfileData): ProfileUpdate {
         description: e.server?.description ?? null,
         display_order: i,
       })),
-    certifications: data.certifications,
+    certifications: data.certifications
+      .filter((c) => c.title.trim() && c.month && c.year)
+      .map((c, i) => ({
+        title: c.title.trim(),
+        obtain_date: joinObtainDate(c.month, c.year),
+        display_order: i,
+      })),
     skills: data.skills,
   };
 }
@@ -131,12 +144,13 @@ export function useProfileSetup() {
           skills: prof.skills?.length
             ? prof.skills.map((s) => s.skill_name)
             : d.skills,
-          // Giữ nguyên certifications từ server — wizard không sửa mục này
+          // Nạp từ server: dùng lại id thật của server làm khoá, tách ISO ra
+          // month/year cho UI.
           certifications:
-            prof.certifications?.map((c, i) => ({
+            prof.certifications?.map((c) => ({
+              id: c.id,
               title: c.title,
-              obtain_date: c.obtain_date,
-              display_order: c.display_order ?? i,
+              ...splitObtainDate(c.obtain_date),
             })) ?? d.certifications,
           education: prof.educations?.length
             ? prof.educations.map((e, idx) => ({
@@ -251,6 +265,39 @@ export function useProfileSetup() {
     }));
   };
 
+  /* ── Certifications ── */
+  const addCertification = () => {
+    setData((d) => ({
+      ...d,
+      certifications: [
+        ...d.certifications,
+        { id: uid(), title: "", month: "", year: "" },
+      ],
+    }));
+    showToast("Added new certification entry");
+  };
+
+  const removeCertification = (id: number | string) => {
+    setData((d) => ({
+      ...d,
+      certifications: d.certifications.filter((c) => c.id !== id),
+    }));
+    showToast("Entry removed");
+  };
+
+  const updateCertification = (
+    id: number | string,
+    field: "title" | "month" | "year",
+    value: string,
+  ) => {
+    setData((d) => ({
+      ...d,
+      certifications: d.certifications.map((c) =>
+        c.id === id ? { ...c, [field]: value } : c,
+      ),
+    }));
+  };
+
   /* ── Projects ── */
   const addProject = () => {
     setData((d) => ({
@@ -300,6 +347,13 @@ export function useProfileSetup() {
       if (Object.keys(errs).length > 0) {
         setErrors(errs);
         goToStep(1); // phone nằm ở step 1
+        return;
+      }
+
+      const certErrs = validateCertifications(data.certifications);
+      if (Object.keys(certErrs).length > 0) {
+        setErrors({ certifications: certErrs });
+        goToStep(2); // chứng chỉ nằm ở step 2
         return;
       }
     }
@@ -352,6 +406,9 @@ export function useProfileSetup() {
     addEducation,
     removeEducation,
     updateEducation,
+    addCertification,
+    removeCertification,
+    updateCertification,
     addProject,
     removeProject,
     updateProject,

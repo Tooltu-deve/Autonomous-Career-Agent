@@ -3,15 +3,20 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
 import { getPreferences, getProfile, putProfile } from "@/lib/api";
-import { getInitials } from "@/lib/format";
+import { getInitials, joinObtainDate, splitObtainDate } from "@/lib/format";
 import { KEYS } from "@/lib/storage";
-import { validateProfile, type ProfileFormErrors } from "@/lib/validation";
+import {
+  validateCertifications,
+  validateProfile,
+  type CertificationRow,
+  type ProfileFormErrors,
+} from "@/lib/validation";
 import type {
-  CertificationIn,
   PreferencesResponse,
   ProfileResponse,
   TemplateName,
 } from "@/types/api";
+import { CertificationsForm } from "@/app/profile-setup/_components/CertificationsForm";
 import { EducationForm } from "@/app/profile-setup/_components/EducationForm";
 import { ProjectsForm } from "@/app/profile-setup/_components/ProjectsForm";
 import { SkillsForm } from "@/app/profile-setup/_components/SkillsForm";
@@ -58,8 +63,7 @@ interface DisplayProfile {
   summary: string;
   experiences: ProjectEntry[];
   education: EducationEntry[];
-  /** Ride-along: chưa sửa được trên trang này, giữ lại để PUT không xoá mất. */
-  certifications: CertificationIn[];
+  certifications: CertificationRow[];
   skills: string[];
   preferences: {
     targetRole: string;
@@ -69,11 +73,39 @@ interface DisplayProfile {
 }
 
 type ActiveModal =
-  "basic" | "summary" | "projects" | "education" | "skills" | null;
+  | "basic"
+  | "summary"
+  | "projects"
+  | "education"
+  | "certifications"
+  | "skills"
+  | null;
 
 let _uid = 1000;
 function uid() {
   return String(++_uid);
+}
+
+const MONTH_LABELS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+/** "05" + "2024" -> "May 2024". Rỗng nếu thiếu một trong hai. */
+function formatMonthYear(month: string, year: string): string {
+  const idx = Number(month) - 1;
+  if (!year || idx < 0 || idx > 11) return "";
+  return `${MONTH_LABELS[idx]} ${year}`;
 }
 
 /* ═══════════════════════════════════════════════════
@@ -200,10 +232,10 @@ export default function MasterProfilePage() {
               },
             })) ?? [],
           certifications:
-            prof?.certifications?.map((c, i) => ({
+            prof?.certifications?.map((c) => ({
+              id: c.id,
               title: c.title,
-              obtain_date: c.obtain_date,
-              display_order: c.display_order ?? i,
+              ...splitObtainDate(c.obtain_date),
             })) ?? [],
           skills: prof?.skills?.map((s) => s.skill_name) ?? [],
           preferences: {
@@ -237,6 +269,7 @@ export default function MasterProfilePage() {
         summary: string;
         experiences: ProjectEntry[];
         education: EducationEntry[];
+        certifications: CertificationRow[];
         skills: string[];
       }>,
     ) => {
@@ -258,11 +291,15 @@ export default function MasterProfilePage() {
           patch.summary !== undefined ? patch.summary : profile.summary;
         const mergedExp = patch.experiences ?? profile.experiences;
         const mergedEdu = patch.education ?? profile.education;
+        const mergedCerts = patch.certifications ?? profile.certifications;
         const mergedSkills = patch.skills ?? profile.skills;
 
         // Filter once — use for both PUT and setProfile so UI stays in sync
         const filteredExp = mergedExp.filter((e) => e.name.trim());
         const filteredEdu = mergedEdu.filter((e) => e.university.trim());
+        const filteredCerts = mergedCerts.filter(
+          (c) => c.title.trim() && c.month && c.year,
+        );
 
         await putProfile({
           headline: mergedHeadline.trim() || null,
@@ -289,9 +326,11 @@ export default function MasterProfilePage() {
             description: e.server?.description ?? null,
             display_order: i,
           })),
-          // Ride-along: trang này chưa sửa certifications, gửi lại nguyên vẹn
-          // để PUT (thay toàn bộ) không xoá mất.
-          certifications: profile.certifications,
+          certifications: filteredCerts.map((c, i) => ({
+            title: c.title.trim(),
+            obtain_date: joinObtainDate(c.month, c.year),
+            display_order: i,
+          })),
           skills: mergedSkills,
         });
 
@@ -306,6 +345,7 @@ export default function MasterProfilePage() {
           summary: mergedSummary,
           experiences: filteredExp,
           education: filteredEdu,
+          certifications: filteredCerts,
           skills: mergedSkills,
         }));
 
@@ -641,6 +681,57 @@ export default function MasterProfilePage() {
               )}
             </div>
           </div>
+
+          {/* Certifications */}
+          <div className={s.sectionCard}>
+            <div className={s.cardHeader}>
+              <div className={s.cardTitle}>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <circle cx="12" cy="8" r="6" />
+                  <path d="M15.5 13.5 17 22l-5-3-5 3 1.5-8.5" />
+                </svg>
+                Certifications
+              </div>
+              <button
+                className={s.btnAddItem}
+                onClick={() => setActiveModal("certifications")}
+                type="button"
+              >
+                + Add / Edit
+              </button>
+            </div>
+
+            <div className={s.timelineList}>
+              {profile.certifications.length > 0 ? (
+                profile.certifications.map((cert) => (
+                  <div key={cert.id} className={s.timelineItem}>
+                    <div
+                      className={s.itemLogo}
+                      style={{ background: "var(--surface-2)" }}
+                    >
+                      📜
+                    </div>
+                    <div className={s.itemBody}>
+                      <div className={s.itemRole}>{cert.title}</div>
+                      <div className={s.itemCompany}>
+                        {formatMonthYear(cert.month, cert.year)}
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div style={{ color: "#888", fontSize: "13px" }}>
+                  No certifications — click &apos;+ Add / Edit&apos; to add one.
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
         {/* Right Sidebar */}
@@ -816,6 +907,16 @@ export default function MasterProfilePage() {
           initialEducation={profile.education}
           saving={saving}
           onSave={(edu) => void saveProfile({ education: edu })}
+          onClose={() => setActiveModal(null)}
+        />
+      )}
+
+      {/* Certifications Modal */}
+      {activeModal === "certifications" && (
+        <CertificationsModal
+          initialCertifications={profile.certifications}
+          saving={saving}
+          onSave={(certs) => void saveProfile({ certifications: certs })}
           onClose={() => setActiveModal(null)}
         />
       )}
@@ -1168,6 +1269,71 @@ function EducationModal({
         onAdd={addEdu}
         onRemove={removeEdu}
         onUpdate={updateEdu}
+      />
+    </ModalWrapper>
+  );
+}
+
+/* ═══════════════════════════════════════════════════
+   Certifications Modal (uses shared CertificationsForm component)
+═══════════════════════════════════════════════════ */
+function CertificationsModal({
+  initialCertifications,
+  saving,
+  onSave,
+  onClose,
+}: {
+  initialCertifications: CertificationRow[];
+  saving: boolean;
+  onSave: (certs: CertificationRow[]) => void;
+  onClose: () => void;
+}) {
+  const [certifications, setCertifications] = useState<CertificationRow[]>(
+    initialCertifications.length > 0
+      ? initialCertifications
+      : [{ id: uid(), title: "", month: "", year: "" }],
+  );
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const addCert = () =>
+    setCertifications((c) => [
+      ...c,
+      { id: uid(), title: "", month: "", year: "" },
+    ]);
+  const removeCert = (id: string | number) =>
+    setCertifications((c) => c.filter((x) => x.id !== id));
+  const updateCert = (
+    id: string | number,
+    field: "title" | "month" | "year",
+    val: string,
+  ) =>
+    setCertifications((c) =>
+      c.map((x) => (x.id === id ? { ...x, [field]: val } : x)),
+    );
+
+  const handleSave = () => {
+    const errs = validateCertifications(certifications);
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      return;
+    }
+    setErrors({});
+    onSave(certifications);
+  };
+
+  return (
+    <ModalWrapper
+      title="📜 Certifications"
+      onClose={onClose}
+      onSave={handleSave}
+      saving={saving}
+    >
+      <CertificationsForm
+        certifications={certifications}
+        errors={errors}
+        onAdd={addCert}
+        onRemove={removeCert}
+        onUpdate={updateCert}
       />
     </ModalWrapper>
   );

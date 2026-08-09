@@ -1300,6 +1300,40 @@
   stroke: #62d26f;
 }
 
+.ps-select {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e4e4e4;
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: #1e1f21;
+  outline: none;
+  cursor: pointer;
+  transition:
+    border-color 120ms,
+    box-shadow 120ms;
+}
+
+.ps-select:focus {
+  border-color: #f06a6a;
+  box-shadow: 0 0 0 3px #fce8e6;
+}
+
+.ps-field-error-state .ps-select {
+  border-color: #e8384f;
+}
+
+.ps-section-divider {
+  margin: 22px 0 12px;
+  padding-top: 18px;
+  border-top: 1px solid #e4e4e4;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1e1f21;
+}
+
 @media (max-width: 1020px) {
   .ps-workspace {
     grid-template-columns: 1fr;
