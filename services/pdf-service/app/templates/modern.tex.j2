@@ -41,7 +41,7 @@
 \setlength{\columnsep}{0.04\paperwidth}
 \begin{paracol}{2}
 
-% ---------- LEFT SIDEBAR: summary + skills ----------
+% ---------- LEFT SIDEBAR: contact + education ----------
 \switchcolumn[0]
 \raggedright\noindent\colorbox{Charcoal}{%
 \begin{minipage}[t][\dimexpr\paperheight-5pt\relax][t]{\linewidth}
@@ -59,16 +59,20 @@
 \BLOCK{ if hdr.linkedin_url }{\small\href{\VAR{hdr.linkedin_url | texurl}}{\color{white!88}\textbf{LinkedIn}}}\par\vspace{6pt}\BLOCK{ endif }
 \BLOCK{ endif }
 
-\BLOCK{ if cv.skills }
-\sidebarheading{SKILLS}
-\BLOCK{ for s in cv.skills }
-{\color{white!88}\small \VAR{s | tex}}\par\vspace{3pt}
+\BLOCK{ if cv.education }
+\sidebarheading{EDUCATION}
+\BLOCK{ for ed in cv.education }
+{\color{white!88}\small \textbf{\VAR{ed.school | tex}}}\par
+\BLOCK{ if ed.degree or ed.field_of_study }{\color{white!68}\small \BLOCK{ if ed.degree }\VAR{ed.degree | tex}\BLOCK{ endif }\BLOCK{ if ed.field_of_study }\BLOCK{ if ed.degree } --- \BLOCK{ endif }\VAR{ed.field_of_study | tex}\BLOCK{ endif }}\par\BLOCK{ endif }
+\BLOCK{ if ed.start_date | monthyear }{\color{white!55}\small \VAR{ed.start_date | monthyear | tex} -- \VAR{((ed.end_date | monthyear) or "Present") | tex}}\par\BLOCK{ endif }
+\BLOCK{ if ed.description }{\color{white!68}\small \VAR{ed.description | tex}}\par\BLOCK{ endif }
+\vspace{6pt}
 \BLOCK{ endfor }
 \BLOCK{ endif }
 
 \end{minipage}\end{minipage}}
 
-% ---------- RIGHT COLUMN: experience + education ----------
+% ---------- RIGHT COLUMN: summary + skills + experience ----------
 \switchcolumn[1]
 \vspace*{24pt}
 \rightskip=16pt
@@ -78,17 +82,15 @@
 {\small \VAR{cv.summary | tex}}\par
 \BLOCK{ endif }
 
+\BLOCK{ if cv.skills }
+\cvsection{SKILLS}
+{\small \VAR{(cv.skills | map("tex") | join(", "))}}\par
+\BLOCK{ endif }
+
 \BLOCK{ if cv.experience }
 \cvsection{WORK EXPERIENCE}
 \BLOCK{ for e in cv.experience }
 \cventry{\VAR{e.title | tex}}{\BLOCK{ if e.start_date | monthyear }\VAR{e.start_date | monthyear | tex} -- \VAR{((e.end_date | monthyear) or "Present") | tex}\BLOCK{ endif }}{\VAR{e.organization | tex}}{\BLOCK{ if e.description }\VAR{e.description | tex}\BLOCK{ endif }}
-\BLOCK{ endfor }
-\BLOCK{ endif }
-
-\BLOCK{ if cv.education }
-\cvsection{EDUCATION}
-\BLOCK{ for ed in cv.education }
-\cventry{\VAR{ed.school | tex}}{\BLOCK{ if ed.start_date | monthyear }\VAR{ed.start_date | monthyear | tex} -- \VAR{((ed.end_date | monthyear) or "Present") | tex}\BLOCK{ endif }}{\BLOCK{ if ed.degree }\VAR{ed.degree | tex}\BLOCK{ endif }\BLOCK{ if ed.field_of_study } --- \VAR{ed.field_of_study | tex}\BLOCK{ endif }}{\BLOCK{ if ed.description }\VAR{ed.description | tex}\BLOCK{ endif }}
 \BLOCK{ endfor }
 \BLOCK{ endif }
 
