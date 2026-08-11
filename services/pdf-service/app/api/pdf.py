@@ -23,7 +23,7 @@ def export_pdf(data: ExportRequest) -> Response:
         # whitelist đã chặn ở Pydantic; đây là phòng khi thiếu file template.
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Template không tồn tại: {data.template}",
+            detail=f"Template not found: {data.template}",
         )
 
     try:
@@ -31,7 +31,7 @@ def export_pdf(data: ExportRequest) -> Response:
     except compiler.CompileError as exc:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail=f"Xuất PDF thất bại: {exc}",
+            detail=f"Unable to create the PDF file, please try again. ({exc})",
         )
 
     return Response(
