@@ -10,6 +10,9 @@ _SKIP = {
     "keep-alive",
     "transfer-encoding",
     "upgrade",
+    # x-user-id do gateway tự gắn sau khi xác thực JWT — không bao giờ được
+    # nhận từ client, nếu không sẽ là lỗ hổng giả mạo danh tính (impersonation).
+    "x-user-id",
 }
 
 

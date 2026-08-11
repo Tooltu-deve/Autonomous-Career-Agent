@@ -81,21 +81,21 @@
 \BLOCK{ if cv.experience }
 \cvsection{WORK EXPERIENCE}
 \BLOCK{ for e in cv.experience }
-\cventry{\VAR{e.title | tex}}{\BLOCK{ if e.start_date }\VAR{e.start_date | tex} -- \VAR{(e.end_date or "Present") | tex}\BLOCK{ endif }}{\VAR{e.organization | tex}}{\BLOCK{ if e.description }\VAR{e.description | tex}\BLOCK{ endif }}
+\cventry{\VAR{e.title | tex}}{\BLOCK{ if e.start_date | monthyear }\VAR{e.start_date | monthyear | tex} -- \VAR{((e.end_date | monthyear) or "Present") | tex}\BLOCK{ endif }}{\VAR{e.organization | tex}}{\BLOCK{ if e.description }\VAR{e.description | tex}\BLOCK{ endif }}
 \BLOCK{ endfor }
 \BLOCK{ endif }
 
 \BLOCK{ if cv.education }
 \cvsection{EDUCATION}
 \BLOCK{ for ed in cv.education }
-\cventry{\VAR{ed.school | tex}}{\BLOCK{ if ed.start_date }\VAR{ed.start_date | tex} -- \VAR{(ed.end_date or "Present") | tex}\BLOCK{ endif }}{\BLOCK{ if ed.degree }\VAR{ed.degree | tex}\BLOCK{ endif }\BLOCK{ if ed.field_of_study } --- \VAR{ed.field_of_study | tex}\BLOCK{ endif }}{\BLOCK{ if ed.description }\VAR{ed.description | tex}\BLOCK{ endif }}
+\cventry{\VAR{ed.school | tex}}{\BLOCK{ if ed.start_date | monthyear }\VAR{ed.start_date | monthyear | tex} -- \VAR{((ed.end_date | monthyear) or "Present") | tex}\BLOCK{ endif }}{\BLOCK{ if ed.degree }\VAR{ed.degree | tex}\BLOCK{ endif }\BLOCK{ if ed.field_of_study } --- \VAR{ed.field_of_study | tex}\BLOCK{ endif }}{\BLOCK{ if ed.description }\VAR{ed.description | tex}\BLOCK{ endif }}
 \BLOCK{ endfor }
 \BLOCK{ endif }
 
 \BLOCK{ if cv.certifications }
 \cvsection{CERTIFICATIONS}
 \BLOCK{ for cert in cv.certifications }
-\cventry{\VAR{cert.title | tex}}{\VAR{cert.obtain_date | tex}}{}{}
+\cventry{\VAR{cert.title | tex}}{\VAR{cert.obtain_date | monthyear | tex}}{}{}
 \BLOCK{ endfor }
 \BLOCK{ endif }
 
