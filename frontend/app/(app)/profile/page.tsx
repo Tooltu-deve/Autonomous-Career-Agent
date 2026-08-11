@@ -1,8 +1,13 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
-import Link from "next/link";
-import { getPreferences, getProfile, putProfile } from "@/lib/api";
+import "@/app/profile-preferences/profile-preferences.css";
+import {
+  getPreferences,
+  getProfile,
+  putPreferences,
+  putProfile,
+} from "@/lib/api";
 import { getInitials, joinMonthYear, splitMonthYear } from "@/lib/format";
 import { KEYS } from "@/lib/storage";
 import {
@@ -15,6 +20,7 @@ import {
 import type {
   PreferencesResponse,
   ProfileResponse,
+  RemotePreference,
   TemplateName,
 } from "@/types/api";
 import { CertificationsForm } from "@/app/profile-setup/_components/CertificationsForm";
@@ -28,6 +34,10 @@ import {
   type ExperienceField,
   type ExperienceItem,
 } from "@/app/profile-setup/_components/ExperienceForm";
+import {
+  PreferencesForm,
+  type WorkFormat,
+} from "@/app/profile-setup/_components/PreferencesForm";
 import { SkillsForm } from "@/app/profile-setup/_components/SkillsForm";
 import { TemplatePicker } from "@/app/profile-setup/_components/TemplatePicker";
 import "@/app/profile-setup/profile-setup.css";
@@ -65,6 +75,7 @@ type ActiveModal =
   | "education"
   | "certifications"
   | "skills"
+  | "preferences"
   | null;
 
 let _uid = 1000;
@@ -381,6 +392,57 @@ export default function MasterProfilePage() {
       }
     },
     [profile, showToast],
+  );
+
+  const savePreferences = useCallback(
+    async (data: {
+      positions: string[];
+      formats: WorkFormat[];
+      location: string;
+    }) => {
+      const targetRole = data.positions[0]?.trim() || "";
+      const remotePreference: RemotePreference | null = data.formats.includes(
+        "hybrid",
+      )
+        ? "hybrid"
+        : data.formats.includes("remote")
+          ? "remote"
+          : data.formats.includes("onsite")
+            ? "onsite"
+            : null;
+
+      setSaving(true);
+      try {
+        await putPreferences({
+          target_role: targetRole,
+          preferred_locations: [
+            ...(data.location.trim() ? [data.location.trim()] : []),
+            ...(data.formats.includes("remote") ? ["Remote"] : []),
+          ],
+          remote_preference: remotePreference,
+        });
+
+        setProfile((prev) => ({
+          ...prev,
+          preferences: {
+            targetRole,
+            workType: remotePreference ? remotePreference.toUpperCase() : "",
+            preferredLocations: [
+              ...(data.location.trim() ? [data.location.trim()] : []),
+              ...(data.formats.includes("remote") ? ["Remote"] : []),
+            ],
+          },
+        }));
+
+        setActiveModal(null);
+        showToast("✓ Preferences saved successfully!");
+      } catch {
+        showToast("✗ Save failed — please try again.");
+      } finally {
+        setSaving(false);
+      }
+    },
+    [showToast],
   );
 
   const completionPercent = calculateCompletion(profile);
@@ -847,16 +909,20 @@ export default function MasterProfilePage() {
                 </svg>
                 Career Preferences
               </div>
-              <Link
-                href="/profile-preferences"
+              <button
+                onClick={() => setActiveModal("preferences")}
+                type="button"
                 style={{
                   fontSize: "12px",
                   fontWeight: 600,
                   color: "var(--primary-hover)",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
                 }}
               >
                 Edit
-              </Link>
+              </button>
             </div>
             <div className={s.prefItemRow}>
               <span className={s.prefLbl}>Target Role:</span>
@@ -979,6 +1045,16 @@ export default function MasterProfilePage() {
           initialSkills={profile.skills}
           saving={saving}
           onSave={(skills) => void saveProfile({ skills })}
+          onClose={() => setActiveModal(null)}
+        />
+      )}
+
+      {/* Preferences Modal */}
+      {activeModal === "preferences" && (
+        <PreferencesModal
+          initialPreferences={profile.preferences}
+          saving={saving}
+          onSave={(prefData) => void savePreferences(prefData)}
           onClose={() => setActiveModal(null)}
         />
       )}
@@ -1465,6 +1541,111 @@ function SkillsModal({
         setCustomSkill={setCustom}
         onRemoveSkill={removeSkill}
         onCustomAdd={handleCustomAdd}
+      />
+    </ModalWrapper>
+  );
+}
+
+/* ═══════════════════════════════════════════════════
+   Preferences Modal (uses shared PreferencesForm component)
+═══════════════════════════════════════════════════ */
+function PreferencesModal({
+  initialPreferences,
+  saving,
+  onSave,
+  onClose,
+}: {
+  initialPreferences: {
+    targetRole: string;
+    workType: string;
+    preferredLocations: string[];
+  };
+  saving: boolean;
+  onSave: (data: {
+    positions: string[];
+    formats: WorkFormat[];
+    location: string;
+  }) => void;
+  onClose: () => void;
+}) {
+  const [positions, setPositions] = useState<string[]>(() => {
+    if (!initialPreferences.targetRole) return [];
+    return initialPreferences.targetRole
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+  });
+
+  const [formats, setFormats] = useState<WorkFormat[]>(() => {
+    const wt = initialPreferences.workType.toLowerCase() as WorkFormat;
+    if (wt === "remote" || wt === "hybrid" || wt === "onsite") {
+      return [wt];
+    }
+    const fmtList: WorkFormat[] = [];
+    if (
+      initialPreferences.preferredLocations.some(
+        (l) => l.toLowerCase() === "remote",
+      )
+    ) {
+      fmtList.push("remote");
+    }
+    return fmtList;
+  });
+
+  const [location, setLocation] = useState<string>(() => {
+    const loc = initialPreferences.preferredLocations.find(
+      (l) => l.toLowerCase() !== "remote",
+    );
+    return loc || "";
+  });
+
+  const [posInput, setPosInput] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  const addPosition = (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed || positions.includes(trimmed)) return;
+    setPositions((prev) => [...prev, trimmed]);
+    setErrorMsg("");
+  };
+
+  const removePosition = (pos: string) => {
+    setPositions((prev) => prev.filter((p) => p !== pos));
+  };
+
+  const toggleFormat = (fmt: WorkFormat) => {
+    setFormats((prev) =>
+      prev.includes(fmt) ? prev.filter((f) => f !== fmt) : [...prev, fmt],
+    );
+  };
+
+  const handleSave = () => {
+    if (positions.length === 0) {
+      setErrorMsg("Please add at least one desired position.");
+      return;
+    }
+    setErrorMsg("");
+    onSave({ positions, formats, location });
+  };
+
+  return (
+    <ModalWrapper
+      title="🎯 Career Preferences"
+      onClose={onClose}
+      onSave={handleSave}
+      saving={saving}
+    >
+      <PreferencesForm
+        positions={positions}
+        posInput={posInput}
+        formats={formats}
+        location={location}
+        errorMsg={errorMsg}
+        setPosInput={setPosInput}
+        onAddPosition={addPosition}
+        onRemovePosition={removePosition}
+        onToggleFormat={toggleFormat}
+        setLocation={setLocation}
       />
     </ModalWrapper>
   );
