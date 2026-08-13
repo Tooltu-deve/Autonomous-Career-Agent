@@ -46,6 +46,7 @@ function Modal({
 function Resume({
   cv,
   header,
+  template,
   close,
   onSave,
   error,
@@ -53,6 +54,7 @@ function Resume({
 }: {
   cv: CvView;
   header: PdfHeader;
+  template: TemplateName;
   close: () => void;
   onSave: (content: CvContent, exportAfterSave: boolean) => void;
   error: string | null;
@@ -63,6 +65,7 @@ function Resume({
       <CvEditor
         cv={cv}
         header={header}
+        template={template}
         onClose={close}
         onSave={onSave}
         error={error}
@@ -486,6 +489,7 @@ export function CvManager() {
         <Resume
           cv={preview}
           header={pdfHeader}
+          template={profile?.preferred_template ?? "classic"}
           close={() => setPreview(null)}
           onSave={save}
           error={error}

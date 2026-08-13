@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { loadCvViews } from "@/lib/cv";
+import { cloneCvContent, loadCvViews } from "@/lib/cv";
 import { getApplication, listApplications } from "@/lib/api";
-import type { ApplicationDetail, ApplicationListItem } from "@/types/api";
+import type {
+  ApplicationDetail,
+  ApplicationListItem,
+  CvContent,
+} from "@/types/api";
 
 vi.mock("@/lib/api", () => ({
   listApplications: vi.fn(),
@@ -109,5 +113,24 @@ describe("loadCvViews — cover letter mapping", () => {
     expect(views[1].coverLetter).toBe("");
     // Placeholder path never needs the detail endpoint.
     expect(mockedGetApplication).not.toHaveBeenCalled();
+  });
+});
+
+describe("cloneCvContent", () => {
+  it("normalizes collection fields missing from a legacy CV", () => {
+    const legacyContent = {
+      summary: "Legacy CV",
+      experience: [],
+      education: [],
+      skills: [],
+    } as unknown as CvContent;
+
+    expect(cloneCvContent(legacyContent)).toEqual({
+      summary: "Legacy CV",
+      experience: [],
+      education: [],
+      certifications: [],
+      skills: [],
+    });
   });
 });

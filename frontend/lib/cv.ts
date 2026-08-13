@@ -122,7 +122,16 @@ export async function loadCvViews(): Promise<CvView[]> {
 }
 
 export function cloneCvContent(content: CvContent): CvContent {
-  return structuredClone(content);
+  // Stored CVs may predate fields such as `certifications`. Normalize at the
+  // UI boundary so legacy records cannot crash newer editor/preview code.
+  return structuredClone({
+    ...content,
+    summary: content.summary ?? "",
+    experience: content.experience ?? [],
+    education: content.education ?? [],
+    certifications: content.certifications ?? [],
+    skills: content.skills ?? [],
+  });
 }
 
 export function validateCvContent(content: CvContent): string | null {
