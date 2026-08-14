@@ -124,6 +124,7 @@ const MapPinSvg = () => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
+    stroke="currentColor"
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
@@ -465,12 +466,26 @@ export default function ProfilePreferencesPage() {
           {/* Right preview column */}
           <div className="pp-preview-col">
             <div className="pp-preview-card">
-              <div className="pp-section-head">
-                <h2>Preview preferences</h2>
-                <p>Live preview of your settings</p>
+              <div className="pp-pv-header">
+                <h3>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                  Live Preferences Preview
+                </h3>
+                <span className="pp-live-pill">🟢 Realtime</span>
               </div>
-            </div>
-            <div className="pp-preview-card">
+
               {/* User head */}
               <div className="pp-pv-head">
                 <div className="pp-pv-avatar">{userInitials}</div>
@@ -502,7 +517,7 @@ export default function ProfilePreferencesPage() {
               <div className="pp-pv-block">
                 <div className="pp-pv-label">Format</div>
                 {data.formats.length === 0 ? (
-                  <p className="pp-pv-empty">Select formats on the left.</p>
+                  <p className="pp-pv-empty">Select a format on the left.</p>
                 ) : (
                   <div className="pp-pv-fmt-wrap">
                     {data.formats.map((f) => (
