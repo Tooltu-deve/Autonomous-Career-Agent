@@ -83,9 +83,9 @@ const TEMPLATES: {
     id: "modern",
     name: "Modern",
     badge: "Recommended",
-    desc: "Two-column sans-serif layout with a dark sidebar for contact & skills.",
-    // modern.tex.j2: charcoal LEFT SIDEBAR (name, headline, CONTACT, SKILLS)
-    // + right column (SUMMARY, WORK EXPERIENCE, EDUCATION).
+    desc: "Two-column sans-serif layout with a dark sidebar for contact & education.",
+    // modern.tex.j2: charcoal LEFT SIDEBAR (name, headline, CONTACT, EDUCATION)
+    // + right column (SUMMARY, SKILLS, WORK EXPERIENCE).
     preview: (
       <div className="ps-tpl-preview ps-tpl-modern">
         <div className="ps-tpl-modern-side">
@@ -107,16 +107,23 @@ const TEMPLATES: {
             <br />
             Ho Chi Minh City
           </div>
-          <div className="ps-tpl-modern-shead">SKILLS</div>
-          <div className="ps-tpl-modern-item">python</div>
-          <div className="ps-tpl-modern-item">fastapi</div>
-          <div className="ps-tpl-modern-item">postgresql</div>
-          <div className="ps-tpl-modern-item">docker</div>
+          <div className="ps-tpl-modern-shead">EDUCATION</div>
+          <div className="ps-tpl-modern-item">
+            <b>University of Science</b>
+            <br />
+            BSc --- Computer Science
+            <br />
+            2019 -- 2023
+          </div>
         </div>
         <div className="ps-tpl-modern-main">
           <div className="ps-tpl-stitle-modern">SUMMARY</div>
           <div className="ps-tpl-entry">
             Backend engineer with 3 years of experience building reliable APIs.
+          </div>
+          <div className="ps-tpl-stitle-modern">SKILLS</div>
+          <div className="ps-tpl-entry">
+            python, fastapi, postgresql, docker
           </div>
           <div className="ps-tpl-stitle-modern">WORK EXPERIENCE</div>
           <div className="ps-tpl-row">
@@ -127,12 +134,6 @@ const TEMPLATES: {
           <div className="ps-tpl-bullet">
             Built REST APIs serving 10k users.
           </div>
-          <div className="ps-tpl-stitle-modern">EDUCATION</div>
-          <div className="ps-tpl-row">
-            <strong>University of Science</strong>
-            <span>2019 -- 2023</span>
-          </div>
-          <div className="ps-tpl-italic">BSc --- Computer Science</div>
         </div>
       </div>
     ),
