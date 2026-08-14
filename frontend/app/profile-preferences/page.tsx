@@ -388,9 +388,12 @@ export default function ProfilePreferencesPage() {
                       role="checkbox"
                       aria-checked={selected}
                       tabIndex={0}
-                      onKeyDown={(e) =>
-                        e.key === "Enter" && toggleFormat(fmt.key)
-                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          toggleFormat(fmt.key);
+                        }
+                      }}
                     >
                       <div
                         className={`pp-format-check ${selected ? "checked" : ""}`}

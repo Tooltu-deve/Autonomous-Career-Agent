@@ -240,9 +240,12 @@ export function PreferencesForm({
                 role="checkbox"
                 aria-checked={selected}
                 tabIndex={0}
-                onKeyDown={(e) =>
-                  e.key === "Enter" && onToggleFormat(fmt.key)
-                }
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    onToggleFormat(fmt.key);
+                  }
+                }}
                 style={{ padding: "14px 10px" }}
               >
                 <div
