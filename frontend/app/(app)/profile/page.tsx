@@ -1614,9 +1614,7 @@ function PreferencesModal({
   };
 
   const toggleFormat = (fmt: WorkFormat) => {
-    setFormats((prev) =>
-      prev.includes(fmt) ? prev.filter((f) => f !== fmt) : [...prev, fmt],
-    );
+    setFormats((prev) => (prev.includes(fmt) ? [] : [fmt]));
   };
 
   const handleSave = () => {

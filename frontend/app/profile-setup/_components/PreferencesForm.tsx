@@ -224,7 +224,7 @@ export function PreferencesForm({
         >
           <h2 style={{ fontSize: "15px" }}>Work Format</h2>
           <p style={{ fontSize: "12.5px" }}>
-            Choose formats that suit you — you can select more than one.
+            Choose the format that suits you best.
           </p>
         </div>
         <div className="pp-format-grid">

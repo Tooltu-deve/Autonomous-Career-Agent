@@ -86,7 +86,7 @@ const WORK_FORMATS: {
 function calcCompleteness(data: PreferencesData): number {
   let pct = 0;
   pct += Math.min(data.positions.length * 20, 40);
-  pct += Math.min(data.formats.length * 15, 30);
+  if (data.formats.length > 0) pct += 30;
   if (data.location) pct += 30;
   return Math.min(100, pct);
 }
@@ -208,9 +208,7 @@ export default function ProfilePreferencesPage() {
   const toggleFormat = (fmt: WorkFormat) => {
     setData((d) => ({
       ...d,
-      formats: d.formats.includes(fmt)
-        ? d.formats.filter((f) => f !== fmt)
-        : [...d.formats, fmt],
+      formats: d.formats.includes(fmt) ? [] : [fmt],
     }));
   };
 
@@ -373,8 +371,7 @@ export default function ProfilePreferencesPage() {
               <div className="pp-section-head">
                 <h2>Work Format</h2>
                 <p>
-                  Choose the formats that suit you — you can select more than
-                  one.
+                  Choose the format that suits you best.
                 </p>
               </div>
               <div className="pp-format-grid">
