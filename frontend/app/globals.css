@@ -2244,3 +2244,73 @@ select {
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* ── Job Description HTML renderer ──────────────────────────────────────────
+   Styles for sanitized HTML from Apify's job_description_raw_html.
+   All class / data-* attributes are stripped by DOMPurify before render,
+   so we style by element selectors only.
+   ──────────────────────────────────────────────────────────────────────── */
+.job-desc-html {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--ink);
+  word-break: break-word;
+}
+
+.job-desc-html h1,
+.job-desc-html h2,
+.job-desc-html h3,
+.job-desc-html h4,
+.job-desc-html h5,
+.job-desc-html h6 {
+  font-weight: 600;
+  color: var(--ink);
+  margin: 1.1em 0 0.35em;
+  line-height: 1.3;
+}
+
+.job-desc-html h1 { font-size: 16px; }
+.job-desc-html h2 { font-size: 14.5px; }
+.job-desc-html h3,
+.job-desc-html h4,
+.job-desc-html h5,
+.job-desc-html h6 { font-size: 13.5px; }
+
+.job-desc-html p {
+  margin: 0 0 0.75em;
+}
+
+.job-desc-html ul,
+.job-desc-html ol {
+  margin: 0.4em 0 0.75em 1.35em;
+  padding: 0;
+}
+
+.job-desc-html li {
+  margin-bottom: 0.3em;
+}
+
+.job-desc-html strong,
+.job-desc-html b {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.job-desc-html em,
+.job-desc-html i {
+  font-style: italic;
+}
+
+/* First element flush — remove top margin on the very first element */
+.job-desc-html > *:first-child {
+  margin-top: 0;
+}
+
+/* Plain-text fallback (when description_html is null) */
+.job-desc-plain {
+  font-size: 13.5px;
+  line-height: 1.7;
+  color: var(--ink);
+  white-space: pre-wrap;
+  word-break: break-word;
+}

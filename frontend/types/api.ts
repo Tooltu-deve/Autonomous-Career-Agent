@@ -124,6 +124,9 @@ export interface JobOut {
   seniority_level?: string | null;
   url?: string | null;
   description?: string | null;
+  /** Sanitized HTML from Apify's job_description_raw_html. Preferred for display.
+   *  Falls back to plain-text `description` when null/undefined. */
+  description_html?: string | null;
   posted_at?: string | null;
   scraped_at?: string | null;
   status: "active" | "expired" | "closed";
