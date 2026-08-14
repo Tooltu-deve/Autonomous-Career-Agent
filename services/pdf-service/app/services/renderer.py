@@ -115,6 +115,21 @@ _MONTH_NAMES = (
 )
 
 
+def bullets(value: object) -> list[str]:
+    r"""Chuẩn hoá `description` về danh sách bullet để template `for` được.
+
+    `render()` nhận dict thô (không qua Pydantic), nên cv_json cũ — nơi
+    description là một chuỗi "- A\n- B" — phải được tách ở đây. Nếu không,
+    Jinja lặp trên chuỗi và sinh ra một `\item` cho MỖI KÝ TỰ.
+    """
+    if value is None:
+        return []
+    if isinstance(value, str):
+        lines = (ln.strip().lstrip("-•*").strip() for ln in value.splitlines())
+        return [ln for ln in lines if ln]
+    return [str(v) for v in value if str(v).strip()]
+
+
 def month_year(value: object) -> str:
     """Định dạng ngày cho CV: date hoặc chuỗi ISO -> "May 2024".
 
@@ -158,6 +173,7 @@ _env.filters["tex"] = escape_tex
 _env.filters["texurl"] = escape_tex_url
 _env.filters["linklabel"] = link_label
 _env.filters["monthyear"] = month_year
+_env.filters["bullets"] = bullets
 
 
 def render(template: str, cv_data: dict, header: dict | None = None) -> str:

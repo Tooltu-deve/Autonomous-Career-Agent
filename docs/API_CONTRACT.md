@@ -361,6 +361,19 @@ Lỗi: `404` không tồn tại / không thuộc user; `422` giá trị ngoài e
 Do **cv-agent-service** sở hữu (bảng `cv_generations`). User xem preview + chỉnh sửa CV đã PASS
 trong CV Editor (React + Tiptap) trước khi xuất PDF.
 
+> **`description` trong CV là MẢNG chuỗi** — mỗi phần tử là một gạch đầu dòng, để template
+> render thành `itemize` thay vì một đoạn văn liền. Khác với profile (§A2), nơi `description`
+> là chuỗi tự do do user gõ.
+> ```json
+> "experience": [{
+>   "title": "Backend Developer", "organization": "ACME",
+>   "start_date": "2023-01-01", "end_date": null,
+>   "description": ["Built REST APIs serving 10k users", "Cut response time by 40%"]
+> }]
+> ```
+> Chuỗi vẫn được chấp nhận khi ghi (tự tách theo dòng) để `cv_json` sinh trước thay đổi này
+> không bị vỡ; nhưng response luôn trả về mảng.
+
 ### `GET /cvs/{cv_generation_id}` → `200`
 Trả nội dung CV đã sinh.
 ```json

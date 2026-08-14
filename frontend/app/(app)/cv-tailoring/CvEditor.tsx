@@ -24,13 +24,27 @@ const emptyExperience = (): ExperienceEntry => ({
   organization: "",
   start_date: null,
   end_date: null,
-  description: "",
+  description: [],
 });
 
 const emptyEducation = (): EducationEntry => ({
   school: "",
   degree: "",
+  description: [],
 });
+
+/* ── Bullets ↔ editable text ──
+ * The CV stores each responsibility as its own bullet, but the editor is a
+ * plain multi-line box: one line per bullet. Blank lines are dropped so a
+ * stray Enter does not become an empty bullet in the PDF. */
+const bulletsToText = (lines: string[] | string | null | undefined): string =>
+  Array.isArray(lines) ? lines.join("\n") : (lines ?? "");
+
+const textToBullets = (text: string): string[] =>
+  text
+    .split("\n")
+    .map((line) => line.replace(/^[-•*]\s*/, "").trim())
+    .filter(Boolean);
 
 function TextEditor({
   value,
@@ -223,11 +237,13 @@ export function CvEditor({
                 Description{" "}
                 <TextEditor
                   label={`Experience #${index + 1} description`}
-                  value={exp.description ?? ""}
-                  onChange={(description) =>
+                  value={bulletsToText(exp.description)}
+                  onChange={(text) =>
                     set(
                       "experience",
-                      updateExp(draft.experience, index, { description }),
+                      updateExp(draft.experience, index, {
+                        description: textToBullets(text),
+                      }),
                     )
                   }
                 />

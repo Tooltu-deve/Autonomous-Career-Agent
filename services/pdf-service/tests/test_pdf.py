@@ -447,3 +447,88 @@ def test_cv_omits_date_range_when_start_date_unparseable():
     assert "Local NGO" in tex
     assert "sometime in 2019" not in tex
     assert "Present" not in tex
+
+
+# ---- Bullet descriptions (SCRUM-75) ----
+CV_WITH_BULLETS = {
+    **CV,
+    "experience": [
+        {
+            "title": "Backend Developer",
+            "organization": "ACME",
+            "description": [
+                "Built REST APIs serving 10k users",
+                "Cut response time by 40%",
+                "Led a team of 3 engineers",
+            ],
+        }
+    ],
+    "education": [{"school": "HCMUS", "degree": "BSc", "description": ["GPA 3.6/4.0"]}],
+}
+
+
+def _description_items(tex: str, section: str) -> int:
+    """Đếm \\item thuộc phần mô tả, bỏ qua \\item của mục Skills."""
+    body = tex.split(section, 1)[1] if section in tex else tex
+    stop = body.find("Skills")
+    return body[: stop if stop > 0 else len(body)].count(r"\item")
+
+
+@pytest.mark.parametrize("tpl", ["classic", "modern", "academic"])
+def test_render_description_as_bullet_list(tpl):
+    """Mỗi dòng mô tả thành một \\item riêng, bọc trong itemize."""
+    tex = renderer.render(tpl, CV_WITH_BULLETS, HEADER)
+    assert r"\begin{itemize}" in tex
+    for line in ("Built REST APIs serving 10k users", "Led a team of 3 engineers"):
+        assert rf"\item {line}" in tex.replace(r"\%", "%"), tpl
+
+
+@pytest.mark.parametrize("tpl", ["classic", "modern", "academic"])
+def test_render_accepts_legacy_string_description(tpl):
+    """cv_json cũ (chuỗi "- A\\n- B") vẫn render đúng 2 bullet, không lặp ký tự."""
+    legacy = {
+        **CV,
+        "experience": [
+            {
+                "title": "Dev",
+                "organization": "ACME",
+                "description": "- Built REST APIs\n- Cut latency by 40%",
+            }
+        ],
+        "education": [],
+    }
+    tex = renderer.render(tpl, legacy, HEADER)
+    assert r"\item Built REST APIs" in tex
+    assert r"\item Cut latency by 40\%" in tex
+    # nếu Jinja lặp trên chuỗi thì sẽ có hàng chục \item một ký tự
+    assert tex.count(r"\item") < 6, f"{tpl}: có vẻ đang lặp theo ký tự"
+
+
+@pytest.mark.parametrize("desc", [[], None, ""])
+def test_render_omits_itemize_when_description_empty(desc):
+    """Không có mô tả -> không sinh itemize rỗng (LaTeX lỗi nếu itemize không item)."""
+    cv = {
+        **CV,
+        "experience": [{"title": "D", "organization": "A", "description": desc}],
+        "education": [],
+    }
+    tex = renderer.render("classic", cv, HEADER)
+    assert _description_items(tex, "Work Experience") == 0
+
+
+def test_bullet_lines_are_latex_escaped():
+    """Ký tự đặc biệt trong từng bullet vẫn được escape."""
+    cv = {
+        **CV,
+        "experience": [
+            {
+                "title": "D",
+                "organization": "A",
+                "description": ["Cut cost by 40% & $5k", "C++ _perf_ {test}"],
+            }
+        ],
+        "education": [],
+    }
+    tex = renderer.render("classic", cv, HEADER)
+    assert r"40\%" in tex and r"\&" in tex and r"\$" in tex
+    assert r"\_" in tex and r"\{" in tex
