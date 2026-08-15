@@ -43,7 +43,7 @@
 \cvsection{Education}
 \BLOCK{ for ed in cv.education }
 \academicentry{\VAR{ed.degree | tex}\BLOCK{ if ed.field_of_study } in \VAR{ed.field_of_study | tex}\BLOCK{ endif }}{\BLOCK{ if ed.start_date | monthyear }\VAR{ed.start_date | monthyear | tex} -- \VAR{((ed.end_date | monthyear) or "Present") | tex}\BLOCK{ endif }}{\VAR{ed.school | tex}}
-\BLOCK{ if ed.description }\begin{itemize}[leftmargin=*,nosep,topsep=2pt]\BLOCK{ for line in ed.description | bullets }\item \VAR{line | tex}
+\BLOCK{ if ed.description | bullets }\begin{itemize}[leftmargin=*,nosep,topsep=2pt]\BLOCK{ for line in ed.description | bullets }\item \VAR{line | tex}
 \BLOCK{ endfor }\end{itemize}\BLOCK{ endif }
 \BLOCK{ endfor }
 \BLOCK{ endif }
@@ -53,7 +53,7 @@
 \cvsection{Professional Appointments}
 \BLOCK{ for e in cv.experience }
 \academicentry{\VAR{e.title | tex}}{\BLOCK{ if e.start_date | monthyear }\VAR{e.start_date | monthyear | tex} -- \VAR{((e.end_date | monthyear) or "Present") | tex}\BLOCK{ endif }}{\VAR{e.organization | tex}}
-\BLOCK{ if e.description }\begin{itemize}[leftmargin=*,nosep,topsep=2pt]\BLOCK{ for line in e.description | bullets }\item \VAR{line | tex}
+\BLOCK{ if e.description | bullets }\begin{itemize}[leftmargin=*,nosep,topsep=2pt]\BLOCK{ for line in e.description | bullets }\item \VAR{line | tex}
 \BLOCK{ endfor }\end{itemize}\BLOCK{ endif }
 \BLOCK{ endfor }
 \BLOCK{ endif }

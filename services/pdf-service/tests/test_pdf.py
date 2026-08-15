@@ -516,6 +516,29 @@ def test_render_omits_itemize_when_description_empty(desc):
     assert _description_items(tex, "Work Experience") == 0
 
 
+# Các giá trị TRUTHY nhưng lọc xong không còn bullet nào. `if description` trần
+# sẽ mở itemize rồi không sinh \item -> LaTeX báo "perhaps a missing \item".
+BLANK_DESCRIPTIONS = [[""], ["   "], ["", ""], "\n", "-", "  \n  "]
+
+
+@pytest.mark.parametrize("tpl", ["classic", "modern", "academic"])
+@pytest.mark.parametrize("desc", BLANK_DESCRIPTIONS)
+def test_render_never_emits_empty_itemize(tpl, desc):
+    """Mô tả chỉ chứa khoảng trắng/dấu gạch -> KHÔNG mở itemize."""
+    cv = {
+        **CV,
+        "experience": [{"title": "D", "organization": "A", "description": desc}],
+        "education": [{"school": "HCMUS", "description": desc}],
+        "certifications": [],
+        "skills": [],
+    }
+    tex = renderer.render(tpl, cv, HEADER)
+    # Không có bullet nào -> cũng không được có \begin{itemize} nào (skills đã bỏ trống)
+    assert (
+        tex.count(r"\begin{itemize}") == 0
+    ), f"{tpl}: mở itemize rỗng với description={desc!r}"
+
+
 def test_bullet_lines_are_latex_escaped():
     """Ký tự đặc biệt trong từng bullet vẫn được escape."""
     cv = {

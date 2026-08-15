@@ -1,0 +1,107 @@
+import { describe, expect, it, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { CvEditor } from "../CvEditor";
+import type { CvView } from "@/lib/cv";
+import type { CvContent } from "@/types/api";
+
+// Tiptap cần DOM range API mà jsdom không có; editor không phải thứ đang test.
+vi.mock("@tiptap/react", () => ({
+  useEditor: () => null,
+  EditorContent: () => null,
+}));
+vi.mock("@tiptap/starter-kit", () => ({ default: {} }));
+
+const content = (over: Partial<CvContent> = {}): CvContent => ({
+  summary: "Backend engineer",
+  experience: [
+    {
+      title: "Backend Developer",
+      organization: "ACME",
+      start_date: "2023-01-01",
+      end_date: null,
+      description: ["Built REST APIs serving 10k users", "Cut latency by 40%"],
+    },
+  ],
+  education: [
+    {
+      school: "HCMUS",
+      degree: "BSc",
+      field_of_study: null,
+      start_date: null,
+      end_date: null,
+      description: ["GPA 3.6/4.0"],
+    },
+  ],
+  certifications: [],
+  skills: ["python"],
+  ...over,
+});
+
+const view = (over: Partial<CvContent> = {}): CvView => ({
+  cvId: "cv-1",
+  applicationId: "app-1",
+  title: "Backend Developer — ACME",
+  sourceJob: "Backend Developer at ACME",
+  atsScore: 85,
+  updatedAt: "2026-08-15T00:00:00Z",
+  editStatus: "draft",
+  generationStatus: "completed",
+  content: content(over),
+  matched: [],
+  missing: [],
+  recommendations: [],
+  coverLetter: "",
+});
+
+function renderEditor(over: Partial<CvContent> = {}) {
+  return render(
+    <CvEditor
+      cv={view(over)}
+      header={{ full_name: "Nguyen Van A", email: "a@example.com" }}
+      onSave={vi.fn()}
+      onClose={vi.fn()}
+      error={null}
+      notice={null}
+    />,
+  );
+}
+
+describe("CvEditor live preview", () => {
+  it("hiện mỗi dòng mô tả kinh nghiệm thành một bullet riêng", () => {
+    const { container } = renderEditor();
+
+    const first = screen.getByText("Built REST APIs serving 10k users");
+    const second = screen.getByText("Cut latency by 40%");
+
+    // mỗi dòng là một <li> riêng, không dồn vào một đoạn văn
+    expect(first.tagName).toBe("LI");
+    expect(second.tagName).toBe("LI");
+    expect(first.parentElement).toBe(second.parentElement);
+    expect(first.parentElement?.tagName).toBe("UL");
+    expect(container.querySelectorAll("ul li").length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("hiện mô tả học vấn dưới dạng bullet", () => {
+    renderEditor();
+    expect(screen.getByText("GPA 3.6/4.0").tagName).toBe("LI");
+  });
+
+  it("không hiện danh sách rỗng khi không có mô tả", () => {
+    const { container } = renderEditor({
+      experience: [
+        {
+          title: "Dev",
+          organization: "ACME",
+          start_date: null,
+          end_date: null,
+          description: [],
+        },
+      ],
+      education: [],
+      skills: [],
+    });
+
+    // chỉ còn các <ul> khác (nếu có), không có <li> mô tả nào
+    expect(container.querySelectorAll("ul li").length).toBe(0);
+  });
+});

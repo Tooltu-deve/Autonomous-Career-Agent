@@ -352,7 +352,13 @@ export function CvEditor({
                 {exp.title} — {exp.organization}
               </b>
               <small>{dateRange(exp.start_date, exp.end_date)}</small>
-              {exp.description && <p>• {exp.description}</p>}
+              {exp.description.length > 0 && (
+                <ul className={styles["cm-resume-bullets"]}>
+                  {exp.description.map((line, i) => (
+                    <li key={i}>{line}</li>
+                  ))}
+                </ul>
+              )}
             </section>
           ))}
           {draft.education.map((edu, index) => (
@@ -363,6 +369,13 @@ export function CvEditor({
                 {edu.degree ? ` — ${edu.degree}` : ""}
               </b>
               <small>{dateRange(edu.start_date, edu.end_date)}</small>
+              {edu.description.length > 0 && (
+                <ul className={styles["cm-resume-bullets"]}>
+                  {edu.description.map((line, i) => (
+                    <li key={i}>{line}</li>
+                  ))}
+                </ul>
+              )}
             </section>
           ))}
           <section className={styles["cm-resume-section"]}>
