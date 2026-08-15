@@ -86,4 +86,11 @@ describe("CvPreview", () => {
     expect(screen.getByLabelText("CV preview — Modern template")).toBeVisible();
     expect(screen.queryByText("Certifications")).not.toBeInTheDocument();
   });
+
+  it("formats experience dates as month and year only", () => {
+    render(<CvPreview content={content} header={header} template="classic" />);
+
+    expect(screen.getByText("January 2024 — Present")).toBeVisible();
+    expect(screen.queryByText("2024-01-01")).not.toBeInTheDocument();
+  });
 });

@@ -7,9 +7,19 @@ type Props = {
   template: TemplateName;
 };
 
+function formatMonthYear(iso?: string | null): string {
+  if (!iso) return "";
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
 function dateRange(start?: string | null, end?: string | null): string {
   if (!start && !end) return "";
-  return `${start ?? ""} — ${end ?? "Present"}`;
+  return `${formatMonthYear(start)} — ${formatMonthYear(end) || "Present"}`;
 }
 
 function Contact({ header }: { header: PdfHeader }) {

@@ -58,6 +58,7 @@ function renderEditor(over: Partial<CvContent> = {}) {
     <CvEditor
       cv={view(over)}
       header={{ full_name: "Nguyen Van A", email: "a@example.com" }}
+      template="classic"
       onSave={vi.fn()}
       onClose={vi.fn()}
       error={null}
