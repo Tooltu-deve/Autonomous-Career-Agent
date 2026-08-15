@@ -37,8 +37,9 @@ def cv_generation(
     parts += [
         "\n## Yêu cầu nội dung",
         "- summary: 3-4 câu, nêu số năm kinh nghiệm + thế mạnh khớp nhất với JD.",
-        "- description của mỗi kinh nghiệm: 2-4 gạch đầu dòng (phân cách bằng "
-        "'\\n- '), mở đầu bằng động từ hành động, ưu tiên thành quả đo đếm được.",
+        "- description của mỗi kinh nghiệm: MẢNG 2-4 chuỗi, mỗi chuỗi là một "
+        "gạch đầu dòng. KHÔNG kèm dấu '-' ở đầu chuỗi. Mở đầu bằng động từ "
+        "hành động, ưu tiên thành quả đo đếm được.",
         "- Dùng từ khóa xuất hiện trong JD ở mọi chỗ hợp lệ (chỉ khi hồ sơ thật "
         "sự có kinh nghiệm đó).",
         "- skills: sắp kỹ năng khớp JD lên đầu.",
@@ -51,11 +52,11 @@ def cv_generation(
         '  "summary": "Backend engineer with 3 years of experience...",\n'
         '  "experience": [{"title": "Backend Developer", "organization": "ACME",\n'
         '    "start_date": "2023-01-01", "end_date": null,\n'
-        '    "description": "- Built REST APIs serving 10k users'
-        '\\n- Cut response time by 40%"}],\n'
+        '    "description": ["Built REST APIs serving 10k users",\n'
+        '      "Cut response time by 40%"]}],\n'
         '  "education": [{"school": "HCMUS", "degree": "BSc",\n'
         '    "field_of_study": "Computer Science", "start_date": "2019-09-01",\n'
-        '    "end_date": "2023-06-01", "description": null}],\n'
+        '    "end_date": "2023-06-01", "description": []}],\n'
         '  "certifications": [{"title": "AWS Certified Developer",\n'
         '    "obtain_date": "2024-05-20"}],\n'
         '  "skills": ["python", "fastapi", "postgresql"]\n'

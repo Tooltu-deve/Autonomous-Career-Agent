@@ -511,6 +511,19 @@
   color: var(--cm-muted);
   line-height: 1.6;
 }
+/* Mô tả trong CV là danh sách bullet — preview phải khớp với bản PDF. */
+.cm-resume-bullets {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  list-style: disc;
+}
+.cm-resume-bullets li {
+  font-size: 13px;
+  color: var(--cm-muted);
+  line-height: 1.6;
+  margin-bottom: 2px;
+}
+
 .cm-resume-section small {
   float: right;
   color: var(--cm-subtle);
