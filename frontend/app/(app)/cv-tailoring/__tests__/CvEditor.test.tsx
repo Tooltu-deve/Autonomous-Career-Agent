@@ -66,6 +66,51 @@ function renderEditor(over: Partial<CvContent> = {}) {
   );
 }
 
+/* Tiptap tách paragraph bằng một dòng trống, nên chuỗi đi ra từ editor và
+ * chuỗi dựng lại từ bullet phải cùng dạng — nếu lệch, useEffect tưởng nội dung
+ * thay đổi và gọi setContent() sau mỗi phím, làm mất đoạn đang gõ. */
+describe("CvEditor bullet round-trip", () => {
+  const textToBullets = (text: string): string[] =>
+    text
+      .split("\n")
+      .map((line) => line.replace(/^[-•*]\s*/, "").trim())
+      .filter(Boolean);
+  const bulletsToText = (lines: string[]): string => lines.join("\n\n");
+  const sameContent = (a: string, b: string) =>
+    textToBullets(a).join(" ") === textToBullets(b).join(" ");
+
+  it("tách mỗi paragraph của editor thành một bullet", () => {
+    expect(textToBullets("text1\n\ntext2")).toEqual(["text1", "text2"]);
+    expect(textToBullets("text1\n\ntext2\n\ntext3")).toEqual([
+      "text1",
+      "text2",
+      "text3",
+    ]);
+  });
+
+  it("dựng lại chuỗi đúng dạng editor sinh ra", () => {
+    expect(bulletsToText(["text1", "text2"])).toBe("text1\n\ntext2");
+  });
+
+  it("không coi là thay đổi khi nội dung thực chất giống nhau", () => {
+    // đây chính là điều kiện khiến setContent() chạy oan và reset editor
+    for (const typed of [
+      "text1",
+      "text1\n\ntext2",
+      "text1\n\ntext2\n\n",
+      "text1\n\ntext2\n\ntext3",
+    ]) {
+      const rebuilt = bulletsToText(textToBullets(typed));
+      expect(sameContent(typed, rebuilt)).toBe(true);
+    }
+  });
+
+  it("bỏ dòng trống thừa, không tạo bullet rỗng", () => {
+    expect(textToBullets("text1\n\n\n\ntext2\n\n")).toEqual(["text1", "text2"]);
+    expect(textToBullets("   \n\n  ")).toEqual([]);
+  });
+});
+
 describe("CvEditor live preview", () => {
   it("hiện mỗi dòng mô tả kinh nghiệm thành một bullet riêng", () => {
     const { container } = renderEditor();
