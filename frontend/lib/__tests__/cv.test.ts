@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { cloneCvContent, loadCvViews } from "@/lib/cv";
+import { cloneCvContent, loadCvViews, validateCvContent } from "@/lib/cv";
 import { getApplication, listApplications } from "@/lib/api";
 import type {
   ApplicationDetail,
@@ -132,5 +132,35 @@ describe("cloneCvContent", () => {
       certifications: [],
       skills: [],
     });
+  });
+});
+
+describe("validateCvContent", () => {
+  const validContent = (): CvContent => ({
+    summary: "Backend engineer",
+    experience: [],
+    education: [],
+    certifications: [],
+    skills: [],
+  });
+
+  it("accepts a complete certification", () => {
+    expect(
+      validateCvContent({
+        ...validContent(),
+        certifications: [
+          { title: "AWS Certified Developer", obtain_date: "2024-05-01" },
+        ],
+      }),
+    ).toBeNull();
+  });
+
+  it("requires both the certification name and obtained date", () => {
+    expect(
+      validateCvContent({
+        ...validContent(),
+        certifications: [{ title: "AWS Certified Developer", obtain_date: "" }],
+      }),
+    ).toBe("Each certification needs a name and an obtained date.");
   });
 });

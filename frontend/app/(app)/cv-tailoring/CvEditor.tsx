@@ -10,6 +10,7 @@ import { CvPreview } from "./CvPreview";
 
 type ExperienceEntry = CvContent["experience"][number];
 type EducationEntry = CvContent["education"][number];
+type CertificationEntry = CvContent["certifications"][number];
 
 type Props = {
   cv: CvView;
@@ -32,7 +33,15 @@ const emptyExperience = (): ExperienceEntry => ({
 const emptyEducation = (): EducationEntry => ({
   school: "",
   degree: "",
+  field_of_study: "",
+  start_date: null,
+  end_date: null,
   description: [],
+});
+
+const emptyCertification = (): CertificationEntry => ({
+  title: "",
+  obtain_date: "",
 });
 
 /* ── Bullets ↔ editable text ──
@@ -98,6 +107,16 @@ function updateEdu(
   return education.map((e, i) => (i === index ? { ...e, ...patch } : e));
 }
 
+function updateCertification(
+  certifications: CertificationEntry[],
+  index: number,
+  patch: Partial<CertificationEntry>,
+): CertificationEntry[] {
+  return certifications.map((certification, i) =>
+    i === index ? { ...certification, ...patch } : certification,
+  );
+}
+
 export function CvEditor({
   cv,
   header,
@@ -136,6 +155,18 @@ export function CvEditor({
     setDraft((current) => ({
       ...current,
       education: current.education.filter((_, i) => i !== index),
+    }));
+
+  const addCertification = () =>
+    setDraft((current) => ({
+      ...current,
+      certifications: [...current.certifications, emptyCertification()],
+    }));
+
+  const removeCertification = (index: number) =>
+    setDraft((current) => ({
+      ...current,
+      certifications: current.certifications.filter((_, i) => i !== index),
     }));
 
   return (
@@ -311,6 +342,66 @@ export function CvEditor({
                   }
                 />
               </label>
+              <label>
+                Field of Study
+                <input
+                  value={edu.field_of_study ?? ""}
+                  placeholder="e.g., Computer Science"
+                  onChange={(event) =>
+                    set(
+                      "education",
+                      updateEdu(draft.education, index, {
+                        field_of_study: event.target.value || null,
+                      }),
+                    )
+                  }
+                />
+              </label>
+              <label>
+                Start date (YYYY-MM-DD)
+                <input
+                  value={edu.start_date ?? ""}
+                  placeholder="2020-09-01"
+                  onChange={(event) =>
+                    set(
+                      "education",
+                      updateEdu(draft.education, index, {
+                        start_date: event.target.value || null,
+                      }),
+                    )
+                  }
+                />
+              </label>
+              <label>
+                End date (YYYY-MM-DD, blank = present)
+                <input
+                  value={edu.end_date ?? ""}
+                  placeholder="2024-06-01"
+                  onChange={(event) =>
+                    set(
+                      "education",
+                      updateEdu(draft.education, index, {
+                        end_date: event.target.value || null,
+                      }),
+                    )
+                  }
+                />
+              </label>
+              <label>
+                Note (optional){" "}
+                <TextEditor
+                  label={`Education #${index + 1} note`}
+                  value={bulletsToText(edu.description)}
+                  onChange={(text) =>
+                    set(
+                      "education",
+                      updateEdu(draft.education, index, {
+                        description: textToBullets(text),
+                      }),
+                    )
+                  }
+                />
+              </label>
             </fieldset>
           ))}
 
@@ -320,6 +411,64 @@ export function CvEditor({
             onClick={addEducation}
           >
             + Add Education
+          </button>
+
+          {/* Certifications */}
+          {draft.certifications.map((certification, index) => (
+            <fieldset key={index} className={styles["cm-experience-fieldset"]}>
+              <legend>
+                Certification{" "}
+                {draft.certifications.length > 1 ? `#${index + 1}` : ""}
+                {draft.certifications.length > 1 && (
+                  <button
+                    type="button"
+                    className={styles["cm-danger-sm"]}
+                    onClick={() => removeCertification(index)}
+                    aria-label={`Remove certification #${index + 1}`}
+                  >
+                    Remove
+                  </button>
+                )}
+              </legend>
+              <label>
+                Certification name
+                <input
+                  value={certification.title}
+                  placeholder="e.g., AWS Certified Developer"
+                  onChange={(event) =>
+                    set(
+                      "certifications",
+                      updateCertification(draft.certifications, index, {
+                        title: event.target.value,
+                      }),
+                    )
+                  }
+                />
+              </label>
+              <label>
+                Obtained date (YYYY-MM-DD)
+                <input
+                  value={certification.obtain_date ?? ""}
+                  placeholder="2025-01-01"
+                  onChange={(event) =>
+                    set(
+                      "certifications",
+                      updateCertification(draft.certifications, index, {
+                        obtain_date: event.target.value,
+                      }),
+                    )
+                  }
+                />
+              </label>
+            </fieldset>
+          ))}
+
+          <button
+            type="button"
+            className={styles["cm-secondary"]}
+            onClick={addCertification}
+          >
+            + Add Certification
           </button>
 
           {/* Skills */}

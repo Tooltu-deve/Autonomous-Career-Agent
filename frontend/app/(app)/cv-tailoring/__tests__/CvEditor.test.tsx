@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { CvEditor } from "../CvEditor";
 import type { CvView } from "@/lib/cv";
 import type { CvContent } from "@/types/api";
@@ -53,13 +53,16 @@ const view = (over: Partial<CvContent> = {}): CvView => ({
   coverLetter: "",
 });
 
-function renderEditor(over: Partial<CvContent> = {}) {
+function renderEditor(
+  over: Partial<CvContent> = {},
+  onSave: (content: CvContent, exportAfterSave: boolean) => void = vi.fn(),
+) {
   return render(
     <CvEditor
       cv={view(over)}
       header={{ full_name: "Nguyen Van A", email: "a@example.com" }}
       template="classic"
-      onSave={vi.fn()}
+      onSave={onSave}
       onClose={vi.fn()}
       error={null}
       notice={null}
@@ -149,5 +152,105 @@ describe("CvEditor live preview", () => {
 
     // chỉ còn các <ul> khác (nếu có), không có <li> mô tả nào
     expect(container.querySelectorAll("ul li").length).toBe(0);
+  });
+});
+
+describe("CvEditor education", () => {
+  it("allows all education details to be edited and saved", () => {
+    const onSave = vi.fn();
+    renderEditor({}, onSave);
+
+    fireEvent.change(screen.getByLabelText("Field of Study"), {
+      target: { value: "Software Engineering" },
+    });
+    fireEvent.change(screen.getAllByLabelText("Start date (YYYY-MM-DD)")[1], {
+      target: { value: "2020-09-01" },
+    });
+    fireEvent.change(
+      screen.getAllByLabelText(
+        "End date (YYYY-MM-DD, blank = present)",
+      )[1],
+      { target: { value: "2024-06-01" } },
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(screen.getByText("Note (optional)")).toBeVisible();
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        education: [
+          {
+            school: "HCMUS",
+            degree: "BSc",
+            field_of_study: "Software Engineering",
+            start_date: "2020-09-01",
+            end_date: "2024-06-01",
+            description: ["GPA 3.6/4.0"],
+          },
+        ],
+      }),
+      false,
+    );
+  });
+});
+
+describe("CvEditor certifications", () => {
+  it("allows an existing certification to be edited and saved", () => {
+    const onSave = vi.fn();
+    renderEditor(
+      {
+        certifications: [
+          { title: "Cloud Certificate", obtain_date: "2025-01-01" },
+        ],
+      },
+      onSave,
+    );
+
+    fireEvent.change(screen.getByLabelText("Certification name"), {
+      target: { value: "AWS Certified Developer" },
+    });
+    fireEvent.change(screen.getByLabelText("Obtained date (YYYY-MM-DD)"), {
+      target: { value: "2024-05-20" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        certifications: [
+          { title: "AWS Certified Developer", obtain_date: "2024-05-20" },
+        ],
+      }),
+      false,
+    );
+  });
+
+  it("only shows remove controls after another certification is added", () => {
+    renderEditor({
+      certifications: [
+        { title: "Cloud Certificate", obtain_date: "2025-01-01" },
+      ],
+    });
+
+    expect(
+      screen.queryByRole("button", { name: "Remove certification #1" }),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "+ Add Certification" }),
+    );
+    expect(screen.getAllByLabelText("Certification name")).toHaveLength(2);
+    expect(
+      screen.getByRole("button", { name: "Remove certification #1" }),
+    ).toBeVisible();
+    expect(
+      screen.getByRole("button", { name: "Remove certification #2" }),
+    ).toBeVisible();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Remove certification #2" }),
+    );
+    expect(screen.getAllByLabelText("Certification name")).toHaveLength(1);
+    expect(
+      screen.queryByRole("button", { name: "Remove certification #1" }),
+    ).not.toBeInTheDocument();
   });
 });

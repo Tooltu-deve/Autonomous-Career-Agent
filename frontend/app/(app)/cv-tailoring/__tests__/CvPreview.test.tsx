@@ -93,4 +93,11 @@ describe("CvPreview", () => {
     expect(screen.getByText("January 2024 — Present")).toBeVisible();
     expect(screen.queryByText("2024-01-01")).not.toBeInTheDocument();
   });
+
+  it("formats certification dates as month and year only", () => {
+    render(<CvPreview content={content} header={header} template="classic" />);
+
+    expect(screen.getByText("January 2025")).toBeVisible();
+    expect(screen.queryByText("2025-01-01")).not.toBeInTheDocument();
+  });
 });

@@ -14,6 +14,10 @@ function formatMonthYear(iso?: string | null): string {
   return date.toLocaleDateString("en-US", {
     month: "long",
     year: "numeric",
+    // Backend dates are calendar dates rather than instants. Formatting in UTC
+    // prevents an ISO value such as 2025-01-01 from becoming December 2024 for
+    // users west of UTC.
+    timeZone: "UTC",
   });
 }
 
@@ -120,7 +124,7 @@ function Certifications({ content }: { content: CvContent }) {
       {certifications.map((entry, index) => (
         <div className={styles["cm-preview-entry"]} key={index}>
           <b>{entry.title}</b>
-          <small>{entry.obtain_date}</small>
+          <small>{formatMonthYear(entry.obtain_date)}</small>
         </div>
       ))}
     </section>

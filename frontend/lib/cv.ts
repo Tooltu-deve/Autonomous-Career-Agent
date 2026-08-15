@@ -144,5 +144,11 @@ export function validateCvContent(content: CvContent): string | null {
     return "Each experience needs a title and an organization.";
   if (!content.education.every((item) => item.school.trim()))
     return "Each education entry needs a school.";
+  if (
+    !content.certifications.every(
+      (item) => item.title.trim() && item.obtain_date?.trim(),
+    )
+  )
+    return "Each certification needs a name and an obtained date.";
   return null;
 }
