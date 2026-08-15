@@ -122,7 +122,16 @@ export async function loadCvViews(): Promise<CvView[]> {
 }
 
 export function cloneCvContent(content: CvContent): CvContent {
-  return structuredClone(content);
+  // Stored CVs may predate fields such as `certifications`. Normalize at the
+  // UI boundary so legacy records cannot crash newer editor/preview code.
+  return structuredClone({
+    ...content,
+    summary: content.summary ?? "",
+    experience: content.experience ?? [],
+    education: content.education ?? [],
+    certifications: content.certifications ?? [],
+    skills: content.skills ?? [],
+  });
 }
 
 export function validateCvContent(content: CvContent): string | null {
@@ -135,5 +144,11 @@ export function validateCvContent(content: CvContent): string | null {
     return "Each experience needs a title and an organization.";
   if (!content.education.every((item) => item.school.trim()))
     return "Each education entry needs a school.";
+  if (
+    !content.certifications.every(
+      (item) => item.title.trim() && item.obtain_date?.trim(),
+    )
+  )
+    return "Each certification needs a name and an obtained date.";
   return null;
 }
