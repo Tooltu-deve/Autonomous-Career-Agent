@@ -18,19 +18,23 @@
 
 \setlist[itemize]{leftmargin=1.5em,itemsep=2pt,topsep=2pt,parsep=0pt}
 
+% Bề ngang cột nhãn bảng kỹ năng — đo từ nhãn dài nhất (xem mục SKILLS).
+\newlength{\cvskilllabel}
+\newlength{\cvskilltmp}
+
 \begin{document}
 
 % ---------- HEADER ----------
 \begin{center}
 \BLOCK{ if hdr.full_name }{\Large\bfseries \VAR{hdr.full_name | tex}}\\[4pt]\BLOCK{ endif }%
 \BLOCK{ if hdr.headline }\VAR{hdr.headline | tex}\\\BLOCK{ endif }%
-\BLOCK{ if hdr.location }\VAR{hdr.location | tex}\\[2pt]\BLOCK{ endif }%
-\BLOCK{ if hdr.email or hdr.phone or hdr.github_url or hdr.linkedin_url }
-\begin{tabular}{r@{~~\textbar~~}l}
-\BLOCK{ if hdr.email and hdr.phone }Email:~\VAR{hdr.email | tex} & Phone:~\VAR{hdr.phone | tex} \\[2pt]\BLOCK{ elif hdr.email }\multicolumn{2}{c}{Email:~\VAR{hdr.email | tex}} \\[2pt]\BLOCK{ elif hdr.phone }\multicolumn{2}{c}{Phone:~\VAR{hdr.phone | tex}} \\[2pt]\BLOCK{ endif }%
-\BLOCK{ if hdr.github_url and hdr.linkedin_url }\href{\VAR{hdr.github_url | texurl}}{\VAR{hdr.github_url | linklabel}} & \href{\VAR{hdr.linkedin_url | texurl}}{LinkedIn}\BLOCK{ elif hdr.github_url }\multicolumn{2}{c}{\href{\VAR{hdr.github_url | texurl}}{\VAR{hdr.github_url | linklabel}}}\BLOCK{ elif hdr.linkedin_url }\multicolumn{2}{c}{\href{\VAR{hdr.linkedin_url | texurl}}{LinkedIn}}\BLOCK{ endif }%
-\end{tabular}
-\BLOCK{ endif }
+% Contact trên MỘT dòng, ngăn bằng dấu chấm giữa (xem chú thích ở classic).
+\BLOCK{ set ns = namespace(any=False) }%
+\BLOCK{ if hdr.location }\VAR{hdr.location | tex}\BLOCK{ set ns.any = True }\BLOCK{ endif }%
+\BLOCK{ if hdr.phone }\BLOCK{ if ns.any }\ \textperiodcentered\ \BLOCK{ endif }\VAR{hdr.phone | tex}\BLOCK{ set ns.any = True }\BLOCK{ endif }%
+\BLOCK{ if hdr.email }\BLOCK{ if ns.any }\ \textperiodcentered\ \BLOCK{ endif }\VAR{hdr.email | tex}\BLOCK{ set ns.any = True }\BLOCK{ endif }%
+\BLOCK{ if hdr.github_url }\BLOCK{ if ns.any }\ \textperiodcentered\ \BLOCK{ endif }\href{\VAR{hdr.github_url | texurl}}{\VAR{hdr.github_url | linklabel}}\BLOCK{ set ns.any = True }\BLOCK{ endif }%
+\BLOCK{ if hdr.linkedin_url }\BLOCK{ if ns.any }\ \textperiodcentered\ \BLOCK{ endif }\href{\VAR{hdr.linkedin_url | texurl}}{LinkedIn}\BLOCK{ endif }%
 \end{center}
 \vspace{-4pt}
 
@@ -43,8 +47,25 @@
 \cvsection{Education}
 \BLOCK{ for ed in cv.education }
 \academicentry{\VAR{ed.degree | tex}\BLOCK{ if ed.field_of_study } in \VAR{ed.field_of_study | tex}\BLOCK{ endif }}{\BLOCK{ if ed.start_date | monthyear }\VAR{ed.start_date | monthyear | tex} -- \VAR{((ed.end_date | monthyear) or "Present") | tex}\BLOCK{ endif }}{\VAR{ed.school | tex}}
-\BLOCK{ if ed.description }\begin{itemize}\item \VAR{ed.description | tex}\end{itemize}\BLOCK{ endif }
+\BLOCK{ if ed.description | bullets }\begin{itemize}[leftmargin=*,nosep,topsep=2pt]\BLOCK{ for line in ed.description | bullets }\item \VAR{line | tex}
+\BLOCK{ endfor }\end{itemize}\BLOCK{ endif }
 \BLOCK{ endfor }
+\BLOCK{ endif }
+
+% ---------- SKILLS ----------
+% Bảng 2 cột, cột nhãn đo theo nhãn dài nhất (xem chú thích ở classic.tex.j2).
+\BLOCK{ if cv | skillgroups }
+\cvsection{Technical Skills \& Competencies}
+\begingroup
+\setlength{\cvskilllabel}{0pt}
+\BLOCK{ for g in cv | skillgroups }\settowidth{\cvskilltmp}{\textbf{\VAR{g.category | tex}}}\ifdim\cvskilltmp>\cvskilllabel\setlength{\cvskilllabel}{\cvskilltmp}\fi
+\BLOCK{ endfor }\ifdim\cvskilllabel>0.42\linewidth\setlength{\cvskilllabel}{0.42\linewidth}\fi
+\setlength{\tabcolsep}{0pt}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}p{\cvskilllabel}@{\hspace{6pt}}l@{\hspace{6pt}}p{\dimexpr\linewidth-\cvskilllabel-16pt\relax}@{}}
+\BLOCK{ for g in cv | skillgroups }\raggedright\textbf{\VAR{g.category | tex}} & : & \VAR{ g.skills | map("tex") | join(", ") } \\
+\BLOCK{ endfor }\end{tabular}
+\endgroup
 \BLOCK{ endif }
 
 % ---------- EXPERIENCE ----------
@@ -52,7 +73,8 @@
 \cvsection{Professional Appointments}
 \BLOCK{ for e in cv.experience }
 \academicentry{\VAR{e.title | tex}}{\BLOCK{ if e.start_date | monthyear }\VAR{e.start_date | monthyear | tex} -- \VAR{((e.end_date | monthyear) or "Present") | tex}\BLOCK{ endif }}{\VAR{e.organization | tex}}
-\BLOCK{ if e.description }\begin{itemize}\item \VAR{e.description | tex}\end{itemize}\BLOCK{ endif }
+\BLOCK{ if e.description | bullets }\begin{itemize}[leftmargin=*,nosep,topsep=2pt]\BLOCK{ for line in e.description | bullets }\item \VAR{line | tex}
+\BLOCK{ endfor }\end{itemize}\BLOCK{ endif }
 \BLOCK{ endfor }
 \BLOCK{ endif }
 
@@ -64,12 +86,5 @@
 \BLOCK{ endfor }
 \BLOCK{ endif }
 
-% ---------- SKILLS ----------
-\BLOCK{ if cv.skills }
-\cvsection{Technical Skills \& Competencies}
-\begin{itemize}
-  \item \VAR{ (cv.skills | map("tex") | join(", ")) }
-\end{itemize}
-\BLOCK{ endif }
 
 \end{document}

@@ -211,12 +211,17 @@ export interface ApplicationDetail {
 }
 
 /* ── A6. CVs ── */
+/**
+ * In a CV the description is a list of bullet points, so templates can render
+ * it as a proper itemised list. (Profile descriptions stay free-form strings —
+ * see ExperienceIn / EducationIn above.)
+ */
 export interface CvExperienceItem {
   title: string;
   organization: string;
   start_date?: string | null;
   end_date?: string | null;
-  description?: string | null;
+  description: string[];
 }
 
 export interface CvEducationItem {
@@ -225,7 +230,7 @@ export interface CvEducationItem {
   field_of_study?: string | null;
   start_date?: string | null;
   end_date?: string | null;
-  description?: string | null;
+  description: string[];
 }
 
 export interface CvCertificationItem {
@@ -233,12 +238,22 @@ export interface CvCertificationItem {
   obtain_date: string;
 }
 
+export interface CvSkillGroup {
+  category: string;
+  skills: string[];
+}
+
 export interface CvContent {
   summary: string;
   experience: CvExperienceItem[];
   education: CvEducationItem[];
   certifications: CvCertificationItem[];
-  skills: string[];
+  skill_groups: CvSkillGroup[];
+  /**
+   * @deprecated Flat skills from CVs generated before grouping. Read only by
+   * cloneCvContent(), which folds it into skill_groups and drops the key.
+   */
+  skills?: string[];
 }
 
 export type CvEditStatus = "draft" | "edited";

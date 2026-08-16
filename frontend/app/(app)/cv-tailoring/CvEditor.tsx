@@ -4,15 +4,19 @@ import { useEffect, useState } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { cloneCvContent, type CvView } from "@/lib/cv";
-import type { CvContent, PdfHeader } from "@/types/api";
+import type { CvContent, PdfHeader, TemplateName } from "@/types/api";
 import styles from "./cv-manager.module.css";
+import { CvPreview } from "./CvPreview";
 
 type ExperienceEntry = CvContent["experience"][number];
 type EducationEntry = CvContent["education"][number];
+type CertificationEntry = CvContent["certifications"][number];
+type SkillGroupEntry = CvContent["skill_groups"][number];
 
 type Props = {
   cv: CvView;
   header: PdfHeader;
+  template: TemplateName;
   onSave: (content: CvContent, exportAfterSave: boolean) => void;
   onClose: () => void;
   error: string | null;
@@ -24,13 +28,83 @@ const emptyExperience = (): ExperienceEntry => ({
   organization: "",
   start_date: null,
   end_date: null,
-  description: "",
+  description: [],
 });
 
 const emptyEducation = (): EducationEntry => ({
   school: "",
   degree: "",
+  field_of_study: "",
+  start_date: null,
+  end_date: null,
+  description: [],
 });
+
+const emptyCertification = (): CertificationEntry => ({
+  title: "",
+  obtain_date: "",
+});
+
+const emptySkillGroup = (): SkillGroupEntry => ({ category: "", skills: [] });
+
+const parseSkills = (text: string): string[] =>
+  text
+    .split(",")
+    .map((skill) => skill.trim())
+    .filter(Boolean);
+
+/* ── Bullets ↔ editable text ──
+ * The CV stores each responsibility as its own bullet; in the editor each
+ * paragraph is one bullet. Blank lines are dropped so a stray Enter does not
+ * become an empty bullet in the PDF. */
+const textToBullets = (text: string): string[] =>
+  text
+    .split("\n")
+    .map((line) => line.replace(/^[-•*]\s*/, "").trim())
+    .filter(Boolean);
+
+/** Tiptap separates paragraphs with a blank line, so bullets must round-trip
+ *  through the same shape the editor produces — otherwise every keystroke
+ *  looks like a change and setContent() resets the editor mid-typing. */
+const bulletsToText = (lines: string[] | string | null | undefined): string =>
+  Array.isArray(lines) ? lines.join("\n\n") : (lines ?? "");
+
+/** Comma-separated skills for one group. The raw text is held locally so a
+ *  trailing "," or " " survives the keystroke — deriving the value from the
+ *  parsed array (the previous behaviour) erased it on every change. Resync only
+ *  when the parent array stops matching what this text parses to, i.e. a
+ *  different CV was loaded — same guard as TextEditor above. */
+function SkillsInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string[];
+  onChange: (skills: string[]) => void;
+}) {
+  const [text, setText] = useState(() => value.join(", "));
+  useEffect(() => {
+    if (parseSkills(text).join("\0") !== value.join("\0"))
+      setText(value.join(", "));
+    // `text` is intentionally omitted: including it would reset the input
+    // mid-typing, which is exactly the bug this component fixes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+  return (
+    <label>
+      {label}
+      <input
+        value={text}
+        placeholder="AWS, Docker, Kubernetes"
+        onChange={(event) => {
+          setText(event.target.value);
+          onChange(parseSkills(event.target.value));
+        }}
+      />
+    </label>
+  );
+}
 
 function TextEditor({
   value,
@@ -50,7 +124,14 @@ function TextEditor({
     onUpdate: ({ editor }) => onChange(editor.getText()),
   });
   useEffect(() => {
-    if (editor && editor.getText() !== value) editor.commands.setContent(value);
+    if (!editor) return;
+    // Compare on the normalised bullets, not the raw text: the editor may use
+    // a different amount of whitespace for the same content, and resetting on
+    // every keystroke would move the caret and drop the paragraph being typed.
+    const same =
+      textToBullets(editor.getText()).join("\0") ===
+      textToBullets(value).join("\0");
+    if (!same) editor.commands.setContent(value);
   }, [editor, value]);
   return <EditorContent editor={editor} />;
 }
@@ -72,14 +153,30 @@ function updateEdu(
   return education.map((e, i) => (i === index ? { ...e, ...patch } : e));
 }
 
-function dateRange(start?: string | null, end?: string | null): string {
-  if (!start && !end) return "";
-  return `${start ?? ""} — ${end ?? "Present"}`;
+function updateCertification(
+  certifications: CertificationEntry[],
+  index: number,
+  patch: Partial<CertificationEntry>,
+): CertificationEntry[] {
+  return certifications.map((certification, i) =>
+    i === index ? { ...certification, ...patch } : certification,
+  );
+}
+
+function updateSkillGroup(
+  groups: SkillGroupEntry[],
+  index: number,
+  patch: Partial<SkillGroupEntry>,
+): SkillGroupEntry[] {
+  return groups.map((group, i) =>
+    i === index ? { ...group, ...patch } : group,
+  );
 }
 
 export function CvEditor({
   cv,
   header,
+  template,
   onSave,
   onClose,
   error,
@@ -114,6 +211,30 @@ export function CvEditor({
     setDraft((current) => ({
       ...current,
       education: current.education.filter((_, i) => i !== index),
+    }));
+
+  const addCertification = () =>
+    setDraft((current) => ({
+      ...current,
+      certifications: [...current.certifications, emptyCertification()],
+    }));
+
+  const removeCertification = (index: number) =>
+    setDraft((current) => ({
+      ...current,
+      certifications: current.certifications.filter((_, i) => i !== index),
+    }));
+
+  const addSkillGroup = () =>
+    setDraft((current) => ({
+      ...current,
+      skill_groups: [...current.skill_groups, emptySkillGroup()],
+    }));
+
+  const removeSkillGroup = (index: number) =>
+    setDraft((current) => ({
+      ...current,
+      skill_groups: current.skill_groups.filter((_, i) => i !== index),
     }));
 
   return (
@@ -223,11 +344,13 @@ export function CvEditor({
                 Description{" "}
                 <TextEditor
                   label={`Experience #${index + 1} description`}
-                  value={exp.description ?? ""}
-                  onChange={(description) =>
+                  value={bulletsToText(exp.description)}
+                  onChange={(text) =>
                     set(
                       "experience",
-                      updateExp(draft.experience, index, { description }),
+                      updateExp(draft.experience, index, {
+                        description: textToBullets(text),
+                      }),
                     )
                   }
                 />
@@ -287,6 +410,66 @@ export function CvEditor({
                   }
                 />
               </label>
+              <label>
+                Field of Study
+                <input
+                  value={edu.field_of_study ?? ""}
+                  placeholder="e.g., Computer Science"
+                  onChange={(event) =>
+                    set(
+                      "education",
+                      updateEdu(draft.education, index, {
+                        field_of_study: event.target.value || null,
+                      }),
+                    )
+                  }
+                />
+              </label>
+              <label>
+                Start date (YYYY-MM-DD)
+                <input
+                  value={edu.start_date ?? ""}
+                  placeholder="2020-09-01"
+                  onChange={(event) =>
+                    set(
+                      "education",
+                      updateEdu(draft.education, index, {
+                        start_date: event.target.value || null,
+                      }),
+                    )
+                  }
+                />
+              </label>
+              <label>
+                End date (YYYY-MM-DD, blank = present)
+                <input
+                  value={edu.end_date ?? ""}
+                  placeholder="2024-06-01"
+                  onChange={(event) =>
+                    set(
+                      "education",
+                      updateEdu(draft.education, index, {
+                        end_date: event.target.value || null,
+                      }),
+                    )
+                  }
+                />
+              </label>
+              <label>
+                Note (optional){" "}
+                <TextEditor
+                  label={`Education #${index + 1} note`}
+                  value={bulletsToText(edu.description)}
+                  onChange={(text) =>
+                    set(
+                      "education",
+                      updateEdu(draft.education, index, {
+                        description: textToBullets(text),
+                      }),
+                    )
+                  }
+                />
+              </label>
             </fieldset>
           ))}
 
@@ -298,66 +481,119 @@ export function CvEditor({
             + Add Education
           </button>
 
-          {/* Skills */}
-          <label>
-            Skills (comma-separated)
-            <input
-              value={draft.skills.join(", ")}
-              onChange={(event) =>
-                set(
-                  "skills",
-                  event.target.value
-                    .split(",")
-                    .map((skill) => skill.trim())
-                    .filter(Boolean),
-                )
-              }
-            />
-          </label>
+          {/* Certifications */}
+          {draft.certifications.map((certification, index) => (
+            <fieldset key={index} className={styles["cm-experience-fieldset"]}>
+              <legend>
+                Certification{" "}
+                {draft.certifications.length > 1 ? `#${index + 1}` : ""}
+                {draft.certifications.length > 1 && (
+                  <button
+                    type="button"
+                    className={styles["cm-danger-sm"]}
+                    onClick={() => removeCertification(index)}
+                    aria-label={`Remove certification #${index + 1}`}
+                  >
+                    Remove
+                  </button>
+                )}
+              </legend>
+              <label>
+                Certification name
+                <input
+                  value={certification.title}
+                  placeholder="e.g., AWS Certified Developer"
+                  onChange={(event) =>
+                    set(
+                      "certifications",
+                      updateCertification(draft.certifications, index, {
+                        title: event.target.value,
+                      }),
+                    )
+                  }
+                />
+              </label>
+              <label>
+                Obtained date (YYYY-MM-DD)
+                <input
+                  value={certification.obtain_date ?? ""}
+                  placeholder="2025-01-01"
+                  onChange={(event) =>
+                    set(
+                      "certifications",
+                      updateCertification(draft.certifications, index, {
+                        obtain_date: event.target.value,
+                      }),
+                    )
+                  }
+                />
+              </label>
+            </fieldset>
+          ))}
+
+          <button
+            type="button"
+            className={styles["cm-secondary"]}
+            onClick={addCertification}
+          >
+            + Add Certification
+          </button>
+
+          {/* Skills — grouped by category, rendered as two aligned columns */}
+          {draft.skill_groups.map((group, index) => (
+            <fieldset key={index} className={styles["cm-experience-fieldset"]}>
+              <legend>
+                Skill Group{" "}
+                {draft.skill_groups.length > 1 ? `#${index + 1}` : ""}
+                {/* Unlike experience, shown even for a single group: a CV with
+                    no skill groups is valid, the section simply disappears. */}
+                <button
+                  type="button"
+                  className={styles["cm-danger-sm"]}
+                  onClick={() => removeSkillGroup(index)}
+                  aria-label={`Remove skill group #${index + 1}`}
+                >
+                  Remove
+                </button>
+              </legend>
+              <label>
+                Category
+                <input
+                  value={group.category}
+                  placeholder="e.g., Cloud Platforms"
+                  onChange={(event) =>
+                    set(
+                      "skill_groups",
+                      updateSkillGroup(draft.skill_groups, index, {
+                        category: event.target.value,
+                      }),
+                    )
+                  }
+                />
+              </label>
+              <SkillsInput
+                label="Skills (comma-separated)"
+                value={group.skills}
+                onChange={(skills) =>
+                  set(
+                    "skill_groups",
+                    updateSkillGroup(draft.skill_groups, index, { skills }),
+                  )
+                }
+              />
+            </fieldset>
+          ))}
+
+          <button
+            type="button"
+            className={styles["cm-secondary"]}
+            onClick={addSkillGroup}
+          >
+            + Add Skill Group
+          </button>
         </form>
 
-        {/* Live Preview */}
-        <article
-          className={`${styles["cm-resume"]} ${styles["cm-live-preview"]}`}
-        >
-          <h1>{header.full_name ?? ""}</h1>
-          <h2>{header.headline ?? ""}</h2>
-          <p className={styles["cm-contact"]}>
-            {[header.email, header.location].filter(Boolean).join(" · ")}
-          </p>
-          <section className={styles["cm-resume-section"]}>
-            <h3>Summary</h3>
-            <p>{draft.summary}</p>
-          </section>
-          {draft.experience.map((exp, index) => (
-            <section key={index} className={styles["cm-resume-section"]}>
-              <h3>{index === 0 ? "Experience" : ""}</h3>
-              <b>
-                {exp.title} — {exp.organization}
-              </b>
-              <small>{dateRange(exp.start_date, exp.end_date)}</small>
-              {exp.description && <p>• {exp.description}</p>}
-            </section>
-          ))}
-          {draft.education.map((edu, index) => (
-            <section key={index} className={styles["cm-resume-section"]}>
-              <h3>{index === 0 ? "Education" : ""}</h3>
-              <b>
-                {edu.school}
-                {edu.degree ? ` — ${edu.degree}` : ""}
-              </b>
-              <small>{dateRange(edu.start_date, edu.end_date)}</small>
-            </section>
-          ))}
-          <section className={styles["cm-resume-section"]}>
-            <h3>Skills</h3>
-            <div className={styles["cm-skills"]}>
-              {draft.skills.map((skill) => (
-                <span key={skill}>{skill}</span>
-              ))}
-            </div>
-          </section>
-        </article>
+        <CvPreview content={draft} header={header} template={template} />
       </div>
       <footer className={styles["cm-modal-footer"]}>
         <span>

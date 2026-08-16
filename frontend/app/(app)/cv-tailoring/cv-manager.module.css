@@ -481,11 +481,11 @@
   padding: 40px 44px;
   box-shadow: 0 1px 3px #0001;
 }
-.cm-resume > h1 {
+.cm-preview-header h1 {
   font-size: 22px;
   margin: 0 0 3px;
 }
-.cm-resume > h2 {
+.cm-preview-header h2 {
   font-size: 14px;
   color: #e5544f;
   margin: 0 0 8px;
@@ -511,22 +511,125 @@
   color: var(--cm-muted);
   line-height: 1.6;
 }
+/* Mô tả trong CV là danh sách bullet — preview phải khớp với bản PDF. */
+.cm-resume-bullets {
+  margin: 6px 0 0;
+  padding-left: 18px;
+  list-style: disc;
+}
+.cm-resume-bullets li {
+  font-size: 13px;
+  color: var(--cm-muted);
+  line-height: 1.6;
+  margin-bottom: 2px;
+}
+
 .cm-resume-section small {
   float: right;
   color: var(--cm-subtle);
   font-size: 11px;
 }
-.cm-skills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+.cm-preview-entry {
+  display: flow-root;
+  margin-bottom: 10px;
+  color: var(--cm-ink);
+  font-size: 13px;
+  line-height: 1.5;
 }
-.cm-skills span {
-  padding: 4px 10px;
-  background: #edece9;
-  border-radius: 999px;
+.cm-preview-entry:last-child {
+  margin-bottom: 0;
+}
+.cm-preview-entry p {
+  margin: 4px 0 0;
+}
+/* Two-column skill groups, mirroring the aligned tabular in the .tex templates.
+   `auto` (not max-content) lets the label column shrink inside the modern
+   template's narrow main column instead of squeezing the skills column away. */
+.cm-skills {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  column-gap: 10px;
+  row-gap: 5px;
+  margin: 0;
   color: var(--cm-muted);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.cm-skills dt {
+  color: var(--cm-ink);
+  font-weight: 600;
+}
+.cm-skills dt::after {
+  content: ":";
+}
+.cm-skills dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.cm-preview-classic .cm-preview-header,
+.cm-preview-academic .cm-preview-header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+.cm-preview-classic .cm-resume-section h3 {
+  color: var(--cm-ink);
   font-size: 12px;
+  font-weight: 700;
+}
+.cm-preview-academic {
+  font-family: Georgia, "Times New Roman", serif;
+}
+.cm-preview-academic .cm-preview-header h2 {
+  color: var(--cm-ink);
+  font-weight: 400;
+}
+.cm-preview-academic .cm-resume-section h3 {
+  color: var(--cm-ink);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 13px;
+  font-variant: small-caps;
+  text-transform: none;
+}
+
+.cm-preview-modern {
+  display: grid;
+  grid-template-columns: minmax(150px, 34%) 1fr;
+  padding: 0;
+  overflow: hidden;
+}
+.cm-modern-sidebar {
+  min-height: 620px;
+  padding: 34px 24px;
+  background: #252525;
+  color: #fff;
+}
+.cm-modern-main {
+  padding: 34px 30px;
+}
+.cm-modern-sidebar .cm-preview-header {
+  margin-bottom: 24px;
+}
+.cm-modern-sidebar .cm-preview-header h1,
+.cm-modern-sidebar .cm-preview-header h2,
+.cm-modern-sidebar .cm-contact,
+.cm-modern-sidebar .cm-preview-entry,
+.cm-modern-sidebar .cm-resume-section h3,
+.cm-modern-sidebar .cm-resume-section small,
+.cm-modern-sidebar .cm-resume-section p {
+  color: #fff;
+}
+.cm-modern-sidebar .cm-preview-header h2,
+.cm-modern-sidebar .cm-contact,
+.cm-modern-sidebar .cm-resume-section small,
+.cm-modern-sidebar .cm-resume-section p {
+  opacity: 0.72;
+}
+.cm-modern-sidebar .cm-contact {
+  overflow-wrap: anywhere;
+}
+.cm-modern-sidebar .cm-resume-section h3 {
+  border-color: #ffffff59;
 }
 .cm-ats-content {
   display: grid;

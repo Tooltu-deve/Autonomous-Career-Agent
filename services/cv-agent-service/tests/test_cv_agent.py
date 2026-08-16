@@ -301,3 +301,148 @@ def test_generate_accepts_cv_without_certifications(db, monkeypatch, mock_publis
 
     cv = db.get(CvGenerationORM, cv_id)
     assert cv.cv_json["certifications"] == []
+
+
+def test_generate_persists_skill_groups_from_llm(db, monkeypatch, mock_publish):
+    """LLM gom kỹ năng thành nhóm -> lưu nguyên cấu trúc vào cv_json."""
+    _seed(db)
+    _mock_llm(
+        monkeypatch,
+        output=(
+            '{"summary": "Backend engineer", "experience": [], "education": [],'
+            ' "certifications": [], "skill_groups": ['
+            '{"category": "Cloud Platforms", "skills": ["AWS EC2"]},'
+            ' {"category": "Core Programming", "skills": ["Python", "SQL"]}]}'
+        ),
+    )
+
+    cv_id = cv_agent.generate(db, CvRequest(user_id=str(USER_ID), job_id=str(JOB_ID)))
+
+    cv = db.get(CvGenerationORM, cv_id)
+    assert cv.cv_json["skill_groups"] == [
+        {"category": "Cloud Platforms", "skills": ["AWS EC2"]},
+        {"category": "Core Programming", "skills": ["Python", "SQL"]},
+    ]
+    assert "skills" not in cv.cv_json
+
+
+def test_generate_rescues_flat_skills_from_llm(db, monkeypatch, mock_publish):
+    """LLM trả mảng phẳng (regress prompt) -> gộp thành một nhóm, không fail."""
+    _seed(db)
+    _mock_llm(
+        monkeypatch,
+        output=(
+            '{"summary": "Backend engineer", "experience": [], "education": [],'
+            ' "certifications": [], "skills": ["python", "sql"]}'
+        ),
+    )
+
+    cv_id = cv_agent.generate(db, CvRequest(user_id=str(USER_ID), job_id=str(JOB_ID)))
+
+    cv = db.get(CvGenerationORM, cv_id)
+    assert cv.cv_json["skill_groups"] == [
+        {"category": "Skills", "skills": ["python", "sql"]}
+    ]
+
+
+# ---- UC05-UI04: lỗi LLM tạm thời khi sinh CV ----
+def test_generate_transient_llm_error_raises_for_requeue(db, monkeypatch, mock_publish):
+    """LLM timeout/mạng là lỗi TẠM THỜI -> để raise cho consumer nack+requeue.
+
+    Khác lỗi permanent (JSON hỏng) vốn đánh dấu `failed` rồi ack. Ở đây phải
+    giữ nguyên trạng thái để lần retry sau còn xử lý được.
+    """
+    app_row = _seed(db)
+    client = MagicMock()
+    client.complete.side_effect = TimeoutError("LLM request timed out")
+    monkeypatch.setattr(cv_agent, "get_llm_client", lambda: client)
+
+    with pytest.raises(TimeoutError):
+        cv_agent.generate(db, CvRequest(user_id=str(USER_ID), job_id=str(JOB_ID)))
+
+    db.refresh(app_row)
+    # KHÔNG bị đánh dấu failed — message sẽ được xử lý lại
+    assert app_row.generation_status != "failed"
+    assert mock_publish == []
+
+
+def test_generate_transient_error_does_not_increment_attempt(
+    db, monkeypatch, mock_publish
+):
+    """Lỗi hệ thống KHÔNG được tính là một lần thử sinh CV (UC05-UI04)."""
+    app_row = _seed(db)
+    before = app_row.attempt
+    client = MagicMock()
+    client.complete.side_effect = ConnectionError("upstream unavailable")
+    monkeypatch.setattr(cv_agent, "get_llm_client", lambda: client)
+
+    with pytest.raises(ConnectionError):
+        cv_agent.generate(db, CvRequest(user_id=str(USER_ID), job_id=str(JOB_ID)))
+
+    db.refresh(app_row)
+    assert app_row.attempt == before
+
+
+# ---- Bullet descriptions (SCRUM-75) ----
+def test_generate_persists_description_as_bullets(db, monkeypatch, mock_publish):
+    """LLM trả description dạng mảng -> lưu nguyên mảng vào cv_json."""
+    _seed(db)
+    _mock_llm(
+        monkeypatch,
+        output=(
+            '{"summary": "Backend engineer",'
+            ' "experience": [{"title": "Dev", "organization": "ACME",'
+            ' "description": ["Built REST APIs", "Cut latency by 40%"]}],'
+            ' "education": [], "certifications": [], "skills": ["python"]}'
+        ),
+    )
+
+    cv_id = cv_agent.generate(db, CvRequest(user_id=str(USER_ID), job_id=str(JOB_ID)))
+
+    cv = db.get(CvGenerationORM, cv_id)
+    assert cv.cv_json["experience"][0]["description"] == [
+        "Built REST APIs",
+        "Cut latency by 40%",
+    ]
+
+
+def test_generate_splits_legacy_string_description(db, monkeypatch, mock_publish):
+    """LLM lỡ trả chuỗi "- A\\n- B" -> tự tách thành mảng, không lưu nguyên chuỗi."""
+    _seed(db)
+    _mock_llm(
+        monkeypatch,
+        output=(
+            '{"summary": "Backend engineer",'
+            ' "experience": [{"title": "Dev", "organization": "ACME",'
+            ' "description": "- Built REST APIs\\n- Cut latency by 40%"}],'
+            ' "education": [], "certifications": [], "skills": ["python"]}'
+        ),
+    )
+
+    cv_id = cv_agent.generate(db, CvRequest(user_id=str(USER_ID), job_id=str(JOB_ID)))
+
+    cv = db.get(CvGenerationORM, cv_id)
+    assert cv.cv_json["experience"][0]["description"] == [
+        "Built REST APIs",
+        "Cut latency by 40%",
+    ]
+
+
+def test_generate_defaults_missing_description_to_empty_list(
+    db, monkeypatch, mock_publish
+):
+    """Thiếu description -> mảng rỗng, không phải None (template `if` vẫn đúng)."""
+    _seed(db)
+    _mock_llm(
+        monkeypatch,
+        output=(
+            '{"summary": "Backend engineer",'
+            ' "experience": [{"title": "Dev", "organization": "ACME"}],'
+            ' "education": [], "certifications": [], "skills": ["python"]}'
+        ),
+    )
+
+    cv_id = cv_agent.generate(db, CvRequest(user_id=str(USER_ID), job_id=str(JOB_ID)))
+
+    cv = db.get(CvGenerationORM, cv_id)
+    assert cv.cv_json["experience"][0]["description"] == []

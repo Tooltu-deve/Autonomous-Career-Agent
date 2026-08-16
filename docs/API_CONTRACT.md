@@ -361,6 +361,35 @@ Lỗi: `404` không tồn tại / không thuộc user; `422` giá trị ngoài e
 Do **cv-agent-service** sở hữu (bảng `cv_generations`). User xem preview + chỉnh sửa CV đã PASS
 trong CV Editor (React + Tiptap) trước khi xuất PDF.
 
+> **`description` trong CV là MẢNG chuỗi** — mỗi phần tử là một gạch đầu dòng, để template
+> render thành `itemize` thay vì một đoạn văn liền. Khác với profile (§A2), nơi `description`
+> là chuỗi tự do do user gõ.
+> ```json
+> "experience": [{
+>   "title": "Backend Developer", "organization": "ACME",
+>   "start_date": "2023-01-01", "end_date": null,
+>   "description": ["Built REST APIs serving 10k users", "Cut response time by 40%"]
+> }]
+> ```
+> Chuỗi vẫn được chấp nhận khi ghi (tự tách theo dòng) để `cv_json` sinh trước thay đổi này
+> không bị vỡ; nhưng response luôn trả về mảng.
+
+> **Kỹ năng trong CV nhóm theo `skill_groups`** — mỗi nhóm gồm nhãn `category` và danh sách
+> `skills`, để template render thành bảng 2 cột (nhãn | kỹ năng) thay vì một dòng phẳng.
+> LLM tự đặt tên nhóm theo chuẩn ngành của JD; user sửa lại được trong CV Editor.
+> ```json
+> "skill_groups": [
+>   { "category": "Languages", "skills": ["Python", "Go"] },
+>   { "category": "Containers & Orchestration", "skills": ["Docker", "Kubernetes"] }
+> ]
+> ```
+> Khác với profile (§A2), nơi `skills` là danh sách phẳng do user tự khai — việc phân nhóm
+> là do cv-agent làm khi sinh CV cho một JD cụ thể.
+>
+> **Tương thích ngược:** `cv_json` cũ lưu `skills: ["python", "fastapi"]` vẫn đọc và export
+> được — khi ghi, danh sách phẳng tự gộp thành một nhóm `"Skills"`. Response luôn trả về
+> `skill_groups`; key `skills` ở cấp CV không còn nằm trong response.
+
 ### `GET /cvs/{cv_generation_id}` → `200`
 Trả nội dung CV đã sinh.
 ```json
@@ -410,8 +439,9 @@ Request:
 }
 ```
 > `header` và mọi field bên trong đều **optional** — profile chưa điền field nào thì template bỏ
-> field đó. `cv_data` chỉ chứa nội dung CV (summary/experience/education/skills); thông tin cá nhân
-> tách sang `header` vì không thuộc `cv_json`.
+> field đó. `cv_data` chỉ chứa nội dung CV (`summary` / `experience` / `education` /
+> `certifications` / `skill_groups`) và validate lại theo đúng schema `cv_json` ở §A6; thông tin
+> cá nhân tách sang `header` vì không thuộc `cv_json`.
 
 Response `200`: `Content-Type: application/pdf` (binary stream, không JSON).
 - `template` phải thuộc whitelist `"classic" | "modern" | "academic"` — sai → `400` (chống path injection).

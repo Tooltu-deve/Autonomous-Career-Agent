@@ -86,7 +86,7 @@ const WORK_FORMATS: {
 function calcCompleteness(data: PreferencesData): number {
   let pct = 0;
   pct += Math.min(data.positions.length * 20, 40);
-  pct += Math.min(data.formats.length * 15, 30);
+  if (data.formats.length > 0) pct += 30;
   if (data.location) pct += 30;
   return Math.min(100, pct);
 }
@@ -124,6 +124,7 @@ const MapPinSvg = () => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
+    stroke="currentColor"
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
@@ -208,9 +209,7 @@ export default function ProfilePreferencesPage() {
   const toggleFormat = (fmt: WorkFormat) => {
     setData((d) => ({
       ...d,
-      formats: d.formats.includes(fmt)
-        ? d.formats.filter((f) => f !== fmt)
-        : [...d.formats, fmt],
+      formats: d.formats.includes(fmt) ? [] : [fmt],
     }));
   };
 
@@ -373,8 +372,7 @@ export default function ProfilePreferencesPage() {
               <div className="pp-section-head">
                 <h2>Work Format</h2>
                 <p>
-                  Choose the formats that suit you — you can select more than
-                  one.
+                  Choose the format that suits you best.
                 </p>
               </div>
               <div className="pp-format-grid">
@@ -388,9 +386,12 @@ export default function ProfilePreferencesPage() {
                       role="checkbox"
                       aria-checked={selected}
                       tabIndex={0}
-                      onKeyDown={(e) =>
-                        e.key === "Enter" && toggleFormat(fmt.key)
-                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          toggleFormat(fmt.key);
+                        }
+                      }}
                     >
                       <div
                         className={`pp-format-check ${selected ? "checked" : ""}`}
@@ -465,12 +466,26 @@ export default function ProfilePreferencesPage() {
           {/* Right preview column */}
           <div className="pp-preview-col">
             <div className="pp-preview-card">
-              <div className="pp-section-head">
-                <h2>Preview preferences</h2>
-                <p>Live preview of your settings</p>
+              <div className="pp-pv-header">
+                <h3>
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  >
+                    <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+                    <circle cx="12" cy="12" r="3" />
+                  </svg>
+                  Live Preferences Preview
+                </h3>
+                <span className="pp-live-pill">🟢 Realtime</span>
               </div>
-            </div>
-            <div className="pp-preview-card">
+
               {/* User head */}
               <div className="pp-pv-head">
                 <div className="pp-pv-avatar">{userInitials}</div>
@@ -502,7 +517,7 @@ export default function ProfilePreferencesPage() {
               <div className="pp-pv-block">
                 <div className="pp-pv-label">Format</div>
                 {data.formats.length === 0 ? (
-                  <p className="pp-pv-empty">Select formats on the left.</p>
+                  <p className="pp-pv-empty">Select a format on the left.</p>
                 ) : (
                   <div className="pp-pv-fmt-wrap">
                     {data.formats.map((f) => (

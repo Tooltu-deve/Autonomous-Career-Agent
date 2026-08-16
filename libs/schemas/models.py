@@ -7,7 +7,7 @@ và schema `infra/init-db/01_schema.sql`.
 from datetime import date, datetime
 from typing import Literal, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 # Phiên bản format cho message qua RabbitMQ. Mọi message mang `schema_version`
 # để consumer rẽ nhánh parse khi format đổi (xem API_CONTRACT.md phần B).
@@ -114,14 +114,93 @@ class CvRequest(BaseModel):
 
 
 # ---- CV content: schema lồng, validate ở PUT /cvs và pdf-service ----
+# Trong CV, mô tả là DANH SÁCH gạch đầu dòng (khác profile — nơi user gõ tự do
+# thành một đoạn). Nhờ vậy template render được \begin{itemize}, đọc như CV thật
+# thay vì một khối văn bản.
+
+
+def _as_bullets(value: object) -> object:
+    """Nhận list giữ nguyên; nhận chuỗi thì tách thành từng bullet.
+
+    CV sinh trước thay đổi này lưu `description` dạng chuỗi có "\\n- ", nên
+    cv_json cũ trong DB vẫn đọc được (CV Editor và export PDF không vỡ).
+    """
+    if value is None:
+        return []
+    if isinstance(value, str):
+        lines = (ln.strip().lstrip("-•*").strip() for ln in value.splitlines())
+        return [ln for ln in lines if ln]
+    return value
+
+
+class CvExperienceItem(BaseModel):
+    """Một mục kinh nghiệm trong CV — mô tả là các bullet."""
+
+    title: str
+    organization: str
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None  # None = hiện tại
+    description: list[str] = []
+
+    _split_description = field_validator("description", mode="before")(_as_bullets)
+
+
+class CvEducationItem(BaseModel):
+    """Một mục học vấn trong CV — mô tả là các bullet."""
+
+    school: str
+    degree: Optional[str] = None
+    field_of_study: Optional[str] = None
+    start_date: Optional[date] = None
+    end_date: Optional[date] = None
+    description: list[str] = []
+
+    _split_description = field_validator("description", mode="before")(_as_bullets)
+
+
+class SkillGroup(BaseModel):
+    """Một nhóm kỹ năng trong CV — nhãn nhóm + các kỹ năng thuộc nhóm.
+
+    LLM tự đặt tên nhóm theo chuẩn ngành của JD; user sửa lại được ở CV Editor.
+    Template render thành bảng 2 cột (nhãn | kỹ năng) thay vì một dòng phẳng.
+    """
+
+    category: str
+    skills: list[str] = []
+
+
 class CVContent(BaseModel):
     """Cấu trúc `cv_json` — nội dung CV chảy xuyên suốt pipeline."""
 
     summary: str
-    experience: list[ExperienceItem] = []
-    education: list[EducationItem] = []
+    experience: list[CvExperienceItem] = []
+    education: list[CvEducationItem] = []
     certifications: list[CertificationItem] = []
-    skills: list[str] = []
+    skill_groups: list[SkillGroup] = []
+
+    @model_validator(mode="before")
+    @classmethod
+    def _migrate_flat_skills(cls, data: object) -> object:
+        """cv_json CŨ lưu `skills: list[str]` -> gộp thành một nhóm "Skills".
+
+        `GET /cvs/{id}` validate lại mọi bản ghi cũ trong Postgres qua model
+        này, nên CV sinh trước thay đổi này vẫn phải đọc và export được — cùng
+        lý do với `_as_bullets` ở trên.
+
+        Dữ liệu rác (chuỗi, list không phải chuỗi) để nguyên -> `skill_groups`
+        rỗng chứ KHÔNG raise: một bản ghi cũ hỏng không được làm 500 cả API.
+        """
+        if not isinstance(data, dict) or data.get("skill_groups"):
+            return data
+        flat = data.get("skills")
+        if isinstance(flat, list) and all(isinstance(s, str) for s in flat):
+            names = [s.strip() for s in flat if s.strip()]
+            if names:
+                return {
+                    **data,
+                    "skill_groups": [{"category": "Skills", "skills": names}],
+                }
+        return data
 
 
 class GeneratedCV(BaseModel):

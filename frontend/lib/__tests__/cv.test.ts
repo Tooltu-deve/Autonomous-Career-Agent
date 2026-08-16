@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { loadCvViews } from "@/lib/cv";
+import { cloneCvContent, loadCvViews, validateCvContent } from "@/lib/cv";
 import { getApplication, listApplications } from "@/lib/api";
-import type { ApplicationDetail, ApplicationListItem } from "@/types/api";
+import type {
+  ApplicationDetail,
+  ApplicationListItem,
+  CvContent,
+} from "@/types/api";
 
 vi.mock("@/lib/api", () => ({
   listApplications: vi.fn(),
@@ -51,7 +55,7 @@ describe("loadCvViews — cover letter mapping", () => {
           experience: [],
           education: [],
           certifications: [],
-          skills: [],
+          skill_groups: [],
         },
         edit_status: "draft",
         model_used: "claude-opus-4-8",
@@ -109,5 +113,106 @@ describe("loadCvViews — cover letter mapping", () => {
     expect(views[1].coverLetter).toBe("");
     // Placeholder path never needs the detail endpoint.
     expect(mockedGetApplication).not.toHaveBeenCalled();
+  });
+});
+
+describe("cloneCvContent", () => {
+  it("normalizes collection fields missing from a legacy CV", () => {
+    const legacyContent = {
+      summary: "Legacy CV",
+      experience: [],
+      education: [],
+      skills: [],
+    } as unknown as CvContent;
+
+    expect(cloneCvContent(legacyContent)).toEqual({
+      summary: "Legacy CV",
+      experience: [],
+      education: [],
+      certifications: [],
+      skill_groups: [],
+    });
+  });
+
+  it("folds legacy flat skills into one group and drops the legacy key", () => {
+    const legacyContent = {
+      summary: "Legacy CV",
+      experience: [],
+      education: [],
+      certifications: [],
+      skills: ["python", "sql"],
+    } as unknown as CvContent;
+
+    const cloned = cloneCvContent(legacyContent);
+
+    expect(cloned.skill_groups).toEqual([
+      { category: "Skills", skills: ["python", "sql"] },
+    ]);
+    // The draft is saved verbatim and then exported, so the legacy key must
+    // not survive the round-trip.
+    expect(cloned).not.toHaveProperty("skills");
+  });
+
+  it("prefers existing skill_groups over legacy flat skills", () => {
+    const mixed = {
+      summary: "Mixed CV",
+      experience: [],
+      education: [],
+      certifications: [],
+      skill_groups: [{ category: "Cloud", skills: ["AWS"] }],
+      skills: ["python"],
+    } as unknown as CvContent;
+
+    expect(cloneCvContent(mixed).skill_groups).toEqual([
+      { category: "Cloud", skills: ["AWS"] },
+    ]);
+  });
+});
+
+describe("validateCvContent", () => {
+  const validContent = (): CvContent => ({
+    summary: "Backend engineer",
+    experience: [],
+    education: [],
+    certifications: [],
+    skill_groups: [],
+  });
+
+  it("rejects a skill group without a category name", () => {
+    expect(
+      validateCvContent({
+        ...validContent(),
+        skill_groups: [{ category: "  ", skills: ["AWS"] }],
+      }),
+    ).toBe("Each skill group needs a category name.");
+  });
+
+  it("accepts a named skill group that has no skills yet", () => {
+    expect(
+      validateCvContent({
+        ...validContent(),
+        skill_groups: [{ category: "Cloud Platforms", skills: [] }],
+      }),
+    ).toBeNull();
+  });
+
+  it("accepts a complete certification", () => {
+    expect(
+      validateCvContent({
+        ...validContent(),
+        certifications: [
+          { title: "AWS Certified Developer", obtain_date: "2024-05-01" },
+        ],
+      }),
+    ).toBeNull();
+  });
+
+  it("requires both the certification name and obtained date", () => {
+    expect(
+      validateCvContent({
+        ...validContent(),
+        certifications: [{ title: "AWS Certified Developer", obtain_date: "" }],
+      }),
+    ).toBe("Each certification needs a name and an obtained date.");
   });
 });
