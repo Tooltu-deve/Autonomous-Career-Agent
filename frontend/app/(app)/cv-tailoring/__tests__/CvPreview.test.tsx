@@ -15,7 +15,10 @@ const content: CvContent = {
   ],
   education: [{ school: "University", degree: "BSc", description: [] }],
   certifications: [{ title: "Cloud Certificate", obtain_date: "2025-01-01" }],
-  skills: ["TypeScript", "React"],
+  skill_groups: [
+    { category: "Languages", skills: ["TypeScript", "Python"] },
+    { category: "Frameworks", skills: ["React", "FastAPI"] },
+  ],
 };
 
 const header: PdfHeader = {
@@ -39,7 +42,7 @@ describe("CvPreview", () => {
     {
       template: "classic",
       label: "CV preview — Classic template",
-      order: ["summary", "experience", "education", "certifications", "skills"],
+      order: ["summary", "education", "skills", "experience", "certifications"],
     },
     {
       template: "modern",
@@ -49,7 +52,7 @@ describe("CvPreview", () => {
     {
       template: "academic",
       label: "CV preview — Academic template",
-      order: ["summary", "education", "experience", "certifications", "skills"],
+      order: ["summary", "education", "skills", "experience", "certifications"],
     },
   ])("renders the $template template", ({ template, label, order }) => {
     render(<CvPreview content={content} header={header} template={template} />);
@@ -63,7 +66,9 @@ describe("CvPreview", () => {
     const { rerender } = render(
       <CvPreview content={content} header={header} template="classic" />,
     );
-    expect(screen.getByLabelText("CV preview — Classic template")).toBeVisible();
+    expect(
+      screen.getByLabelText("CV preview — Classic template"),
+    ).toBeVisible();
 
     rerender(<CvPreview content={content} header={header} template="modern" />);
 
@@ -99,5 +104,34 @@ describe("CvPreview", () => {
 
     expect(screen.getByText("January 2025")).toBeVisible();
     expect(screen.queryByText("2025-01-01")).not.toBeInTheDocument();
+  });
+
+  it.each<TemplateName>(["classic", "modern", "academic"])(
+    "renders one label/skills pair per group in the %s template",
+    (template) => {
+      render(
+        <CvPreview content={content} header={header} template={template} />,
+      );
+
+      expect(screen.getByText("Languages")).toBeVisible();
+      expect(screen.getByText("TypeScript, Python")).toBeVisible();
+      expect(screen.getByText("Frameworks")).toBeVisible();
+      expect(screen.getByText("React, FastAPI")).toBeVisible();
+    },
+  );
+
+  it("hides the skills section when every group is empty", () => {
+    const emptyGroups: CvContent = {
+      ...content,
+      skill_groups: [{ category: "Languages", skills: [] }],
+    };
+
+    render(
+      <CvPreview content={emptyGroups} header={header} template="classic" />,
+    );
+
+    const preview = screen.getByLabelText("CV preview — Classic template");
+    expect(sectionOrder(preview)).not.toContain("skills");
+    expect(screen.queryByText("Languages")).not.toBeInTheDocument();
   });
 });

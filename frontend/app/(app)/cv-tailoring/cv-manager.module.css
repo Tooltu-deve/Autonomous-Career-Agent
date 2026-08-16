@@ -542,10 +542,29 @@
 .cm-preview-entry p {
   margin: 4px 0 0;
 }
+/* Two-column skill groups, mirroring the aligned tabular in the .tex templates.
+   `auto` (not max-content) lets the label column shrink inside the modern
+   template's narrow main column instead of squeezing the skills column away. */
 .cm-skills {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr);
+  column-gap: 10px;
+  row-gap: 5px;
+  margin: 0;
   color: var(--cm-muted);
   font-size: 13px;
   line-height: 1.6;
+}
+.cm-skills dt {
+  color: var(--cm-ink);
+  font-weight: 600;
+}
+.cm-skills dt::after {
+  content: ":";
+}
+.cm-skills dd {
+  margin: 0;
+  overflow-wrap: anywhere;
 }
 
 .cm-preview-classic .cm-preview-header,

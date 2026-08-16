@@ -303,6 +303,48 @@ def test_generate_accepts_cv_without_certifications(db, monkeypatch, mock_publis
     assert cv.cv_json["certifications"] == []
 
 
+def test_generate_persists_skill_groups_from_llm(db, monkeypatch, mock_publish):
+    """LLM gom kỹ năng thành nhóm -> lưu nguyên cấu trúc vào cv_json."""
+    _seed(db)
+    _mock_llm(
+        monkeypatch,
+        output=(
+            '{"summary": "Backend engineer", "experience": [], "education": [],'
+            ' "certifications": [], "skill_groups": ['
+            '{"category": "Cloud Platforms", "skills": ["AWS EC2"]},'
+            ' {"category": "Core Programming", "skills": ["Python", "SQL"]}]}'
+        ),
+    )
+
+    cv_id = cv_agent.generate(db, CvRequest(user_id=str(USER_ID), job_id=str(JOB_ID)))
+
+    cv = db.get(CvGenerationORM, cv_id)
+    assert cv.cv_json["skill_groups"] == [
+        {"category": "Cloud Platforms", "skills": ["AWS EC2"]},
+        {"category": "Core Programming", "skills": ["Python", "SQL"]},
+    ]
+    assert "skills" not in cv.cv_json
+
+
+def test_generate_rescues_flat_skills_from_llm(db, monkeypatch, mock_publish):
+    """LLM trả mảng phẳng (regress prompt) -> gộp thành một nhóm, không fail."""
+    _seed(db)
+    _mock_llm(
+        monkeypatch,
+        output=(
+            '{"summary": "Backend engineer", "experience": [], "education": [],'
+            ' "certifications": [], "skills": ["python", "sql"]}'
+        ),
+    )
+
+    cv_id = cv_agent.generate(db, CvRequest(user_id=str(USER_ID), job_id=str(JOB_ID)))
+
+    cv = db.get(CvGenerationORM, cv_id)
+    assert cv.cv_json["skill_groups"] == [
+        {"category": "Skills", "skills": ["python", "sql"]}
+    ]
+
+
 # ---- UC05-UI04: lỗi LLM tạm thời khi sinh CV ----
 def test_generate_transient_llm_error_raises_for_requeue(db, monkeypatch, mock_publish):
     """LLM timeout/mạng là lỗi TẠM THỜI -> để raise cho consumer nack+requeue.

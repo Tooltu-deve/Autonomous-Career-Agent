@@ -3,7 +3,7 @@
 from datetime import date
 from typing import Literal, Optional
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 # Whitelist template — chống path injection (chỉ 3 tên hợp lệ, khớp tên file .tex.j2).
 TemplateName = Literal["classic", "modern", "academic"]
@@ -48,12 +48,39 @@ class CertificationItem(BaseModel):
     obtain_date: date
 
 
+class SkillGroup(BaseModel):
+    """Nhãn nhóm + kỹ năng thuộc nhóm — template render thành bảng 2 cột."""
+
+    category: str
+    skills: list[str] = []
+
+
 class CvData(BaseModel):
     summary: str
     experience: list[ExperienceItem] = []
     education: list[EducationItem] = []
     certifications: list[CertificationItem] = []
-    skills: list[str] = []
+    skill_groups: list[SkillGroup] = []
+
+    @model_validator(mode="before")
+    @classmethod
+    def _migrate_flat_skills(cls, data: object) -> object:
+        """cv_json cũ (`skills: list[str]`) -> gộp thành một nhóm "Skills".
+
+        CV sinh trước khi có nhóm vẫn export PDF được. Dữ liệu rác để nguyên ->
+        `skill_groups` rỗng, không raise.
+        """
+        if not isinstance(data, dict) or data.get("skill_groups"):
+            return data
+        flat = data.get("skills")
+        if isinstance(flat, list) and all(isinstance(s, str) for s in flat):
+            names = [s.strip() for s in flat if s.strip()]
+            if names:
+                return {
+                    **data,
+                    "skill_groups": [{"category": "Skills", "skills": names}],
+                }
+        return data
 
 
 class PdfHeader(BaseModel):

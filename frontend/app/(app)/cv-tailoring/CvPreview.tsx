@@ -1,3 +1,5 @@
+import { Fragment } from "react";
+
 import type { CvContent, PdfHeader, TemplateName } from "@/types/api";
 import styles from "./cv-manager.module.css";
 
@@ -27,14 +29,16 @@ function dateRange(start?: string | null, end?: string | null): string {
 }
 
 function Contact({ header }: { header: PdfHeader }) {
+  // Order and link labels mirror the .tex templates, where the profile URLs
+  // render as the site name rather than the bare URL.
   return (
     <p className={styles["cm-contact"]}>
       {[
-        header.email,
-        header.phone,
         header.location,
-        header.github_url,
-        header.linkedin_url,
+        header.phone,
+        header.email,
+        header.github_url && "GitHub",
+        header.linkedin_url && "LinkedIn",
       ]
         .filter(Boolean)
         .join(" · ")}
@@ -52,7 +56,11 @@ function Header({ header }: { header: PdfHeader }) {
   );
 }
 
-function Description({ value }: { value: string[] | string | null | undefined }) {
+function Description({
+  value,
+}: {
+  value: string[] | string | null | undefined;
+}) {
   const lines = Array.isArray(value) ? value : value ? [value] : [];
   if (lines.length === 0) return null;
   return (
@@ -103,11 +111,24 @@ function Education({ content }: { content: CvContent }) {
 }
 
 function Skills({ content }: { content: CvContent }) {
-  if (content.skills.length === 0) return null;
+  // Drop half-typed groups so the preview matches what the PDF renderer keeps.
+  const groups = (content.skill_groups ?? []).filter(
+    (group) => group.skills.length > 0,
+  );
+  if (groups.length === 0) return null;
   return (
     <section className={styles["cm-resume-section"]} data-section="skills">
       <h3>Skills</h3>
-      <div className={styles["cm-skills"]}>{content.skills.join(", ")}</div>
+      {/* Grid definition list: the category column sizes to the widest label so
+          the colons line up, mirroring the aligned tabular in the templates. */}
+      <dl className={styles["cm-skills"]}>
+        {groups.map((group, index) => (
+          <Fragment key={index}>
+            <dt>{group.category}</dt>
+            <dd>{group.skills.join(", ")}</dd>
+          </Fragment>
+        ))}
+      </dl>
     </section>
   );
 }
@@ -131,7 +152,13 @@ function Certifications({ content }: { content: CvContent }) {
   );
 }
 
-function Summary({ content, title = "Summary" }: { content: CvContent; title?: string }) {
+function Summary({
+  content,
+  title = "Summary",
+}: {
+  content: CvContent;
+  title?: string;
+}) {
   return (
     <section className={styles["cm-resume-section"]} data-section="summary">
       <h3>{title}</h3>
@@ -172,9 +199,9 @@ export function CvPreview({ content, header, template }: Props) {
         <Header header={header} />
         <Summary content={content} />
         <Education content={content} />
+        <Skills content={content} />
         <Experience content={content} title="Professional Appointments" />
         <Certifications content={content} />
-        <Skills content={content} />
       </article>
     );
   }
@@ -187,10 +214,10 @@ export function CvPreview({ content, header, template }: Props) {
     >
       <Header header={header} />
       <Summary content={content} title="Objective" />
-      <Experience content={content} title="Work Experience" />
       <Education content={content} />
-      <Certifications content={content} />
       <Skills content={content} />
+      <Experience content={content} title="Work Experience" />
+      <Certifications content={content} />
     </article>
   );
 }

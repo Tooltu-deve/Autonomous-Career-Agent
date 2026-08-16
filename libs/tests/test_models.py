@@ -78,9 +78,73 @@ def test_cv_content_rejects_missing_summary():
 
 def test_cv_content_rejects_wrong_type():
     bad = _valid_content()
-    bad["skills"] = "not-a-list"
+    bad["skill_groups"] = "not-a-list"
     with pytest.raises(ValidationError):
         CVContent(**bad)
+
+
+# ---- skill_groups: nhóm kỹ năng + tương thích ngược với cv_json cũ ----
+# `GET /cvs/{id}` validate lại mọi bản ghi cũ qua CVContent, nên CV sinh trước
+# khi có nhóm phải đọc được nguyên vẹn.
+
+
+def test_cv_content_migrates_legacy_flat_skills():
+    content = CVContent(**_valid_content())  # fixture vẫn dùng `skills` phẳng
+    assert len(content.skill_groups) == 1
+    assert content.skill_groups[0].category == "Skills"
+    assert content.skill_groups[0].skills == ["python", "fastapi"]
+
+
+def test_cv_content_accepts_skill_groups():
+    data = _valid_content()
+    del data["skills"]
+    data["skill_groups"] = [
+        {"category": "Cloud Platforms", "skills": ["AWS EC2"]},
+        {"category": "Core Programming", "skills": ["Python", "SQL"]},
+    ]
+    content = CVContent(**data)
+    assert [g.category for g in content.skill_groups] == [
+        "Cloud Platforms",
+        "Core Programming",
+    ]
+    assert content.skill_groups[1].skills == ["Python", "SQL"]
+
+
+def test_cv_content_prefers_skill_groups_over_legacy_skills():
+    data = _valid_content()  # có sẵn `skills` phẳng
+    data["skill_groups"] = [{"category": "Cloud", "skills": ["AWS"]}]
+    content = CVContent(**data)
+    assert len(content.skill_groups) == 1
+    assert content.skill_groups[0].skills == ["AWS"]
+
+
+def test_cv_content_legacy_empty_skills_gives_no_groups():
+    data = _valid_content()
+    data["skills"] = []
+    assert CVContent(**data).skill_groups == []
+
+
+def test_cv_content_legacy_junk_skills_does_not_crash():
+    # Một bản ghi cũ hỏng không được làm 500 cả GET /cvs/{id}.
+    for junk in ("python", [1, 2], None):
+        data = _valid_content()
+        data["skills"] = junk
+        assert CVContent(**data).skill_groups == []
+
+
+@pytest.mark.parametrize(
+    "groups",
+    [
+        [{"skills": ["a"]}],  # thiếu category
+        [{"category": 1, "skills": "a"}],  # sai kiểu
+        ["Cloud Platforms"],  # chuỗi thay vì object
+    ],
+)
+def test_cv_content_rejects_malformed_skill_groups(groups):
+    data = _valid_content()
+    data["skill_groups"] = groups
+    with pytest.raises(ValidationError):
+        CVContent(**data)
 
 
 def test_job_rejects_source_outside_whitelist():

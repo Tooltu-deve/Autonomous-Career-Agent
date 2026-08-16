@@ -14,8 +14,9 @@ CV_SYSTEM = (
     "thông tin có thật trong hồ sơ — không bịa kinh nghiệm, kỹ năng, bằng cấp "
     "hay số liệu không có trong hồ sơ. TOÀN BỘ nội dung CV phải viết bằng "
     "TIẾNG ANH — kể cả khi hồ sơ hay JD viết bằng ngôn ngữ khác thì dịch thông "
-    "tin thật sang tiếng Anh (không bịa thêm khi dịch). Chỉ trả về MỘT JSON "
-    "object phẳng, không markdown, không giải thích."
+    "tin thật sang tiếng Anh (không bịa thêm khi dịch). Chỉ trả về ĐÚNG MỘT "
+    "JSON object ở cấp cao nhất (không bọc trong key khác), không markdown, "
+    "không giải thích."
 )
 
 
@@ -42,7 +43,15 @@ def cv_generation(
         "hành động, ưu tiên thành quả đo đếm được.",
         "- Dùng từ khóa xuất hiện trong JD ở mọi chỗ hợp lệ (chỉ khi hồ sơ thật "
         "sự có kinh nghiệm đó).",
-        "- skills: sắp kỹ năng khớp JD lên đầu.",
+        "- skill_groups: gom kỹ năng trong hồ sơ thành 3-5 nhóm theo chuẩn "
+        "ngành của JD (ví dụ 'Cloud Platforms', 'Containers & DevOps', "
+        "'Core Programming', 'Systems & Networking'). Tự đặt tên nhóm bằng "
+        "TIẾNG ANH, viết hoa chữ đầu mỗi từ, TỐI ĐA 3 TỪ — nhãn dài sẽ tràn "
+        "cột trái khi render PDF.",
+        "- Mỗi kỹ năng chỉ thuộc ĐÚNG MỘT nhóm; không tạo nhóm rỗng; CHỈ dùng "
+        "kỹ năng có thật trong hồ sơ, KHÔNG bịa nhóm để lấp chỗ trống.",
+        "- Xếp nhóm khớp JD nhất lên đầu, và trong mỗi nhóm xếp kỹ năng khớp "
+        "JD lên trước.",
         "- Viết TOÀN BỘ nội dung bằng TIẾNG ANH, bất kể ngôn ngữ của JD hay hồ sơ.",
         "- Ngày tháng định dạng ISO YYYY-MM-DD; end_date là null nếu đang làm.",
         "- certifications: chép nguyên từ hồ sơ, KHÔNG bịa thêm; bỏ trống nếu hồ "
@@ -59,7 +68,10 @@ def cv_generation(
         '    "end_date": "2023-06-01", "description": []}],\n'
         '  "certifications": [{"title": "AWS Certified Developer",\n'
         '    "obtain_date": "2024-05-20"}],\n'
-        '  "skills": ["python", "fastapi", "postgresql"]\n'
+        '  "skill_groups": [\n'
+        '    {"category": "Cloud Platforms", "skills": ["AWS EC2", "AWS RDS"]},\n'
+        '    {"category": "Core Programming", "skills": ["Python", "SQL"]}\n'
+        "  ]\n"
         "}",
     ]
     return CV_SYSTEM, "\n".join(parts)
