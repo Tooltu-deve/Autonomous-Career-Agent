@@ -11,6 +11,7 @@ import { CvPreview } from "./CvPreview";
 type ExperienceEntry = CvContent["experience"][number];
 type EducationEntry = CvContent["education"][number];
 type CertificationEntry = CvContent["certifications"][number];
+type SkillGroupEntry = CvContent["skill_groups"][number];
 
 type Props = {
   cv: CvView;
@@ -44,6 +45,14 @@ const emptyCertification = (): CertificationEntry => ({
   obtain_date: "",
 });
 
+const emptySkillGroup = (): SkillGroupEntry => ({ category: "", skills: [] });
+
+const parseSkills = (text: string): string[] =>
+  text
+    .split(",")
+    .map((skill) => skill.trim())
+    .filter(Boolean);
+
 /* ── Bullets ↔ editable text ──
  * The CV stores each responsibility as its own bullet; in the editor each
  * paragraph is one bullet. Blank lines are dropped so a stray Enter does not
@@ -59,6 +68,43 @@ const textToBullets = (text: string): string[] =>
  *  looks like a change and setContent() resets the editor mid-typing. */
 const bulletsToText = (lines: string[] | string | null | undefined): string =>
   Array.isArray(lines) ? lines.join("\n\n") : (lines ?? "");
+
+/** Comma-separated skills for one group. The raw text is held locally so a
+ *  trailing "," or " " survives the keystroke — deriving the value from the
+ *  parsed array (the previous behaviour) erased it on every change. Resync only
+ *  when the parent array stops matching what this text parses to, i.e. a
+ *  different CV was loaded — same guard as TextEditor above. */
+function SkillsInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: string[];
+  onChange: (skills: string[]) => void;
+}) {
+  const [text, setText] = useState(() => value.join(", "));
+  useEffect(() => {
+    if (parseSkills(text).join("\0") !== value.join("\0"))
+      setText(value.join(", "));
+    // `text` is intentionally omitted: including it would reset the input
+    // mid-typing, which is exactly the bug this component fixes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+  return (
+    <label>
+      {label}
+      <input
+        value={text}
+        placeholder="AWS, Docker, Kubernetes"
+        onChange={(event) => {
+          setText(event.target.value);
+          onChange(parseSkills(event.target.value));
+        }}
+      />
+    </label>
+  );
+}
 
 function TextEditor({
   value,
@@ -117,6 +163,16 @@ function updateCertification(
   );
 }
 
+function updateSkillGroup(
+  groups: SkillGroupEntry[],
+  index: number,
+  patch: Partial<SkillGroupEntry>,
+): SkillGroupEntry[] {
+  return groups.map((group, i) =>
+    i === index ? { ...group, ...patch } : group,
+  );
+}
+
 export function CvEditor({
   cv,
   header,
@@ -167,6 +223,18 @@ export function CvEditor({
     setDraft((current) => ({
       ...current,
       certifications: current.certifications.filter((_, i) => i !== index),
+    }));
+
+  const addSkillGroup = () =>
+    setDraft((current) => ({
+      ...current,
+      skill_groups: [...current.skill_groups, emptySkillGroup()],
+    }));
+
+  const removeSkillGroup = (index: number) =>
+    setDraft((current) => ({
+      ...current,
+      skill_groups: current.skill_groups.filter((_, i) => i !== index),
     }));
 
   return (
@@ -471,22 +539,58 @@ export function CvEditor({
             + Add Certification
           </button>
 
-          {/* Skills */}
-          <label>
-            Skills (comma-separated)
-            <input
-              value={draft.skills.join(", ")}
-              onChange={(event) =>
-                set(
-                  "skills",
-                  event.target.value
-                    .split(",")
-                    .map((skill) => skill.trim())
-                    .filter(Boolean),
-                )
-              }
-            />
-          </label>
+          {/* Skills — grouped by category, rendered as two aligned columns */}
+          {draft.skill_groups.map((group, index) => (
+            <fieldset key={index} className={styles["cm-experience-fieldset"]}>
+              <legend>
+                Skill Group{" "}
+                {draft.skill_groups.length > 1 ? `#${index + 1}` : ""}
+                {/* Unlike experience, shown even for a single group: a CV with
+                    no skill groups is valid, the section simply disappears. */}
+                <button
+                  type="button"
+                  className={styles["cm-danger-sm"]}
+                  onClick={() => removeSkillGroup(index)}
+                  aria-label={`Remove skill group #${index + 1}`}
+                >
+                  Remove
+                </button>
+              </legend>
+              <label>
+                Category
+                <input
+                  value={group.category}
+                  placeholder="e.g., Cloud Platforms"
+                  onChange={(event) =>
+                    set(
+                      "skill_groups",
+                      updateSkillGroup(draft.skill_groups, index, {
+                        category: event.target.value,
+                      }),
+                    )
+                  }
+                />
+              </label>
+              <SkillsInput
+                label="Skills (comma-separated)"
+                value={group.skills}
+                onChange={(skills) =>
+                  set(
+                    "skill_groups",
+                    updateSkillGroup(draft.skill_groups, index, { skills }),
+                  )
+                }
+              />
+            </fieldset>
+          ))}
+
+          <button
+            type="button"
+            className={styles["cm-secondary"]}
+            onClick={addSkillGroup}
+          >
+            + Add Skill Group
+          </button>
         </form>
 
         <CvPreview content={draft} header={header} template={template} />

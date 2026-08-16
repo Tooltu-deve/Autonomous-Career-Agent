@@ -55,7 +55,7 @@ describe("loadCvViews — cover letter mapping", () => {
           experience: [],
           education: [],
           certifications: [],
-          skills: [],
+          skill_groups: [],
         },
         edit_status: "draft",
         model_used: "claude-opus-4-8",
@@ -130,8 +130,42 @@ describe("cloneCvContent", () => {
       experience: [],
       education: [],
       certifications: [],
-      skills: [],
+      skill_groups: [],
     });
+  });
+
+  it("folds legacy flat skills into one group and drops the legacy key", () => {
+    const legacyContent = {
+      summary: "Legacy CV",
+      experience: [],
+      education: [],
+      certifications: [],
+      skills: ["python", "sql"],
+    } as unknown as CvContent;
+
+    const cloned = cloneCvContent(legacyContent);
+
+    expect(cloned.skill_groups).toEqual([
+      { category: "Skills", skills: ["python", "sql"] },
+    ]);
+    // The draft is saved verbatim and then exported, so the legacy key must
+    // not survive the round-trip.
+    expect(cloned).not.toHaveProperty("skills");
+  });
+
+  it("prefers existing skill_groups over legacy flat skills", () => {
+    const mixed = {
+      summary: "Mixed CV",
+      experience: [],
+      education: [],
+      certifications: [],
+      skill_groups: [{ category: "Cloud", skills: ["AWS"] }],
+      skills: ["python"],
+    } as unknown as CvContent;
+
+    expect(cloneCvContent(mixed).skill_groups).toEqual([
+      { category: "Cloud", skills: ["AWS"] },
+    ]);
   });
 });
 
@@ -141,7 +175,25 @@ describe("validateCvContent", () => {
     experience: [],
     education: [],
     certifications: [],
-    skills: [],
+    skill_groups: [],
+  });
+
+  it("rejects a skill group without a category name", () => {
+    expect(
+      validateCvContent({
+        ...validContent(),
+        skill_groups: [{ category: "  ", skills: ["AWS"] }],
+      }),
+    ).toBe("Each skill group needs a category name.");
+  });
+
+  it("accepts a named skill group that has no skills yet", () => {
+    expect(
+      validateCvContent({
+        ...validContent(),
+        skill_groups: [{ category: "Cloud Platforms", skills: [] }],
+      }),
+    ).toBeNull();
   });
 
   it("accepts a complete certification", () => {

@@ -33,7 +33,7 @@ const content = (over: Partial<CvContent> = {}): CvContent => ({
     },
   ],
   certifications: [],
-  skills: ["python"],
+  skill_groups: [{ category: "Core Programming", skills: ["python"] }],
   ...over,
 });
 
@@ -127,7 +127,9 @@ describe("CvEditor live preview", () => {
     expect(second.tagName).toBe("LI");
     expect(first.parentElement).toBe(second.parentElement);
     expect(first.parentElement?.tagName).toBe("UL");
-    expect(container.querySelectorAll("ul li").length).toBeGreaterThanOrEqual(3);
+    expect(container.querySelectorAll("ul li").length).toBeGreaterThanOrEqual(
+      3,
+    );
   });
 
   it("hiện mô tả học vấn dưới dạng bullet", () => {
@@ -147,7 +149,7 @@ describe("CvEditor live preview", () => {
         },
       ],
       education: [],
-      skills: [],
+      skill_groups: [],
     });
 
     // chỉ còn các <ul> khác (nếu có), không có <li> mô tả nào
@@ -167,9 +169,7 @@ describe("CvEditor education", () => {
       target: { value: "2020-09-01" },
     });
     fireEvent.change(
-      screen.getAllByLabelText(
-        "End date (YYYY-MM-DD, blank = present)",
-      )[1],
+      screen.getAllByLabelText("End date (YYYY-MM-DD, blank = present)")[1],
       { target: { value: "2024-06-01" } },
     );
     fireEvent.click(screen.getByRole("button", { name: "Save" }));
@@ -252,5 +252,66 @@ describe("CvEditor certifications", () => {
     expect(
       screen.queryByRole("button", { name: "Remove certification #1" }),
     ).not.toBeInTheDocument();
+  });
+});
+
+describe("CvEditor skill groups", () => {
+  it("adds and removes groups", () => {
+    renderEditor();
+
+    expect(screen.getAllByLabelText("Category")).toHaveLength(1);
+
+    fireEvent.click(screen.getByRole("button", { name: "+ Add Skill Group" }));
+    expect(screen.getAllByLabelText("Category")).toHaveLength(2);
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Remove skill group #2" }),
+    );
+    expect(screen.getAllByLabelText("Category")).toHaveLength(1);
+    // Unlike certifications, the last group can also be removed.
+    fireEvent.click(
+      screen.getByRole("button", { name: "Remove skill group #1" }),
+    );
+    expect(screen.queryByLabelText("Category")).not.toBeInTheDocument();
+  });
+
+  it("renaming a category updates the live preview", () => {
+    renderEditor();
+
+    fireEvent.change(screen.getByLabelText("Category"), {
+      target: { value: "Cloud Platforms" },
+    });
+
+    expect(screen.getByText("Cloud Platforms").tagName).toBe("DT");
+  });
+
+  /* Trước đây value được suy lại từ mảng đã parse nên dấu phẩy/space cuối bị
+   * xoá ngay mỗi phím, không gõ tiếp được kỹ năng thứ hai. */
+  it("keeps a trailing comma and space while typing", () => {
+    renderEditor();
+
+    const input = screen.getByLabelText("Skills (comma-separated)");
+    fireEvent.change(input, { target: { value: "aws, " } });
+
+    expect(input).toHaveValue("aws, ");
+  });
+
+  it("saves skill_groups and never the legacy flat skills key", () => {
+    const onSave = vi.fn();
+    renderEditor({}, onSave);
+
+    fireEvent.change(screen.getByLabelText("Category"), {
+      target: { value: "Cloud Platforms" },
+    });
+    fireEvent.change(screen.getByLabelText("Skills (comma-separated)"), {
+      target: { value: "AWS EC2, AWS RDS" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Save" }));
+
+    const [saved] = onSave.mock.calls[0];
+    expect(saved.skill_groups).toEqual([
+      { category: "Cloud Platforms", skills: ["AWS EC2", "AWS RDS"] },
+    ]);
+    expect(saved).not.toHaveProperty("skills");
   });
 });

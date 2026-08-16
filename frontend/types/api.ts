@@ -235,12 +235,22 @@ export interface CvCertificationItem {
   obtain_date: string;
 }
 
+export interface CvSkillGroup {
+  category: string;
+  skills: string[];
+}
+
 export interface CvContent {
   summary: string;
   experience: CvExperienceItem[];
   education: CvEducationItem[];
   certifications: CvCertificationItem[];
-  skills: string[];
+  skill_groups: CvSkillGroup[];
+  /**
+   * @deprecated Flat skills from CVs generated before grouping. Read only by
+   * cloneCvContent(), which folds it into skill_groups and drops the key.
+   */
+  skills?: string[];
 }
 
 export type CvEditStatus = "draft" | "edited";

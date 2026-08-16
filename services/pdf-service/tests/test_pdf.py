@@ -6,8 +6,10 @@ trả application/pdf; compile lỗi → 422; thiếu field → 422.
 
 import pytest
 from app.main import app
+from app.schemas.pdf import CvData
 from app.services import compiler, renderer
 from fastapi.testclient import TestClient
+from pydantic import ValidationError
 
 client = TestClient(app)
 
@@ -256,12 +258,21 @@ def test_no_dangling_label_when_only_one_contact_link():
         assert "LinkedIn" in tex, tpl
 
 
-def test_no_dangling_label_when_only_one_of_email_phone():
-    """Cùng lỗi ở dòng Email/Phone — user không có phone rất phổ biến."""
+def test_no_dangling_separator_when_only_one_of_email_phone():
+    """Cùng lỗi ở phần email/phone — user không có phone rất phổ biến.
+
+    Contact giờ là một dòng ngăn bằng dấu chấm giữa, không còn nhãn
+    "Email:"/"Phone:", nên thiếu field phải bớt luôn dấu ngăn tương ứng.
+    """
     for tpl in ("classic", "academic"):
-        tex = renderer.render(tpl, CV, {**HEADER, "phone": None})
-        assert "Phone" not in tex, tpl
-        assert "Email" in tex, tpl
+        full = renderer.render(tpl, CV, HEADER)
+        no_phone = renderer.render(tpl, CV, {**HEADER, "phone": None})
+        assert HEADER["phone"] not in no_phone, tpl
+        assert HEADER["email"] in no_phone, tpl
+        assert (
+            no_phone.count(r"\textperiodcentered")
+            == full.count(r"\textperiodcentered") - 1
+        ), tpl
 
 
 def test_link_label_follows_the_host():
@@ -555,3 +566,175 @@ def test_bullet_lines_are_latex_escaped():
     tex = renderer.render("classic", cv, HEADER)
     assert r"40\%" in tex and r"\&" in tex and r"\$" in tex
     assert r"\_" in tex and r"\{" in tex
+
+
+# ---- skill_groups: nhóm kỹ năng render thành bảng 2 cột ----
+# cv_json cũ lưu `skills` phẳng; CvData và filter `skillgroups` đều phải tự cứu
+# để CV sinh trước thay đổi này vẫn export được.
+
+SKILL_GROUPS = [
+    {"category": "Cloud Platforms", "skills": ["AWS EC2", "AWS RDS"]},
+    {"category": "Core Programming", "skills": ["Python", "SQL"]},
+]
+
+# Một hàng tabular thiếu ô sẽ làm Tectonic lỗi và hỏng cả bản PDF.
+JUNK_GROUPS = [
+    "Cloud Platforms",
+    None,
+    {"category": "NoSkills"},
+    {"category": "Blank", "skills": ["", "  "]},
+    {"skills": None},
+]
+
+
+def _skill_rows(tex: str) -> int:
+    """Đếm số hàng của bảng kỹ năng (mỗi hàng có đúng một ' & : & ')."""
+    return tex.count(" & : & ")
+
+
+def test_cv_data_migrates_legacy_flat_skills():
+    cv = CvData(summary="s", skills=["python", "sql"])
+    assert len(cv.skill_groups) == 1
+    assert cv.skill_groups[0].category == "Skills"
+    assert cv.skill_groups[0].skills == ["python", "sql"]
+
+
+def test_cv_data_accepts_skill_groups():
+    cv = CvData(summary="s", skill_groups=SKILL_GROUPS)
+    assert [g.category for g in cv.skill_groups] == [
+        "Cloud Platforms",
+        "Core Programming",
+    ]
+
+
+def test_cv_data_prefers_skill_groups_over_legacy_skills():
+    cv = CvData(summary="s", skills=["python"], skill_groups=SKILL_GROUPS)
+    assert len(cv.skill_groups) == 2
+
+
+@pytest.mark.parametrize("junk", ["python", [1, 2], None, []])
+def test_cv_data_legacy_junk_skills_does_not_crash(junk):
+    assert CvData(summary="s", skills=junk).skill_groups == []
+
+
+@pytest.mark.parametrize(
+    "groups", [[{"skills": ["a"]}], [{"category": 1, "skills": "a"}], "nope"]
+)
+def test_cv_data_rejects_malformed_skill_groups(groups):
+    with pytest.raises(ValidationError):
+        CvData(summary="s", skill_groups=groups)
+
+
+@pytest.mark.parametrize("tpl", ["classic", "modern", "academic"])
+def test_render_skill_groups_two_column_table(tpl):
+    cv = {**CV, "skills": None, "skill_groups": SKILL_GROUPS}
+    tex = renderer.render(tpl, cv, HEADER)
+    assert r"\begin{tabular}" in tex
+    assert _skill_rows(tex) == len(SKILL_GROUPS)
+    assert r"\textbf{Cloud Platforms}" in tex
+    assert "AWS EC2, AWS RDS" in tex
+    assert "Python, SQL" in tex
+
+
+@pytest.mark.parametrize("tpl", ["classic", "modern", "academic"])
+def test_render_legacy_flat_skills_still_renders(tpl):
+    """cv_json cũ (mảng phẳng) -> một nhóm "Skills", không mất kỹ năng nào."""
+    tex = renderer.render(tpl, CV, HEADER)  # CV vẫn dùng `skills` phẳng
+    assert _skill_rows(tex) == 1
+    assert r"\textbf{Skills}" in tex
+    assert "python, fastapi" in tex
+
+
+@pytest.mark.parametrize("tpl", ["classic", "modern", "academic"])
+def test_render_skips_empty_and_junk_skill_groups(tpl):
+    cv = {
+        **CV,
+        "skills": None,
+        "skill_groups": [SKILL_GROUPS[0], *JUNK_GROUPS],
+    }
+    tex = renderer.render(tpl, cv, HEADER)
+    assert _skill_rows(tex) == 1, f"{tpl}: nhóm rác sinh ra hàng tabular hỏng"
+
+
+@pytest.mark.parametrize("tpl", ["classic", "modern", "academic"])
+def test_render_no_skills_section_when_all_groups_empty(tpl):
+    """Không kỹ năng -> mất hẳn section (không mở tabular rỗng)."""
+    cv = {**CV, "skills": [], "skill_groups": [{"category": "X", "skills": []}]}
+    tex = renderer.render(tpl, cv, HEADER)
+    assert _skill_rows(tex) == 0
+    # Bỏ dòng comment LaTeX ("% ---------- SKILLS ----------") — chúng không
+    # render ra PDF nên không tính là tiêu đề section còn sót.
+    body = "\n".join(ln for ln in tex.splitlines() if not ln.lstrip().startswith("%"))
+    for heading in (r"\section{Skills}", r"\cvsection{SKILLS}", "Technical Skills"):
+        assert heading not in body
+
+
+def test_skill_group_category_is_latex_escaped():
+    cv = {
+        **CV,
+        "skills": None,
+        "skill_groups": [{"category": "R&D {x}", "skills": ["C++ 100%"]}],
+    }
+    tex = renderer.render("classic", cv, HEADER)
+    assert r"R\&D" in tex and r"\{x\}" in tex and r"100\%" in tex
+
+
+# ---- Thứ tự section trong PDF ----
+# classic/academic bám theo bố cục CV mẫu: học vấn và kỹ năng lên trước kinh
+# nghiệm. modern giữ layout 2 cột riêng (học vấn nằm ở sidebar).
+SECTION_MARKERS = {
+    "classic": [
+        (r"\section{Objective}", "summary"),
+        (r"\section{Education}", "education"),
+        (r"\section{Skills}", "skills"),
+        (r"\section{Work Experience}", "experience"),
+        (r"\section{Certifications}", "certifications"),
+    ],
+    "academic": [
+        (r"\cvsection{Summary}", "summary"),
+        (r"\cvsection{Education}", "education"),
+        (r"\cvsection{Technical Skills", "skills"),
+        (r"\cvsection{Professional Appointments}", "experience"),
+        (r"\cvsection{Certifications}", "certifications"),
+    ],
+}
+
+
+@pytest.mark.parametrize("tpl", ["classic", "academic"])
+def test_section_order_matches_reference_layout(tpl):
+    cv = {**CV_WITH_CERTS, "skill_groups": SKILL_GROUPS}
+    tex = renderer.render(tpl, cv, HEADER)
+    positions = []
+    for marker, name in SECTION_MARKERS[tpl]:
+        assert marker in tex, f"{tpl}: thiếu section {name}"
+        positions.append(tex.index(marker))
+    assert positions == sorted(positions), f"{tpl}: sai thứ tự section"
+
+
+# ---- Contact một dòng (classic/academic bám bố cục CV mẫu) ----
+
+
+@pytest.mark.parametrize("tpl", ["classic", "academic"])
+def test_contact_is_a_single_dot_separated_line(tpl):
+    tex = renderer.render(tpl, CV, HEADER)
+    # 5 mục contact -> đúng 4 dấu ngăn, không thừa ở đầu/cuối
+    assert tex.count(r"\textperiodcentered") == 4
+    assert r"\begin{tabular}{r@{~~\textbar~~}l}" not in tex  # bảng 2 dòng cũ
+    for value in (HEADER["location"], HEADER["phone"], HEADER["email"]):
+        assert value in tex
+
+
+@pytest.mark.parametrize("tpl", ["classic", "academic"])
+@pytest.mark.parametrize(
+    "hdr,expected_dots",
+    [
+        ({"full_name": "A", "location": "HCMC", "email": "a@b.c"}, 1),
+        ({"full_name": "A", "email": "a@b.c"}, 0),
+        ({"full_name": "A"}, 0),
+        ({"full_name": "A", "github_url": "github.com/x"}, 0),
+    ],
+)
+def test_contact_separator_only_between_items(tpl, hdr, expected_dots):
+    """Thiếu field -> không để lại dấu ngăn thừa ở đầu/cuối dòng."""
+    tex = renderer.render(tpl, CV, hdr)
+    assert tex.count(r"\textperiodcentered") == expected_dots

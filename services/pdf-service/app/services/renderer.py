@@ -130,6 +130,46 @@ def bullets(value: object) -> list[str]:
     return [str(v) for v in value if str(v).strip()]
 
 
+def skill_groups(value: object) -> list[dict]:
+    r"""Chuẩn hoá phần kỹ năng của CV về [{"category": str, "skills": [str]}].
+
+    Nhận NGUYÊN dict `cv` (không phải `cv.skill_groups`) để với cv_json cũ —
+    nơi kỹ năng nằm ở key `skills` dạng phẳng — vẫn còn đường fallback.
+
+    `render()` nhận dict thô (không qua Pydantic) nên filter phải tự phòng thủ,
+    cùng lý do với `bullets`. Nhóm rác (thiếu key, None, chuỗi) bị BỎ: một hàng
+    tabular thiếu ô sẽ làm Tectonic lỗi và hỏng cả bản PDF.
+    """
+    if not isinstance(value, dict):
+        return []
+    groups: list[dict] = []
+    raw = value.get("skill_groups")
+    if isinstance(raw, (list, tuple)):
+        for item in raw:
+            if not isinstance(item, dict):
+                continue
+            names = item.get("skills")
+            if isinstance(names, str):
+                names = [names]
+            if not isinstance(names, (list, tuple)):
+                continue
+            cleaned = [str(s).strip() for s in names if str(s).strip()]
+            if not cleaned:
+                continue
+            category = str(item.get("category") or "").strip()
+            groups.append({"category": category or "Skills", "skills": cleaned})
+    if groups:
+        return groups
+    flat = value.get("skills")  # fallback cv_json cũ
+    if isinstance(flat, str):
+        flat = [flat]
+    if isinstance(flat, (list, tuple)):
+        cleaned = [str(s).strip() for s in flat if str(s).strip()]
+        if cleaned:
+            return [{"category": "Skills", "skills": cleaned}]
+    return []
+
+
 def month_year(value: object) -> str:
     """Định dạng ngày cho CV: date hoặc chuỗi ISO -> "May 2024".
 
@@ -174,6 +214,7 @@ _env.filters["texurl"] = escape_tex_url
 _env.filters["linklabel"] = link_label
 _env.filters["monthyear"] = month_year
 _env.filters["bullets"] = bullets
+_env.filters["skillgroups"] = skill_groups
 
 
 def render(template: str, cv_data: dict, header: dict | None = None) -> str:

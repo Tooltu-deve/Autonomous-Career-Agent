@@ -48,7 +48,7 @@ const EMPTY_CONTENT: CvContent = {
   experience: [],
   education: [],
   certifications: [],
-  skills: [],
+  skill_groups: [],
 };
 
 function titleOf(item: ApplicationListItem): string {
@@ -122,15 +122,28 @@ export async function loadCvViews(): Promise<CvView[]> {
 }
 
 export function cloneCvContent(content: CvContent): CvContent {
-  // Stored CVs may predate fields such as `certifications`. Normalize at the
-  // UI boundary so legacy records cannot crash newer editor/preview code.
+  // Stored CVs may predate fields such as `certifications`, and CVs generated
+  // before grouping store a flat `skills` array. Normalize at the UI boundary
+  // so legacy records cannot crash newer editor/preview code.
+  const flatSkills = content.skills ?? [];
+  const groups = content.skill_groups?.length
+    ? content.skill_groups
+    : flatSkills.length
+      ? [{ category: "Skills", skills: flatSkills }]
+      : [];
+  // Drop the legacy key: the editor draft is saved verbatim and then sent to
+  // POST /pdf/export, so `skills` must not survive the round-trip.
+  const { skills: _legacySkills, ...rest } = content;
   return structuredClone({
-    ...content,
+    ...rest,
     summary: content.summary ?? "",
     experience: content.experience ?? [],
     education: content.education ?? [],
     certifications: content.certifications ?? [],
-    skills: content.skills ?? [],
+    skill_groups: groups.map((group) => ({
+      category: group.category ?? "",
+      skills: group.skills ?? [],
+    })),
   });
 }
 
@@ -150,5 +163,9 @@ export function validateCvContent(content: CvContent): string | null {
     )
   )
     return "Each certification needs a name and an obtained date.";
+  // A group with no skills is fine — preview and the LaTeX filter both drop it,
+  // so a half-typed group must not block saving the rest of the CV.
+  if (!content.skill_groups.every((group) => group.category.trim()))
+    return "Each skill group needs a category name.";
   return null;
 }
