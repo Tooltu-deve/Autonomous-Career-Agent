@@ -1,10 +1,10 @@
 """Pydantic schemas cho scraper-service (request/response, khớp API_CONTRACT.md A4)."""
 
 from datetime import datetime
-from typing import Literal, Optional
+from typing import Any, Literal, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from libs.schemas.models import JobSource, JobStatus
 
@@ -51,12 +51,30 @@ class JobOut(BaseModel):
     seniority_level: Optional[str] = None
     url: Optional[str] = None
     description: str
+    description_html: Optional[str] = (
+        None  # HTML gốc từ Apify; None nếu actor không trả về
+    )
     posted_at: Optional[datetime] = None
     scraped_at: Optional[datetime] = None
     status: JobStatus
     expires_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
+
+    @model_validator(mode="before")
+    @classmethod
+    def _inject_description_html(cls, data: Any) -> Any:
+        """Kéo job_description_raw_html từ raw_data khi validate từ ORM object.
+
+        Chạy trước khi Pydantic validate fields — nếu description_html đã được
+        set (e.g. trong test hoặc dict literal) thì giữ nguyên, không ghi đè.
+        """
+        if hasattr(data, "raw_data") and isinstance(data.raw_data, dict):
+            if not getattr(data, "description_html", None):
+                html = data.raw_data.get("job_description_raw_html")
+                # Gán vào __dict__ để Pydantic đọc được ở bước validate tiếp theo
+                object.__setattr__(data, "description_html", html or None)
+        return data
 
 
 class JobListResponse(BaseModel):
@@ -103,6 +121,9 @@ class JobPreviewItem(BaseModel):
     seniority_level: Optional[str] = None
     url: Optional[str] = None
     description: str
+    description_html: Optional[str] = (
+        None  # HTML gốc từ Apify; None nếu actor không trả về
+    )
     posted_at: Optional[datetime] = None
     scraped_at: Optional[datetime] = None
     status: str = "active"  # mặc định active (chưa lưu DB)

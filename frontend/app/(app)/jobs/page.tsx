@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import DOMPurify from "dompurify";
 import type { JobStage, JobView } from "@/types/jobs";
 import type {
   ApplicationListItem,
@@ -18,6 +19,35 @@ import {
   unsaveJob,
 } from "@/lib/api";
 import { daysUntil, timeAgo } from "@/lib/format";
+
+// Tags allowed after DOMPurify sanitization — enough for job descriptions.
+const ALLOWED_TAGS = [
+  "p", "br", "ul", "ol", "li",
+  "strong", "b", "em", "i",
+  "h1", "h2", "h3", "h4", "h5", "h6",
+  "span", "div", "section", "article",
+];
+
+/** Render job description: sanitized HTML nếu có, fallback plain-text nếu không.
+ *  DOMPurify strip toàn bộ attributes (class, data-max-lines, ...) theo AC. */
+function renderJobDescription(
+  html?: string | null,
+  fallbackText?: string | null,
+) {
+  if (html) {
+    const clean = DOMPurify.sanitize(html, {
+      ALLOWED_TAGS,
+      ALLOWED_ATTR: [], // strip ALL attributes — no class, no data-*, no style
+    });
+    // eslint-disable-next-line react/no-danger
+    return <div className="job-desc-html" dangerouslySetInnerHTML={{ __html: clean }} />;
+  }
+  return (
+    <div className="job-desc-plain">
+      {fallbackText ?? "No description provided by the source."}
+    </div>
+  );
+}
 
 function toStage(stage: PipelineStage): JobStage {
   if (stage === "saved") return "saved";
@@ -680,13 +710,10 @@ export default function JobRadar() {
                       </svg>
                       Job details from the employer
                     </div>
-                    <div
-                      className="block-text"
-                      style={{ whiteSpace: "pre-wrap" }}
-                    >
-                      {selectedView.job.description ??
-                        "No description provided by the source."}
-                    </div>
+                    {renderJobDescription(
+                        selectedView.job.description_html,
+                        selectedView.job.description,
+                      )}
                   </div>
                 )}
 

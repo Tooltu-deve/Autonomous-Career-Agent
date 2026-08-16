@@ -174,6 +174,7 @@ def preview_jobs(body: JobSearchRequest) -> JobPreviewResponse:
                     location=job.location,
                     url=job.url,
                     description=job.description,
+                    description_html=raw.get("job_description_raw_html") or None,
                     posted_at=job.posted_at,
                     scraped_at=job.scraped_at,
                     status=job.status or "active",

@@ -16,6 +16,8 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@tiptap/react": "^2.27.2",
     "@tiptap/starter-kit": "^2.27.2",
+    "@types/dompurify": "^3.0.5",
+    "dompurify": "^3.4.13",
     "next": "^14.2.35",
     "react": "^18.3.0",
     "react-dom": "^18.3.0"
