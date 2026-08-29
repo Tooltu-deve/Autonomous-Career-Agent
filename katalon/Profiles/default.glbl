@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<GlobalVariableEntities>
+   <description></description>
+   <name>default</name>
+   <tag></tag>
+   <defaultProfile>true</defaultProfile>
+   <GlobalVariableEntity>
+      <description>Frontend base URL</description>
+      <initValue>'http://localhost:3000'</initValue>
+      <name>baseUrl</name>
+   </GlobalVariableEntity>
+   <GlobalVariableEntity>
+      <description>Existing test account — must be registered before running</description>
+      <initValue>'katalon@example.com'</initValue>
+      <name>email</name>
+   </GlobalVariableEntity>
+   <GlobalVariableEntity>
+      <description>Password for the test account (>=8 chars, letter + digit)</description>
+      <initValue>'Katalon1234'</initValue><!-- pragma: allowlist secret -->
+      <name>password</name>
+   </GlobalVariableEntity>
+</GlobalVariableEntities>

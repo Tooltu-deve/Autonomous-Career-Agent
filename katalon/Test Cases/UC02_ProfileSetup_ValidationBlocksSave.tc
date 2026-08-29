@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<TestCaseEntity>
+   <description></description>
+   <name>UC02_ProfileSetup_ValidationBlocksSave</name>
+   <tag></tag>
+   <comment></comment>
+   <testCaseGuid>8EF280DC-B0BB-43D2-AE6A-602ED7AE87D9</testCaseGuid>
+</TestCaseEntity>
