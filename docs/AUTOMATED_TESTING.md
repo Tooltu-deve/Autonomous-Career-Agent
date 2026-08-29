@@ -5,7 +5,7 @@
 **Browser:** Chrome 152.0.7977.64
 **Target:** `http://localhost:3000` (full stack via `make up`)
 **Executed:** 29 August 2026
-**Tester:** *[your name]*
+**Tester:** Tien Le
 
 ---
 
