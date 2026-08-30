@@ -40,3 +40,13 @@ rabbitmq_data/
 
 # Others
 *.html
+
+# Katalon
+katalon/Reports/
+katalon/Libs/
+katalon/bin/
+katalon/.classpath
+katalon/.project
+katalon/settings/
+katalon/.settings/
+katalon/console.properties
